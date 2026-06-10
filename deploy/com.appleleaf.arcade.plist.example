@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.appleleaf.arcade</string>
+
+    <key>WorkingDirectory</key>
+    <string>__APP_ROOT__</string>
+
+    <key>ProgramArguments</key>
+    <array>
+      <string>/bin/bash</string>
+      <string>__APP_ROOT__/deploy/run-production.sh</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>__APP_ROOT__/logs/arcade.stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>__APP_ROOT__/logs/arcade.stderr.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>HOME</key>
+      <string>__HOME__</string>
+      <key>ARCADE_LAUNCHD_LABEL</key>
+      <string>com.appleleaf.arcade</string>
+    </dict>
+  </dict>
+</plist>

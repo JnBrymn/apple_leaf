@@ -14,7 +14,7 @@ pnpm dev
 
 Open http://localhost:18081
 
-To play games (login required), also run the auth server in a second terminal:
+To enable Google sign-in / backstage access, also run the auth server in a second terminal:
 
 ```bash
 pnpm dev:server
@@ -22,7 +22,7 @@ pnpm dev:server
 
 ## Google login (not configured yet)
 
-Games require Google sign-in. The lobby is public; `/games/*` is protected.
+Games are public. Google sign-in is only used for the protected `/backstage` area.
 
 1. Copy `.env.example` → `.env`
 2. Create a [Google OAuth client](https://console.cloud.google.com/) with redirect URI:
@@ -30,7 +30,7 @@ Games require Google sign-in. The lobby is public; `/games/*` is protected.
 3. Fill in `ARCADE_GOOGLE_CLIENT_ID`, `ARCADE_GOOGLE_CLIENT_SECRET`, and a 32+ char `ARCADE_SESSION_SECRET`
 4. Run `pnpm dev` and `pnpm dev:server`, then sign in
 
-Only `ARCADE_ALLOWED_USER_EMAIL` (default `jfberryman@gmail.com`) can play after OAuth.
+Only emails listed in `ARCADE_ALLOWED_USER_EMAILS` can access `/backstage` after OAuth.
 
 ## Scripts
 
@@ -57,7 +57,7 @@ dist/         Production frontend build
 
 1. Create `src/games/<game-id>/` (see `src/games/snake/` for an example)
 2. Register it in `src/arcade/games.config.ts`
-3. New games are automatically login-protected via `ProtectedRoute`
+3. New games are public by default; use `ProtectedRoute` only for members-only pages like `/backstage`
 
 More detail for agents: [AGENTS.md](AGENTS.md)
 
@@ -69,6 +69,47 @@ ARCADE_PUBLIC_BASE_URL=https://your-domain.com pnpm start
 ```
 
 Set the Google OAuth redirect URI to `https://your-domain.com/auth/google/callback`.
+
+## GitHub auto-deploy to a Mac
+
+This repo includes:
+
+- `.github/workflows/deploy.yml` — deploy on push to `main`
+- `deploy/deploy.sh` — pull, install, build, restart
+- `deploy/run-production.sh` — launchd entrypoint
+- `deploy/com.appleleaf.arcade.plist.example` — launchd template
+
+### One-time setup on the Mac
+
+1. Clone this repo to a dedicated production directory.
+2. Copy `.env.example` to `.env` and fill in production values.
+3. Make the deploy scripts executable:
+   ```bash
+   chmod +x deploy/deploy.sh deploy/run-production.sh
+   ```
+4. Create a plist from the example:
+   - replace `__APP_ROOT__` with the repo path
+   - replace `__HOME__` with your macOS home directory
+   - save it as `~/Library/LaunchAgents/com.appleleaf.arcade.plist`
+5. Create the logs directory:
+   ```bash
+   mkdir -p logs
+   ```
+6. Load the service:
+   ```bash
+   launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.appleleaf.arcade.plist
+   launchctl kickstart -k gui/$(id -u)/com.appleleaf.arcade
+   ```
+
+### GitHub secrets to add
+
+- `APPLELEAF_DEPLOY_HOST`
+- `APPLELEAF_DEPLOY_USER`
+- `APPLELEAF_DEPLOY_PORT` (optional; defaults to `22`)
+- `APPLELEAF_DEPLOY_PATH` (absolute path to the production repo on the Mac)
+- `APPLELEAF_DEPLOY_SSH_KEY` (private key for SSHing into the Mac)
+
+After that, every push to `main` will SSH into the Mac and run `./deploy/deploy.sh`.
 
 ## Stack
 
