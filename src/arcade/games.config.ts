@@ -26,6 +26,14 @@ export const GAMES: GameConfig[] = [
     tags: ['puzzle', 'simulation'],
     component: lazy(() => import('../games/game-of-life')),
   },
+  {
+    id: 'banana-chaos',
+    title: 'Banana Chaos',
+    description: 'You are a banana. Dodge falling peels. Do not slip.',
+    thumbnail: '/thumbnails/banana-chaos.png',
+    tags: ['silly', 'arcade'],
+    component: lazy(() => import('../games/banana-chaos')),
+  },
 ]
 
 export function getGameById(id: string): GameConfig | undefined {

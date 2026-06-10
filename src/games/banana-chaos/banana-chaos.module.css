@@ -1,0 +1,115 @@
+.root {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  color: #3d2b00;
+  background: linear-gradient(180deg, #87ceeb 0%, #fff9c4 55%, #f4d03f 100%);
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+}
+
+.game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hud {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.gameOver {
+  color: #e74c3c;
+  animation: wobble 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes wobble {
+  from {
+    transform: rotate(-3deg);
+  }
+  to {
+    transform: rotate(3deg);
+  }
+}
+
+.hud button {
+  padding: 0.45rem 1rem;
+  background: #f39c12;
+  color: #fff;
+  border: 2px solid #d68910;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+}
+
+.hud button:hover {
+  background: #e67e22;
+}
+
+.arena {
+  position: relative;
+  overflow: hidden;
+  border: 4px solid #d4ac0d;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #a8e6cf 0%, #dcedc1 100%);
+  box-shadow: 0 8px 0 #b7950b;
+}
+
+.banana {
+  position: absolute;
+  font-size: 2.4rem;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
+  animation: bananaWiggle 0.35s ease-in-out infinite alternate;
+  user-select: none;
+  pointer-events: none;
+}
+
+@keyframes bananaWiggle {
+  from {
+    transform: translate(-50%, -50%) rotate(-12deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(12deg);
+  }
+}
+
+.peel {
+  position: absolute;
+  width: 28px;
+  height: 36px;
+  transform: translate(-50%, -50%) rotate(20deg);
+  user-select: none;
+  pointer-events: none;
+  background: linear-gradient(135deg, #fff176 0%, #fdd835 50%, #f9a825 100%);
+  border: 2px solid #f57f17;
+  border-radius: 0 70% 60% 70%;
+  box-shadow: inset -4px -4px 0 rgba(255, 255, 255, 0.35);
+}
+
+.controls {
+  margin: 0;
+  color: #7d6608;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.sillyMsg {
+  margin: 0;
+  min-height: 1.4rem;
+  font-size: 1rem;
+  color: #c0392b;
+  font-weight: 700;
+  text-align: center;
+}
