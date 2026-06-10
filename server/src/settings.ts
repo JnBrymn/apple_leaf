@@ -12,13 +12,21 @@ function env(name: string, fallback = ''): string {
   return process.env[name] ?? fallback
 }
 
+const sessionSecret = env(
+  'ARCADE_SESSION_SECRET',
+  'dev-only-change-me-use-a-real-secret-in-env-file',
+)
+
+if (sessionSecret.length < 32) {
+  throw new Error(
+    'ARCADE_SESSION_SECRET must be at least 32 characters. Generate one with: openssl rand -base64 32',
+  )
+}
+
 export const settings = {
   googleClientId: env('ARCADE_GOOGLE_CLIENT_ID'),
   googleClientSecret: env('ARCADE_GOOGLE_CLIENT_SECRET'),
-  sessionSecret: env(
-    'ARCADE_SESSION_SECRET',
-    'dev-only-change-me-use-a-real-secret-in-env-file',
-  ),
+  sessionSecret,
   allowedUserEmail: env('ARCADE_ALLOWED_USER_EMAIL', 'jfberryman@gmail.com'),
   publicBaseUrl: env('ARCADE_PUBLIC_BASE_URL', 'http://localhost:18081'),
   port: Number(env('ARCADE_PORT', '18080')),
