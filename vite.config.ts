@@ -9,6 +9,7 @@ const authProxyTarget =
 export default defineConfig({
   plugins: [react()],
   server: {
+    allowedHosts: ['appleleaf.arcturus-labs.com'],
     port: devPort,
     strictPort: true,
     proxy: {
