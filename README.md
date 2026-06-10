@@ -115,6 +115,8 @@ This workflow uses `cloudflared access tcp --hostname ...` to SSH through a Clou
 
 After that, every push to `main` will SSH into the Mac and run `./deploy/deploy.sh`.
 
+The workflow writes `APPLELEAF_DEPLOY_SSH_KEY` to a temporary key file on the GitHub runner and uses it as `IdentityFile` for SSH.
+
 ## Stack
 
 - **Frontend:** React, Vite, React Router, CSS Modules

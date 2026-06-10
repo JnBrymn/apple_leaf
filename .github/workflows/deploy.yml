@@ -21,10 +21,11 @@ jobs:
       CLOUDFLARE_ACCESS_CLIENT_ID: ${{ secrets.APPLELEAF_CLOUDFLARE_ACCESS_CLIENT_ID }}
       CLOUDFLARE_ACCESS_CLIENT_SECRET: ${{ secrets.APPLELEAF_CLOUDFLARE_ACCESS_CLIENT_SECRET }}
     steps:
-      - name: Start SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.APPLELEAF_DEPLOY_SSH_KEY }}
+      - name: Write deploy SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.APPLELEAF_DEPLOY_SSH_KEY }}" > ~/.ssh/appleleaf_deploy
+          chmod 600 ~/.ssh/appleleaf_deploy
 
       - name: Install cloudflared
         run: |
@@ -42,6 +43,7 @@ jobs:
             Port ${DEPLOY_PORT:-22}
             StrictHostKeyChecking no
             UserKnownHostsFile /dev/null
+            IdentityFile ~/.ssh/appleleaf_deploy
             IdentitiesOnly yes
             ServerAliveInterval 30
             ProxyCommand env CLOUDFLARE_ACCESS_CLIENT_ID=${CLOUDFLARE_ACCESS_CLIENT_ID} CLOUDFLARE_ACCESS_CLIENT_SECRET=${CLOUDFLARE_ACCESS_CLIENT_SECRET} cloudflared access tcp --hostname %h
