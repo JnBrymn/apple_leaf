@@ -36,13 +36,23 @@ export async function getSession(c: Context): Promise<ArcadeSession> {
     : {}
 
   const session = data as ArcadeSession
+  let destroyed = false
 
   session.save = async () => {
+    if (destroyed) {
+      deleteCookie(c, cookieName, { path: '/' })
+      return
+    }
+
     setCookie(c, cookieName, await sealData(data, sealOptions), cookieOptions)
   }
 
   session.destroy = () => {
-    deleteCookie(c, cookieName, { path: '/' })
+    destroyed = true
+    delete data.userEmail
+    delete data.nextUrl
+    delete data.oauthState
+    delete data.oauthCodeVerifier
   }
 
   return session

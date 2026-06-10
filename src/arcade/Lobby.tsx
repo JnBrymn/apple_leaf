@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import '../auth/auth.css'
 import { GAMES } from './games.config'
@@ -19,6 +20,9 @@ export default function Lobby() {
             ) : user ? (
               <>
                 <p className="lobby-auth-status">Signed in as {user.email}</p>
+                <Link className="lobby-auth-link" to="/backstage">
+                  Backstage
+                </Link>
                 <a className="lobby-auth-link" href="/logout">
                   Sign out
                 </a>

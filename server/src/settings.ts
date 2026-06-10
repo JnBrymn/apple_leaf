@@ -23,11 +23,19 @@ if (sessionSecret.length < 32) {
   )
 }
 
+const allowedUserEmails = env(
+  'ARCADE_ALLOWED_USER_EMAILS',
+  env('ARCADE_ALLOWED_USER_EMAIL', 'jfberryman@gmail.com'),
+)
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean)
+
 export const settings = {
   googleClientId: env('ARCADE_GOOGLE_CLIENT_ID'),
   googleClientSecret: env('ARCADE_GOOGLE_CLIENT_SECRET'),
   sessionSecret,
-  allowedUserEmail: env('ARCADE_ALLOWED_USER_EMAIL', 'jfberryman@gmail.com'),
+  allowedUserEmails,
   publicBaseUrl: env('ARCADE_PUBLIC_BASE_URL', 'http://localhost:18081'),
   port: Number(env('ARCADE_PORT', '18080')),
   distDir: resolve(rootDir, 'dist'),
@@ -38,7 +46,7 @@ export function callbackUrl(): string {
 }
 
 export function isAllowedEmail(email: string): boolean {
-  return email.toLowerCase() === settings.allowedUserEmail.toLowerCase()
+  return settings.allowedUserEmails.includes(email.toLowerCase())
 }
 
 export function isAuthConfigured(): boolean {

@@ -9,8 +9,8 @@ export default function LoginRequired() {
   return (
     <div className="auth-page">
       <main className="auth-card">
-        <h1>Sign in to play</h1>
-        <p>Use your Google account to open the games in this arcade.</p>
+        <h1>Sign in required</h1>
+        <p>Use your Google account to visit the backstage area of the arcade.</p>
         <a className="auth-google-button" href={loginUrl}>
           Sign in with Google
         </a>

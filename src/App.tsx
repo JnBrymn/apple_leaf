@@ -5,6 +5,7 @@ import LoginRequired from './auth/LoginRequired'
 import ProtectedRoute from './auth/ProtectedRoute'
 import { GAMES } from './arcade/games.config'
 import Lobby from './arcade/Lobby'
+import Backstage from './backstage/Backstage'
 
 function GameLoader() {
   return (
@@ -38,16 +39,16 @@ export default function App() {
           <Route path="/" element={<Lobby />} />
           <Route path="/login-required" element={<LoginRequired />} />
           {GAMES.map((game) => (
-            <Route
-              key={game.id}
-              path={`/games/${game.id}`}
-              element={
-                <ProtectedRoute>
-                  <GameRoute gameId={game.id} />
-                </ProtectedRoute>
-              }
-            />
+            <Route key={game.id} path={`/games/${game.id}`} element={<GameRoute gameId={game.id} />} />
           ))}
+          <Route
+            path="/backstage"
+            element={
+              <ProtectedRoute>
+                <Backstage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
