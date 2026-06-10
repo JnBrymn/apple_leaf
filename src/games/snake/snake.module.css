@@ -1,0 +1,76 @@
+.root {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  color: #e8e8f0;
+  background-color: #0f0f1a;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hud {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.gameOver {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.hud button {
+  padding: 0.4rem 1rem;
+  background: #7c6cff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hud button:hover {
+  background: #6a5ae0;
+}
+
+.board {
+  position: relative;
+  background: #12121f;
+  border: 2px solid #2a2a45;
+  border-radius: 4px;
+}
+
+.segment {
+  position: absolute;
+  background: #4ecdc4;
+  border-radius: 2px;
+}
+
+.head {
+  background: #7c6cff;
+}
+
+.apple {
+  position: absolute;
+  background: #ff6b6b;
+  border-radius: 50%;
+  transform: scale(0.7);
+}
+
+.controls {
+  margin: 0;
+  color: #9a9ab0;
+  font-size: 0.85rem;
+}

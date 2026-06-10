@@ -1,0 +1,40 @@
+.fullscreen-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  height: 100%;
+}
+
+.fullscreen-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #1a1a2e;
+  border-bottom: 1px solid #2a2a45;
+  color: #e8e8f0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.fullscreen-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.fullscreen-back {
+  color: #7c6cff;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.fullscreen-back:hover {
+  text-decoration: underline;
+}
+
+.fullscreen-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
