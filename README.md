@@ -108,6 +108,10 @@ This repo includes:
 - `APPLELEAF_DEPLOY_PORT` (optional; defaults to `22`)
 - `APPLELEAF_DEPLOY_PATH` (absolute path to the production repo on the Mac)
 - `APPLELEAF_DEPLOY_SSH_KEY` (private key for SSHing into the Mac)
+- `APPLELEAF_CLOUDFLARE_ACCESS_CLIENT_ID` (if your SSH tunnel is behind Cloudflare Access)
+- `APPLELEAF_CLOUDFLARE_ACCESS_CLIENT_SECRET` (if your SSH tunnel is behind Cloudflare Access)
+
+This workflow uses `cloudflared access tcp --hostname ...` to SSH through a Cloudflare Tunnel, matching a local SSH setup like `ProxyCommand cloudflared access tcp --hostname %h`.
 
 After that, every push to `main` will SSH into the Mac and run `./deploy/deploy.sh`.
 

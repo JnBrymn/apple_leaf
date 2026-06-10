@@ -13,25 +13,41 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: ${{ secrets.APPLELEAF_DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.APPLELEAF_DEPLOY_USER }}
+      DEPLOY_PORT: ${{ secrets.APPLELEAF_DEPLOY_PORT }}
+      DEPLOY_PATH: ${{ secrets.APPLELEAF_DEPLOY_PATH }}
+      CLOUDFLARE_ACCESS_CLIENT_ID: ${{ secrets.APPLELEAF_CLOUDFLARE_ACCESS_CLIENT_ID }}
+      CLOUDFLARE_ACCESS_CLIENT_SECRET: ${{ secrets.APPLELEAF_CLOUDFLARE_ACCESS_CLIENT_SECRET }}
     steps:
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.APPLELEAF_DEPLOY_SSH_KEY }}
 
-      - name: Trust production host
-        env:
-          DEPLOY_HOST: ${{ secrets.APPLELEAF_DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.APPLELEAF_DEPLOY_PORT }}
+      - name: Install cloudflared
+        run: |
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+          cloudflared --version
+
+      - name: Configure SSH for Cloudflare Tunnel
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p "${DEPLOY_PORT:-22}" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host production-mac
+            HostName ${DEPLOY_HOST}
+            User ${DEPLOY_USER}
+            Port ${DEPLOY_PORT:-22}
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            IdentitiesOnly yes
+            ServerAliveInterval 30
+            ProxyCommand env CLOUDFLARE_ACCESS_CLIENT_ID=${CLOUDFLARE_ACCESS_CLIENT_ID} CLOUDFLARE_ACCESS_CLIENT_SECRET=${CLOUDFLARE_ACCESS_CLIENT_SECRET} cloudflared access tcp --hostname %h
+          EOF
+          chmod 600 ~/.ssh/config
 
       - name: Deploy over SSH
-        env:
-          DEPLOY_HOST: ${{ secrets.APPLELEAF_DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.APPLELEAF_DEPLOY_USER }}
-          DEPLOY_PORT: ${{ secrets.APPLELEAF_DEPLOY_PORT }}
-          DEPLOY_PATH: ${{ secrets.APPLELEAF_DEPLOY_PATH }}
         run: |
-          ssh -p "${DEPLOY_PORT:-22}" "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_PATH' && ./deploy/deploy.sh"
+          ssh production-mac "cd '$DEPLOY_PATH' && ./deploy/deploy.sh"
