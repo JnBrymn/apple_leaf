@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:go": "bash scripts/dev.sh",
     "dev:server": "pnpm --dir server dev",
     "build": "tsc && vite build",
     "preview": "vite preview",

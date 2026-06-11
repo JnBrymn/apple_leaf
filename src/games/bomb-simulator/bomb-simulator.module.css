@@ -1,0 +1,624 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+.root {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: #0c0f14;
+  color: #d8dee9;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.screen {
+  display: none;
+  flex: 1;
+  min-height: 0;
+}
+
+.screenActive {
+  display: flex;
+  flex-direction: column;
+}
+
+.moneyPill {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+  background: #1a2830;
+  border: 2px solid #44aa66;
+  color: #66dd88;
+  padding: 6px 16px;
+  border-radius: 20px;
+}
+
+.moneyPillLow {
+  border-color: #aa4444;
+  color: #ff8866;
+}
+
+.titleScreen {
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 40%, #0a2040 0%, #0c0f14 65%);
+}
+
+.titleScreen canvas {
+  margin-bottom: 20px;
+  filter: drop-shadow(0 8px 30px rgba(40, 120, 255, 0.35));
+}
+
+.titleScreen h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 4.5rem;
+  letter-spacing: 6px;
+  color: #ff5533;
+  text-shadow: 0 0 40px rgba(255, 60, 30, 0.5);
+  margin: 0;
+}
+
+.titleScreen p {
+  color: #6a7585;
+  margin: 8px 0;
+  font-size: 1.05rem;
+  max-width: 480px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.titleMoney {
+  margin-bottom: 28px;
+}
+
+.bigBtn {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 3px;
+  padding: 16px 48px;
+  border: 2px solid #ff5533;
+  background: linear-gradient(180deg, #3a1810, #1a0a08);
+  color: #ff8866;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.bigBtn:hover {
+  background: #ff5533;
+  color: #fff;
+  box-shadow: 0 0 30px rgba(255, 80, 40, 0.4);
+}
+
+.labScreen {
+  background: #12161c;
+}
+
+.labHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid #252a35;
+  background: #161b22;
+  flex-shrink: 0;
+}
+
+.labHeader h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 2px;
+  color: #ff6644;
+  margin: 0;
+}
+
+.labHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.labBody {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  min-height: 0;
+}
+
+.workbenchArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(180deg, #1a1e26 0%, #12161c 100%);
+  border-right: 1px solid #252a35;
+  min-height: 0;
+}
+
+.workbench {
+  border-radius: 8px;
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.5), 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.presetCarousel {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 8px 4px;
+}
+
+.presetCard {
+  flex-shrink: 0;
+  width: 92px;
+  padding: 8px 6px 6px;
+  background: #1e2430;
+  border: 2px solid #2e3848;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.presetCard:hover {
+  border-color: #ff6644;
+  transform: translateY(-2px);
+}
+
+.presetCardSelected {
+  border-color: #ff4422;
+  background: #2a1820;
+  box-shadow: 0 0 16px rgba(255, 60, 30, 0.25);
+}
+
+.presetCardCantAfford {
+  opacity: 0.45;
+}
+
+.presetCard canvas {
+  display: block;
+  margin: 0 auto 4px;
+}
+
+.pname {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #8899aa;
+  line-height: 1.2;
+  display: block;
+}
+
+.pcost {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.85rem;
+  color: #66dd88;
+  display: block;
+  margin-top: 2px;
+}
+
+.presetCardCantAfford .pcost {
+  color: #aa6666;
+}
+
+.labPanel {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.labPanel h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 2px;
+  color: #ff8866;
+  margin: 0 0 12px;
+}
+
+.partSlots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.partSlot {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 10px;
+  align-items: center;
+  background: #1a2030;
+  border: 1px solid #2a3545;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.iconWrap {
+  width: 44px;
+  height: 44px;
+  background: #0e1218;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.partSlot select {
+  width: 100%;
+  background: #0e1218;
+  border: 1px solid #2a3545;
+  color: #d8dee9;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.partSlot label {
+  font-size: 0.7rem;
+  color: #6a7585;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.chargeDisplay {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  color: #ff8866;
+  margin-top: 4px;
+}
+
+.toggleRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.toggle {
+  flex: 1;
+  padding: 10px;
+  background: #1a2030;
+  border: 1px solid #2a3545;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.toggleOn {
+  border-color: #ff6644;
+  background: #2a1820;
+  color: #ff8866;
+}
+
+.statPanel {
+  background: #1a2030;
+  border: 1px solid #2a3545;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.bombTitle {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  color: #ff6644;
+  margin-bottom: 10px;
+}
+
+.statLine {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  margin-bottom: 5px;
+}
+
+.statLine b {
+  color: #aaccee;
+}
+
+.costLine b {
+  color: #66dd88;
+  font-size: 1rem;
+}
+
+.powerMeter {
+  height: 8px;
+  background: #0e1218;
+  border-radius: 4px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.powerMeterFill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #44aa66, #ddaa22, #ff4422);
+  transition: width 0.3s;
+}
+
+.labFooter {
+  padding: 14px 24px;
+  border-top: 1px solid #252a35;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  background: #161b22;
+  flex-shrink: 0;
+}
+
+.deployInfo {
+  font-size: 0.85rem;
+  color: #8899aa;
+}
+
+.btn {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  padding: 12px 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+
+.btnGhost {
+  background: transparent;
+  border: 1px solid #3a4555;
+  color: #8899aa;
+}
+
+.btnGhost:hover {
+  border-color: #667788;
+  color: #ccd6e0;
+}
+
+.btnPrimary {
+  background: linear-gradient(180deg, #ff5533, #cc2200);
+  color: #fff;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  filter: brightness(1.15);
+  box-shadow: 0 0 20px rgba(255, 60, 30, 0.35);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btnDanger {
+  background: linear-gradient(180deg, #cc1100, #880000);
+  color: #fff;
+  font-size: 1.2rem;
+  padding: 14px 40px;
+}
+
+.btnDanger:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.arenaScreen {
+  background: #000;
+}
+
+.arenaHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.75);
+  border-bottom: 1px solid #333;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.arenaHeader h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 2px;
+  color: #44aaff;
+  margin: 0;
+}
+
+.arenaMeters {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.meterWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meterBar {
+  width: 100px;
+  height: 8px;
+  background: #222;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.meterFillDestr {
+  height: 100%;
+  background: #ff4422;
+  transition: width 0.3s;
+}
+
+.meterFillRepair {
+  height: 100%;
+  background: #44aa66;
+  transition: width 0.3s;
+}
+
+.arenaMain {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+}
+
+.arenaCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+.arenaHud {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #444;
+  border-radius: 24px;
+  padding: 8px 20px;
+  font-size: 0.85rem;
+  color: #8899aa;
+  pointer-events: none;
+  text-align: center;
+}
+
+.arenaFooter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.85);
+  border-top: 1px solid #333;
+  flex-shrink: 0;
+}
+
+.fuseBtns {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.fuseLabel {
+  font-size: 0.75rem;
+  color: #667;
+  margin-right: 6px;
+}
+
+.fuseBtn {
+  padding: 8px 14px;
+  background: #1a2030;
+  border: 1px solid #3a4555;
+  color: #8899aa;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.fuseBtnActive {
+  border-color: #ff6644;
+  color: #ff8866;
+  background: #2a1820;
+}
+
+.flashOverlay {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 9999;
+  transition: opacity 0.15s;
+}
+
+.resultsOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.resultsOverlayShow {
+  display: flex;
+}
+
+.resultsCard {
+  background: #1a2030;
+  border: 2px solid #ff5533;
+  border-radius: 12px;
+  padding: 32px 48px;
+  text-align: center;
+  max-width: 460px;
+}
+
+.resultsCardWin {
+  border-color: #44aa66;
+}
+
+.resultsCard h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.5rem;
+  color: #ff6644;
+  letter-spacing: 3px;
+  margin: 0;
+}
+
+.resultsCardWin h2 {
+  color: #66dd88;
+}
+
+.resultsScore {
+  font-size: 2.5rem;
+  font-family: 'Bebas Neue', sans-serif;
+  color: #fff;
+  margin: 12px 0;
+}
+
+.resultsEarned {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  color: #66dd88;
+  margin-bottom: 8px;
+}
+
+.resultsMsg {
+  color: #8899aa;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.crewCountActive {
+  color: #66dd88;
+}
+
+.crewCountIdle {
+  color: #8899aa;
+}
+
+@media (max-width: 900px) {
+  .labBody {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+
+  .labPanel {
+    max-height: 40vh;
+  }
+
+  .titleScreen h1 {
+    font-size: 2.5rem;
+  }
+}

@@ -43,7 +43,9 @@ server/
 dist/              Vite build output (served by server in production)
 ```
 
-Skill for adding games: `.cursor/skills/create-arcade-game/SKILL.md`
+Skills for games:
+- Port from legacy Apple Bobs: `.cursor/skills/port-from-apple-bobs/SKILL.md`
+- Create new game from scratch: `.cursor/skills/create-arcade-game/SKILL.md` (if present)
 
 ## Backend stack (TypeScript)
 
@@ -141,16 +143,61 @@ Google Cloud Console → Authorized redirect URI must match exactly:
 pnpm install
 pnpm --dir server install
 
-# Dev (two terminals)
-pnpm dev:server   # Hono on :8000 (tsx watch)
-pnpm dev          # Vite on :5173, proxies auth to :8000
+# Dev — one command (preferred when Bo asks to run/open a game)
+bash scripts/dev.sh              # lobby → http://localhost:18081/
+bash scripts/dev.sh bomb-simulator # game  → http://localhost:18081/games/bomb-simulator
+pnpm dev:go -- snake               # same via package script (note the --)
+
+# Dev — manual (two terminals)
+pnpm dev:server   # Hono on :18080 (tsx watch)
+pnpm dev          # Vite on :18081, proxies auth to :18080
 
 # Production
 pnpm build
-pnpm start        # Hono serves dist/ + auth on :8000
+pnpm start        # Hono serves dist/ + auth on :18080
 ```
 
-Override dev proxy target: `ARCADE_AUTH_PROXY_TARGET=http://localhost:8000`
+Override dev proxy target: `ARCADE_AUTH_PROXY_TARGET=http://localhost:18080`
+
+### Run a game on Bo's command
+
+When Bo says **run**, **open**, or **play** a game locally, use `scripts/dev.sh`:
+
+1. Look up the game **id** in `src/arcade/games.config.ts` (kebab-case, e.g. `bomb-simulator`).
+2. Run: `bash scripts/dev.sh <game-id>`
+3. The script installs deps if needed, starts both dev processes if not already running, and opens Chrome.
+
+| Bo says | Command |
+|---------|---------|
+| "run bomb simulator" | `bash scripts/dev.sh bomb-simulator` |
+| "open snake" | `bash scripts/dev.sh snake` |
+| "start the arcade" / no game named | `bash scripts/dev.sh` |
+
+Script: `scripts/dev.sh`. Env: `OPEN_URL` overrides the Chrome URL; `ARCADE_DEV_PORT` (default `18081`), `ARCADE_PORT` (default `18080`).
+
+If the server is already up, the script skips restart and only opens Chrome.
+
+### Publish to production
+
+**Deploy path:** commit → push to `main` → GitHub Action (`.github/workflows/deploy.yml`) SSHs to the production Mac and runs `deploy/deploy.sh`. No manual deploy step after push.
+
+When Bo says **publish**, **save**, **save the game**, **commit**, **push**, **ship**, or **push to production** — treat that as a request to **commit all relevant changes and push to `main`** so production updates.
+
+**Agent workflow:**
+
+1. `git status`, `git diff`, `git log -5` — review what will ship.
+2. Stage everything that belongs (game code, registry, scripts, AGENTS.md). **Never** commit `.env`, secrets, or credentials.
+3. Write a clear commit message (1–2 sentences, focus on *why*).
+4. Commit, then `git push origin main` (or push current branch and merge to `main` if that is how the repo is set up — default: push `main`).
+5. Confirm push succeeded; mention that the Deploy workflow will run on GitHub.
+
+**Do not** force-push `main`. **Do not** commit unless Bo uses one of the trigger phrases above (or explicitly asks).
+
+| Bo says | Action |
+|---------|--------|
+| "publish" / "push to production" / "ship it" | commit + push to `main` |
+| "save the game" / "commit" | commit + push to `main` |
+| "run snake" | `bash scripts/dev.sh snake` (local only, no push) |
 
 ## Production / reverse proxy
 

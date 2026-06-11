@@ -34,6 +34,14 @@ export const GAMES: GameConfig[] = [
     tags: ['silly', 'arcade'],
     component: lazy(() => import('../games/banana-chaos')),
   },
+  {
+    id: 'bomb-simulator',
+    title: 'Bomb Simulator',
+    description: 'Buy bombs. Wreck Earth in the arena. Stop repair crews before they fix everything.',
+    thumbnail: '/thumbnails/bomb-simulator.png',
+    tags: ['arcade', 'simulation'],
+    component: lazy(() => import('../games/bomb-simulator')),
+  },
 ]
 
 export function getGameById(id: string): GameConfig | undefined {
