@@ -616,7 +616,7 @@ function drawEarthBackground(ctx: CanvasRenderingContext2D, W: number, H: number
     ctx.ellipse(l[0] * W, l[1] * H, l[2] * W, l[3] * H, 0, 0, Math.PI * 2)
     ctx.fill()
   })
-  const ag = ctx.createRadialGradient(cx, cy - R * 0.55, cx, cy, R * 0.55, cx, cy, R * 0.62)
+  const ag = ctx.createRadialGradient(cx, cy - R * 0.55, R * 0.55, cx, cy, R * 0.62)
   ag.addColorStop(0, 'rgba(120,200,255,0)')
   ag.addColorStop(1, 'rgba(80,180,255,0.4)')
   ctx.fillStyle = ag
@@ -852,7 +852,7 @@ export function detonateBomb(state: ArenaState, b: PlacedBomb): DetonateResult {
   return { flash, screenShake }
 }
 
-export function tickArena(state: ArenaState, W: number, H: number): boolean {
+export function tickArena(state: ArenaState, _W: number, _H: number): boolean {
   if (state.roundOver) return true
 
   let needsDraw = state.animating
