@@ -42,6 +42,14 @@ export const GAMES: GameConfig[] = [
     tags: ['arcade', 'simulation'],
     component: lazy(() => import('../games/bomb-simulator')),
   },
+  {
+    id: 'team-war',
+    title: 'Team War',
+    description: 'Fight as a blue soldier in a 3D battlefield — WASD, mouse look, click to shoot.',
+    thumbnail: '/thumbnails/team-war.png',
+    tags: ['3d', 'action'],
+    component: lazy(() => import('../games/team-war')),
+  },
 ]
 
 export function getGameById(id: string): GameConfig | undefined {

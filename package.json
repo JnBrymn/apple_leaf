@@ -7,11 +7,15 @@
     "dev": "vite",
     "dev:go": "bash scripts/dev.sh",
     "dev:server": "pnpm --dir server dev",
-    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "typecheck:server": "tsc --noEmit -p server/tsconfig.json",
+    "check": "tsc --noEmit && tsc --noEmit -p server/tsconfig.json",
+    "build": "tsc --noEmit && tsc --noEmit -p server/tsconfig.json && vite build",
     "preview": "vite preview",
     "start": "pnpm --dir server start"
   },
   "devDependencies": {
+    "@types/three": "^0.178.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
@@ -20,6 +24,7 @@
   },
   "dependencies": {
     "pnpm": "^11.5.2",
+    "three": "^0.178.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.17.0"

@@ -153,11 +153,23 @@ pnpm dev:server   # Hono on :18080 (tsx watch)
 pnpm dev          # Vite on :18081, proxies auth to :18080
 
 # Production
-pnpm build
-pnpm start        # Hono serves dist/ + auth on :18080
+pnpm check          # fast: typecheck frontend + server
+pnpm build          # full production build (check + vite build)
+pnpm start          # Hono serves dist/ + auth on :18080
 ```
 
 Override dev proxy target: `ARCADE_AUTH_PROXY_TARGET=http://localhost:18080`
+
+### Catch errors before production
+
+`pnpm dev` does **not** run the full TypeScript check. Broken code can look fine locally but fail `pnpm build` (what production uses).
+
+| When | Command |
+|------|---------|
+| Quick check while coding | `pnpm typecheck` |
+| Before publish / commit | `pnpm build` |
+| On GitHub | **CI** workflow (`.github/workflows/ci.yml`) runs on every push/PR |
+| Before deploy | **Deploy** workflow runs `verify` (same build) before SSH to production |
 
 ### Run a game on Bo's command
 
@@ -179,17 +191,18 @@ If the server is already up, the script skips restart and only opens Chrome.
 
 ### Publish to production
 
-**Deploy path:** commit → push to `main` → GitHub Action (`.github/workflows/deploy.yml`) SSHs to the production Mac and runs `deploy/deploy.sh`. No manual deploy step after push.
+**Deploy path:** commit → push to `main` → GitHub **CI** + **Deploy** workflows. Deploy runs `pnpm build` on GitHub first (`verify` job); only if that passes does it SSH to production and run `deploy/deploy.sh`.
 
 When Bo says **publish**, **save**, **save the game**, **commit**, **push**, **ship**, or **push to production** — treat that as a request to **commit all relevant changes and push to `main`** so production updates.
 
 **Agent workflow:**
 
 1. `git status`, `git diff`, `git log -5` — review what will ship.
-2. Stage everything that belongs (game code, registry, scripts, AGENTS.md). **Never** commit `.env`, secrets, or credentials.
-3. Write a clear commit message (1–2 sentences, focus on *why*).
-4. Commit, then `git push origin main` (or push current branch and merge to `main` if that is how the repo is set up — default: push `main`).
-5. Confirm push succeeded; mention that the Deploy workflow will run on GitHub.
+2. **`pnpm build`** — must pass locally before commit. Fix TypeScript/build errors first.
+3. Stage everything that belongs (game code, registry, scripts, AGENTS.md). **Never** commit `.env`, secrets, or credentials.
+4. Write a clear commit message (1–2 sentences, focus on *why*).
+5. Commit, then `git push origin main`.
+6. Confirm push succeeded; CI and Deploy workflows run on GitHub. Deploy only reaches production if `verify` passes.
 
 **Do not** force-push `main`. **Do not** commit unless Bo uses one of the trigger phrases above (or explicitly asks).
 
@@ -231,3 +244,4 @@ When Bo says **publish**, **save**, **save the game**, **commit**, **push**, **s
 4. **Session not sent** — frontend fetches need `credentials: 'include'`; cookie is same-origin via Vite proxy in dev.
 5. **Production without build** — `pnpm start` expects `dist/`; run `pnpm build` first.
 6. **New game playable without login** — ensure route stays inside `ProtectedRoute` in `App.tsx`.
+7. **Dev hides TypeScript errors** — run `pnpm build` before publish; `pnpm dev` alone is not enough.
