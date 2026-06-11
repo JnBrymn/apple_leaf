@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useGameLoop } from '../../shared/hooks/useGameLoop'
 import { useKeyboard } from '../../shared/hooks/useKeyboard'
-import { emptyInput, TeamWarEngine, type HudSnapshot, type InputState } from './teamWarEngine'
+import { emptyInput, SOLDIERS_PER_TEAM, TeamWarEngine, type HudSnapshot, type InputState } from './teamWarEngine'
 import styles from './team-war.module.css'
 
 function createInitialHud(): HudSnapshot {
   return {
     health: 100,
-    blueAlive: 5,
-    redAlive: 6,
+    blueAlive: SOLDIERS_PER_TEAM,
+    redAlive: SOLDIERS_PER_TEAM,
     kills: 0,
     gameOver: false,
     won: null,

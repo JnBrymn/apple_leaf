@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      pathfinding:
+        specifier: ^0.4.18
+        version: 0.4.18
       pnpm:
         specifier: ^11.5.2
         version: 11.5.2
@@ -24,6 +27,9 @@ importers:
         specifier: ^0.178.0
         version: 0.178.0
     devDependencies:
+      '@types/pathfinding':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
@@ -170,6 +176,9 @@ packages:
   '@tybys/wasm-util@0.10.2':
     resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
 
+  '@types/pathfinding@0.1.0':
+    resolution: {integrity: sha512-QkKZqdAPhfkHIoiCWa/4yVolcCDin10qScbdiyqtDsY9cxlcslVgoU1g9yVdFytsHqJQevkYNcNBgD/P7OZbQg==}
+
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
     peerDependencies:
@@ -230,6 +239,9 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+
+  heap@0.2.5:
+    resolution: {integrity: sha512-G7HLD+WKcrOyJP5VQwYZNC3Z6FcQ7YYjEFiFoIj8PfEr73mu421o8B1N5DKUcc8K37EsJ2XXWA8DtrDz/2dReg==}
 
   lightningcss-android-arm64@1.32.0:
     resolution: {integrity: sha512-YK7/ClTt4kAK0vo6w3X+Pnm0D2cf2vPHbhOXdoNti1Ga0al1P4TBZhwjATvjNwLEBCnKvjJc2jQgHXH0NEwlAg==}
@@ -312,6 +324,9 @@ packages:
     resolution: {integrity: sha512-ZB9RH/39qpq5Vu6Y+NmUaFhQR6pp+M2Xt76XBnEwDaGcVAqhlvxrl3B2bKS5D3NH3QR76v3aSrKaF/Kiy7lEtQ==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
+
+  pathfinding@0.4.18:
+    resolution: {integrity: sha512-R0TGEQ9GRcFCDvAWlJAWC+KGJ9SLbW4c0nuZRcioVlXVTlw+F5RvXQ8SQgSqI9KXWC1ew95vgmIiyaWTlCe9Ag==}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -515,6 +530,8 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@types/pathfinding@0.1.0': {}
+
   '@types/react-dom@19.2.3(@types/react@19.2.17)':
     dependencies:
       '@types/react': 19.2.17
@@ -558,6 +575,8 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  heap@0.2.5: {}
 
   lightningcss-android-arm64@1.32.0:
     optional: true
@@ -611,6 +630,10 @@ snapshots:
   meshoptimizer@0.18.1: {}
 
   nanoid@3.3.12: {}
+
+  pathfinding@0.4.18:
+    dependencies:
+      heap: 0.2.5
 
   picocolors@1.1.1: {}
 

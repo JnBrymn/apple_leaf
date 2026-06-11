@@ -15,18 +15,20 @@
     "start": "pnpm --dir server start"
   },
   "devDependencies": {
-    "@types/three": "^0.178.0",
+    "@types/pathfinding": "^0.1.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.178.0",
     "@vitejs/plugin-react": "^6.0.2",
     "typescript": "~6.0.2",
     "vite": "^8.0.12"
   },
   "dependencies": {
+    "pathfinding": "^0.4.18",
     "pnpm": "^11.5.2",
-    "three": "^0.178.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-router-dom": "^7.17.0"
+    "react-router-dom": "^7.17.0",
+    "three": "^0.178.0"
   }
 }

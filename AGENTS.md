@@ -44,6 +44,7 @@ dist/              Vite build output (served by server in production)
 ```
 
 Skills for games:
+- **Best practices (read first):** `.cursor/skills/games-best-practices/SKILL.md` — architecture, modularization, 3D/AI patterns. **Always read before creating, extending, or refactoring a game.** When we learn something new on a game, add it to that skill.
 - Port from legacy Apple Bobs: `.cursor/skills/port-from-apple-bobs/SKILL.md`
 - Create new game from scratch: `.cursor/skills/create-arcade-game/SKILL.md` (if present)
 
@@ -229,6 +230,8 @@ When Bo says **publish**, **save**, **save the game**, **commit**, **push**, **s
 **Do not** put Google client secret in frontend code. **Do not** trust client-side email checks for authorization.
 
 ## Game conventions
+
+**Before game work:** read `.cursor/skills/games-best-practices/SKILL.md` and follow it. Update that skill when we learn new patterns (modular layout, AI, 3D, perf, etc.) so the whole arcade stays consistent.
 
 - Each game: `src/games/<id>/` with `index.tsx`, `<Name>Game.tsx`, `<id>.module.css`
 - Register in `src/arcade/games.config.ts`
