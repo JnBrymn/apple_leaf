@@ -1,0 +1,585 @@
+<!--
+THE INFINITE AIR - Clicker game by Bo
+- Click the red button to earn money
+- Categories: Investments (prices go up/down, buy/sell $ amount), Companies, Jobs (allowances)
+- Investments: value goes up and down; you can buy or sell however much money you want
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Infinite Air</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&display=swap');
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Comfortaa', sans-serif;
+            font-weight: 700;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #7EC8E3 0%, #87CEEB 30%, #5BA3C6 70%, #4A90A4 100%);
+            overflow-x: hidden;
+        }
+        #layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        #leftSide {
+            width: 200px;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        #leftSide .category {
+            font-size: 1.1em;
+            color: #000;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            padding: 12px 0;
+        }
+        #leftSide .category:hover { color: #1a5f7a; }
+        #leftSide .category.active {
+            color: #0d3d4d;
+            text-decoration: underline;
+        }
+        #mainArea {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        #topBar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        #moneyDisplay {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #0d3d4d;
+        }
+        #watchlist {
+            font-size: 1em;
+            font-weight: 700;
+            color: #000;
+        }
+        #clickSection {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-right: 40px;
+        }
+        #redButton {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #e63946, #c1121f);
+            border: 6px solid #000;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: white;
+            text-shadow: 2px 2px 0 #000;
+            box-shadow: 0 8px 0 #6a040f, 0 12px 25px rgba(0,0,0,0.4);
+            transition: transform 0.08s ease, box-shadow 0.08s ease;
+            user-select: none;
+        }
+        #redButton:hover {
+            transform: scale(1.05);
+        }
+        #redButton:active {
+            transform: scale(0.95);
+        }
+        #clickLabel { margin-left: 15px; font-size: 1em; color: #0d3d4d; font-weight: 600; }
+        .nameProducerRow { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .nameProducerRow label { font-size: 0.9em; color: #0d3d4d; }
+        .nameProducerRow input { padding: 6px 10px; border-radius: 8px; border: 2px solid #7eb8c9; font-size: 0.95em; width: 180px; }
+        #cheatBtn { display: none; position: fixed; bottom: 20px; right: 20px; padding: 8px 14px; font-size: 0.85em; border-radius: 10px; background: #5f1a1a; color: white; border: 2px solid #333; cursor: pointer; z-index: 50; }
+        #cheatBtn.show { display: block; }
+        #cheatBtn:hover { filter: brightness(1.2); }
+        #cheatPanel { display: none; position: fixed; bottom: 55px; right: 20px; background: rgba(255,255,255,0.98); border: 3px solid #1a5f7a; border-radius: 12px; padding: 12px; max-width: 280px; max-height: 70vh; overflow-y: auto; z-index: 51; box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+        #cheatPanel.show { display: block; }
+        #cheatPanel h3 { margin: 0 0 10px 0; font-size: 1em; color: #0d3d4d; }
+        #cheatPanel button { display: block; width: 100%; margin-bottom: 6px; padding: 8px 12px; border-radius: 8px; border: 2px solid #7eb8c9; background: #E8F4F8; cursor: pointer; font-size: 0.9em; text-align: left; }
+        #cheatPanel button:hover { background: #b8e0e8; }
+        #panel {
+            background: rgba(255,255,255,0.85);
+            border-radius: 16px;
+            padding: 20px;
+            overflow-y: auto;
+            border: 3px solid #1a5f7a;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+        }
+        #panel h2 { color: #1a5f7a; margin-bottom: 12px; font-size: 1.2em; }
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background: #E8F4F8;
+            border-radius: 12px;
+            border: 2px solid #7eb8c9;
+        }
+        .item .info { flex: 1; }
+        .item .name { font-weight: 600; color: #0d3d4d; }
+        .item .desc { font-size: 0.8em; color: #2d7a8c; }
+        .item .cost { font-weight: 700; color: #1a5f7a; margin-left: 8px; }
+        .item button {
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(180deg, #2d7a8c, #1a5f7a);
+            color: white;
+            font-size: 0.95em;
+        }
+        .item button:hover:not(:disabled) { filter: brightness(1.1); }
+        .item button:disabled { background: #aaa; cursor: not-allowed; }
+        .owned { color: #0d3d4d; font-weight: 600; }
+        .panelContent { display: none; }
+        .panelContent.show { display: block; }
+        .investItem {
+            background: #E8F4F8;
+            border-radius: 12px;
+            border: 2px solid #7eb8c9;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .investItem .name { font-weight: 600; color: #0d3d4d; font-size: 1.05em; }
+        .investItem .priceRow { font-size: 0.9em; color: #2d7a8c; margin: 6px 0; }
+        .investItem .priceUp { color: #0a6b0a; }
+        .investItem .priceDown { color: #c1121f; }
+        .investItem .buySellRow { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+        .investItem input { width: 80px; padding: 6px 8px; border-radius: 8px; border: 2px solid #7eb8c9; font-size: 0.95em; }
+        .investItem .btnBuy { background: linear-gradient(180deg, #2d8c5a, #1a5f3e); }
+        .investItem .btnSell { background: linear-gradient(180deg, #8c2d2d, #5f1a1a); }
+        #investmentChart.chartWrap { margin: 8px 0; border-radius: 8px; background: rgba(0,0,0,0.06); padding: 6px; border: 1px solid #7eb8c9; }
+        #stockChart { display: block; border-radius: 6px; width: 100%; max-width: 380px; height: 140px; }
+        .chartLegend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 8px; font-size: 0.85em; color: #0d3d4d; }
+        .chartLegend span { display: inline-flex; align-items: center; gap: 4px; }
+        .chartLegend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div id="layout">
+        <aside id="leftSide">
+            <button class="category active" data-tab="investments">INVESTMENTS</button>
+            <button class="category" data-tab="companies">COMPANIES</button>
+            <button class="category" data-tab="jobs">JOBS</button>
+        </aside>
+
+        <main id="mainArea">
+            <div id="topBar">
+                <div id="moneyDisplay">$0</div>
+                <div id="watchlist">INVESTMENT WATCHLIST: 0</div>
+            </div>
+
+            <div id="clickSection">
+                <div>
+                    <div class="nameProducerRow">
+                        <label for="producerName">Name your money producer:</label>
+                        <input type="text" id="producerName" maxlength="30" placeholder="e.g. CLICK ME!" />
+                    </div>
+                    <button id="redButton">CLICK ME!</button>
+                    <div id="clickLabel">+$1 per click</div>
+                </div>
+            </div>
+
+            <div id="panel">
+                <div id="panelInvestments" class="panelContent show">
+                    <h2>Investments (prices go up &amp; down – buy or sell $ amount)</h2>
+                    <div id="investmentChart" class="chartWrap">
+                        <canvas id="stockChart" width="380" height="140"></canvas>
+                        <div id="chartLegend" class="chartLegend"></div>
+                    </div>
+                    <div id="investmentList"></div>
+                </div>
+                <div id="panelCompanies" class="panelContent">
+                    <h2>Companies (big earners)</h2>
+                    <div id="companyList"></div>
+                </div>
+                <div id="panelJobs" class="panelContent">
+                    <h2>Jobs (allowances – more per click)</h2>
+                    <div id="allowanceList"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button type="button" id="cheatBtn">Cheats</button>
+    <div id="cheatPanel">
+        <h3>Cheat menu</h3>
+        <div id="cheatList"></div>
+    </div>
+
+    <script>
+        let money = 0;
+        let perClick = 1;
+        let perSecond = 0;
+
+        const investments = [
+            { name: 'Lemonade stand', basePrice: 50 },
+            { name: 'Paper route', basePrice: 200 },
+            { name: 'Dog walking', basePrice: 500 },
+            { name: 'Gas station', basePrice: 3000 },
+            { name: 'Computer company', basePrice: 8000 },
+        ];
+        const companies = [
+            { name: 'Mini business', cost: 2000, earn: 50 },
+            { name: 'Air delivery', cost: 10000, earn: 200 },
+            { name: 'Pizza shop', cost: 5000, earn: 120 },
+            { name: 'Toy store', cost: 12000, earn: 250 },
+            { name: 'Book store', cost: 8000, earn: 180 },
+            { name: 'Ice cream truck', cost: 6000, earn: 140 },
+            { name: 'Tech startup', cost: 25000, earn: 500 },
+            { name: 'Mega corp', cost: 100000, earn: 2000 },
+            { name: 'Coffee shop', cost: 15000, earn: 350 },
+            { name: 'Game store', cost: 20000, earn: 450 },
+            { name: 'Space rockets', cost: 500000, earn: 10000 },
+            { name: 'Robot factory', cost: 1000000, earn: 25000 },
+            { name: 'Bakery', cost: 12000, earn: 280 },
+            { name: 'Movie theater', cost: 35000, earn: 750 },
+            { name: 'Theme park', cost: 250000, earn: 5000 },
+            { name: 'Moon base', cost: 5000000, earn: 100000 },
+        ];
+        const jobs = [
+            { name: 'Pocket money', cost: 10, add: 1 },
+            { name: 'Weekly allowance', cost: 50, add: 2 },
+            { name: 'Bigger allowance', cost: 200, add: 5 },
+            { name: 'Mega allowance', cost: 1000, add: 20 },
+            { name: 'Chore bonus', cost: 500, add: 10 },
+            { name: 'Birthday money', cost: 2500, add: 50 },
+            { name: 'Lawn mowing pay', cost: 5000, add: 100 },
+            { name: 'Super allowance', cost: 25000, add: 500 },
+            { name: 'Pet sitting', cost: 800, add: 15 },
+            { name: 'Snow shoveling', cost: 1500, add: 30 },
+            { name: 'Tutoring pay', cost: 10000, add: 200 },
+            { name: 'Ultimate allowance', cost: 100000, add: 2000 },
+            { name: 'Babysitting', cost: 2000, add: 40 },
+            { name: 'Car wash pay', cost: 4000, add: 80 },
+            { name: 'Lemonade profits', cost: 12000, add: 250 },
+            { name: 'Boss level pay', cost: 500000, add: 10000 },
+        ];
+
+        let investmentPrices = investments.map(inv => inv.basePrice);
+        const HISTORY_LEN = 80;
+        let investmentHistory = investments.map(inv => Array(HISTORY_LEN).fill(inv.basePrice));
+        let investmentShares = [0,0,0,0,0];
+        let companyCounts = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        let jobCounts = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+
+        const moneyEl = document.getElementById('moneyDisplay');
+        const watchlistEl = document.getElementById('watchlist');
+        const redBtn = document.getElementById('redButton');
+        const clickLabel = document.getElementById('clickLabel');
+        const producerNameInput = document.getElementById('producerName');
+        let producerName = localStorage.getItem('infiniteair_producerName') || 'CLICK ME!';
+        if (producerName) {
+            redBtn.textContent = producerName;
+            if (producerNameInput) producerNameInput.value = producerName;
+        }
+        function updateCheatVisibility() {
+            const cheatBtn = document.getElementById('cheatBtn');
+            if (cheatBtn) {
+                if (producerName.toLowerCase() === 'cheatsesme') cheatBtn.classList.add('show');
+                else { cheatBtn.classList.remove('show'); document.getElementById('cheatPanel').classList.remove('show'); }
+            }
+        }
+        if (producerNameInput) {
+            producerNameInput.addEventListener('input', function() {
+                producerName = producerNameInput.value.trim() || 'CLICK ME!';
+                redBtn.textContent = producerName;
+                localStorage.setItem('infiniteair_producerName', producerName);
+                updateCheatVisibility();
+            });
+            producerNameInput.addEventListener('blur', function() {
+                if (!producerNameInput.value.trim()) producerNameInput.value = 'CLICK ME!';
+            });
+        }
+        updateCheatVisibility();
+        const investmentChartEl = document.getElementById('investmentChart');
+        const investmentList = document.getElementById('investmentList');
+        const companyList = document.getElementById('companyList');
+        const allowanceList = document.getElementById('allowanceList');
+
+        function formatMoney(n) {
+            if (n >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
+            if (n >= 1000) return '$' + (n/1000).toFixed(1) + 'K';
+            return '$' + Math.floor(n);
+        }
+
+        function investmentValue() {
+            let v = 0;
+            for (let i = 0; i < investments.length; i++) v += investmentShares[i] * investmentPrices[i];
+            return v;
+        }
+
+        const chartColors = ['#c1121f', '#1a5f7a', '#2d8c5a', '#8c5a2d', '#5a2d8c'];
+        function drawStockChart() {
+            const canvas = document.getElementById('stockChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            let allMin = Infinity, allMax = -Infinity;
+            investmentHistory.forEach(hist => {
+                if (hist.length === 0) return;
+                const mn = Math.min.apply(null, hist);
+                const mx = Math.max.apply(null, hist);
+                if (mn < allMin) allMin = mn;
+                if (mx > allMax) allMax = mx;
+            });
+            if (allMin === Infinity) allMin = 0;
+            if (allMax <= allMin) allMax = allMin + 1;
+            const pad = 4;
+            const chartW = w - pad * 2;
+            const chartH = h - pad * 2;
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.fillRect(0, 0, w, h);
+            investments.forEach((inv, i) => {
+                const hist = investmentHistory[i];
+                if (!hist || hist.length < 2) return;
+                ctx.beginPath();
+                ctx.strokeStyle = chartColors[i % chartColors.length];
+                ctx.lineWidth = 2;
+                for (let j = 0; j < hist.length; j++) {
+                    const x = pad + (j / (hist.length - 1)) * chartW;
+                    const y = pad + chartH - ((hist[j] - allMin) / (allMax - allMin)) * chartH;
+                    if (j === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            });
+        }
+
+        function updateUI() {
+            moneyEl.textContent = formatMoney(money);
+            watchlistEl.textContent = 'INVESTMENT VALUE: ' + formatMoney(investmentValue());
+            clickLabel.textContent = '+' + formatMoney(perClick) + ' per click';
+
+            if (investmentList.children.length !== investments.length) {
+                investmentList.innerHTML = '';
+                investments.forEach((inv, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'investItem';
+                    div.innerHTML = `
+                        <div class="name">${inv.name}</div>
+                        <div class="priceRow">Price: <span class="invPrice">$0</span> &nbsp; You own: <span class="invShares">0</span> shares = <span class="invValue">$0</span></div>
+                        <div class="buySellRow">
+                            <input type="number" min="0" step="1" placeholder="Amount $" data-invest-input="${i}" />
+                            <button class="btnBuy" data-invest-buy="${i}">Buy</button>
+                            <button class="btnSell" data-invest-sell="${i}">Sell</button>
+                            <button class="btnSell" data-invest-sellall="${i}">Sell all</button>
+                        </div>
+                    `;
+                    investmentList.appendChild(div);
+                });
+            }
+            investmentList.querySelectorAll('.investItem').forEach((row, i) => {
+                const price = investmentPrices[i];
+                const shares = investmentShares[i];
+                row.querySelector('.invPrice').textContent = formatMoney(price);
+                row.querySelector('.invShares').textContent = shares.toFixed(1);
+                row.querySelector('.invValue').textContent = formatMoney(shares * price);
+                const sellAllBtn = row.querySelector('[data-invest-sellall]');
+                if (sellAllBtn) sellAllBtn.disabled = (shares <= 0);
+            });
+            drawStockChart();
+            const legendEl = document.getElementById('chartLegend');
+            if (legendEl && legendEl.children.length === 0) {
+                investments.forEach((inv, i) => {
+                    const span = document.createElement('span');
+                    span.innerHTML = '<span class="dot" style="background:' + chartColors[i % chartColors.length] + '"></span> ' + inv.name;
+                    legendEl.appendChild(span);
+                });
+            }
+
+            companyList.innerHTML = '';
+            companies.forEach((c, i) => {
+                const count = companyCounts[i];
+                const cost = Math.floor(c.cost * Math.pow(1.15, count));
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `
+                    <div class="info">
+                        <span class="name">${c.name}</span>
+                        <div class="desc">+${formatMoney(c.earn)}/sec <span class="owned">×${count}</span></div>
+                    </div>
+                    <span class="cost">${formatMoney(cost)}</span>
+                    <button data-company="${i}" ${money < cost ? 'disabled' : ''}>Buy</button>
+                `;
+                companyList.appendChild(div);
+            });
+
+            allowanceList.innerHTML = '';
+            jobs.forEach((j, i) => {
+                const count = jobCounts[i];
+                const cost = Math.floor(j.cost * Math.pow(1.15, count));
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `
+                    <div class="info">
+                        <span class="name">${j.name}</span>
+                        <div class="desc">+${formatMoney(j.add)} per click <span class="owned">×${count}</span></div>
+                    </div>
+                    <span class="cost">${formatMoney(cost)}</span>
+                    <button data-job="${i}" ${money < cost ? 'disabled' : ''}>Buy</button>
+                `;
+                allowanceList.appendChild(div);
+            });
+        }
+
+        document.querySelectorAll('.category').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.category').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.panelContent').forEach(p => p.classList.remove('show'));
+                this.classList.add('active');
+                document.getElementById('panel' + this.dataset.tab.charAt(0).toUpperCase() + this.dataset.tab.slice(1)).classList.add('show');
+            });
+        });
+
+        function doClick() {
+            money += perClick;
+            updateUI();
+        }
+        redBtn.addEventListener('click', doClick);
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space' || e.key === ' ') {
+                const inInput = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+                if (!inInput) {
+                    e.preventDefault();
+                    doClick();
+                }
+            }
+        });
+
+        investmentList.addEventListener('click', function(e) {
+            const buyBtn = e.target.closest('[data-invest-buy]');
+            const sellBtn = e.target.closest('[data-invest-sell]');
+            const sellAllBtn = e.target.closest('[data-invest-sellall]');
+            if (!buyBtn && !sellBtn && !sellAllBtn) return;
+            const i = buyBtn ? parseInt(buyBtn.dataset.investBuy, 10) : (sellBtn ? parseInt(sellBtn.dataset.investSell, 10) : parseInt(sellAllBtn.dataset.investSellall, 10));
+            const row = (buyBtn || sellBtn || sellAllBtn).closest('.investItem');
+            const input = row ? row.querySelector('[data-invest-input]') : null;
+            const price = investmentPrices[i];
+            if (price <= 0) return;
+            if (sellAllBtn) {
+                const value = investmentShares[i] * price;
+                if (value > 0) {
+                    money += value;
+                    investmentShares[i] = 0;
+                }
+            } else if (buyBtn) {
+                const amount = input ? Math.max(0, Math.floor(parseFloat(input.value) || 0)) : 0;
+                const spend = Math.min(amount, money);
+                if (spend > 0) {
+                    const shares = spend / price;
+                    investmentShares[i] += shares;
+                    money -= spend;
+                }
+            } else {
+                const amount = input ? Math.max(0, Math.floor(parseFloat(input.value) || 0)) : 0;
+                const maxValue = investmentShares[i] * price;
+                const sellValue = Math.min(amount, maxValue);
+                if (sellValue > 0) {
+                    const sharesToSell = sellValue / price;
+                    investmentShares[i] -= sharesToSell;
+                    money += sellValue;
+                }
+            }
+            if (input) input.value = '';
+            updateUI();
+        });
+
+        companyList.addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-company]');
+            if (!btn || btn.disabled) return;
+            const i = parseInt(btn.dataset.company, 10);
+            const c = companies[i];
+            const cost = Math.floor(c.cost * Math.pow(1.15, companyCounts[i]));
+            if (money >= cost) {
+                money -= cost;
+                companyCounts[i]++;
+                perSecond += c.earn;
+                updateUI();
+            }
+        });
+
+        allowanceList.addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-job]');
+            if (!btn || btn.disabled) return;
+            const i = parseInt(btn.dataset.job, 10);
+            const j = jobs[i];
+            const cost = Math.floor(j.cost * Math.pow(1.15, jobCounts[i]));
+            if (money >= cost) {
+                money -= cost;
+                jobCounts[i]++;
+                perClick += j.add;
+                updateUI();
+            }
+        });
+
+        setInterval(function() {
+            money += perSecond / 10;
+            updateUI();
+        }, 100);
+
+        setInterval(function() {
+            investments.forEach((inv, i) => {
+                const change = 1 + (Math.random() - 0.5) * 0.2;
+                investmentPrices[i] *= change;
+                const base = inv.basePrice;
+                if (investmentPrices[i] < base * 0.2) investmentPrices[i] = base * 0.2;
+                if (investmentPrices[i] > base * 5) investmentPrices[i] = base * 5;
+                investmentHistory[i].push(investmentPrices[i]);
+                if (investmentHistory[i].length > HISTORY_LEN) investmentHistory[i].shift();
+            });
+            updateUI();
+        }, 1500);
+
+        const cheatBtn = document.getElementById('cheatBtn');
+        const cheatPanel = document.getElementById('cheatPanel');
+        const cheatList = document.getElementById('cheatList');
+        if (cheatBtn && cheatPanel) {
+            cheatBtn.addEventListener('click', function() { cheatPanel.classList.toggle('show'); });
+        }
+        const cheats = [
+            { label: 'Add $1,000', fn: function() { money += 1000; } },
+            { label: 'Add $100,000', fn: function() { money += 100000; } },
+            { label: 'Add $1,000,000', fn: function() { money += 1000000; } },
+            { label: 'Add $1,000,000,000', fn: function() { money += 1e9; } },
+            { label: 'Set per click to 10,000', fn: function() { perClick = 10000; } },
+            { label: 'Set per click to 1,000,000', fn: function() { perClick = 1e6; } },
+            { label: 'Buy 5 of every company', fn: function() { companies.forEach((c, i) => { for (let n = 0; n < 5; n++) { companyCounts[i]++; perSecond += c.earn; } }); } },
+            { label: 'Buy 10 of every job', fn: function() { jobs.forEach((j, i) => { for (let n = 0; n < 10; n++) { jobCounts[i]++; perClick += j.add; } }); } },
+            { label: 'Add 100 shares of each investment', fn: function() { for (let i = 0; i < investments.length; i++) investmentShares[i] += 100; } },
+            { label: 'Set per second to 100,000', fn: function() { perSecond = 100000; } },
+        ];
+        if (cheatList) {
+            cheats.forEach(function(c) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = c.label;
+                btn.addEventListener('click', function() { c.fn(); updateUI(); });
+                cheatList.appendChild(btn);
+            });
+        }
+        document.addEventListener('click', function(e) {
+            if (cheatPanel && cheatPanel.classList.contains('show') && !cheatPanel.contains(e.target) && e.target !== cheatBtn) cheatPanel.classList.remove('show');
+        });
+
+        updateUI();
+    </script>
+</body>
+</html>

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Crappy Game - Main Menu</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff00;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        /* Matrix Digital Rain Background */
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .rain-drop {
+            position: absolute;
+            color: #00ff00;
+            font-size: 1.2rem;
+            animation: rainFall 3s linear infinite;
+            opacity: 0.7;
+        }
+        
+        @keyframes rainFall {
+            0% { transform: translateY(-100vh); }
+            100% { transform: translateY(100vh); }
+        }
+        
+        /* Main Menu Container */
+        .main-menu {
+            position: relative;
+            z-index: 10;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            padding: 50px;
+            box-sizing: border-box;
+        }
+        
+        /* Game Title */
+        .game-title {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #00ff00;
+            text-shadow: 0 0 20px #00ff00;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+        
+        .game-subtitle {
+            font-size: 1.2rem;
+            color: #ffffff;
+            margin-bottom: 50px;
+            opacity: 0.8;
+        }
+        
+        /* Menu Options */
+        .menu-options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .menu-option {
+            font-size: 1.5rem;
+            color: #ff0000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px #ff0000;
+            font-weight: bold;
+        }
+        
+        .menu-option:hover {
+            color: #ff6666;
+            text-shadow: 0 0 20px #ff6666;
+            transform: scale(1.1);
+        }
+        
+        /* Chapter Selection */
+        .chapter-select {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .chapter-option {
+            font-size: 1.3rem;
+            color: #00ff00;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px #00ff00;
+            padding: 10px;
+            border: 2px solid transparent;
+        }
+        
+        .chapter-option:hover {
+            color: #66ff66;
+            text-shadow: 0 0 20px #66ff66;
+            border-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .chapter-option.selected {
+            color: #ffff00;
+            text-shadow: 0 0 20px #ffff00;
+            border-color: #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+        }
+        
+        /* Back Button */
+        .back-button {
+            font-size: 1.2rem;
+            color: #888888;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            color: #ffffff;
+        }
+        
+        /* Game Container */
+        .game-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: #000;
+        }
+        
+        /* Chapter 1 Styles (existing game) */
+        .chapter1-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        .chapter1-container h1 {
+            font-size: 3rem;
+            text-align: center;
+            margin-top: 50px;
+            color: #ff0000;
+            text-shadow: 0 0 20px #ff0000;
+            animation: glitch 0.5s infinite;
+        }
+        
+        .chapter1-container p {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+        }
+        
+        .chapter1-container button {
+            display: block;
+            margin: 50px auto;
+            padding: 20px 40px;
+            font-size: 2rem;
+            background: #333;
+            color: #fff;
+            border: 2px solid #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .chapter1-container button:hover {
+            background: #555;
+            border-color: #888;
+        }
+        
+        /* Chapter 2 Styles */
+        .chapter2-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        .chapter2-container h1 {
+            font-size: 3rem;
+            text-align: center;
+            margin-top: 50px;
+            color: #ff00ff;
+            text-shadow: 0 0 20px #ff00ff;
+            animation: nightmare 2s infinite;
+        }
+        
+        .chapter2-container p {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+        }
+        
+        .chapter2-container button {
+            display: block;
+            margin: 50px auto;
+            padding: 20px 40px;
+            font-size: 2rem;
+            background: #300;
+            color: #ff0000;
+            border: 2px solid #ff0000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .chapter2-container button:hover {
+            background: #600;
+            border-color: #ff6666;
+            box-shadow: 0 0 20px #ff0000;
+        }
+        
+        /* Animations */
+        @keyframes glitch {
+            0%, 100% { transform: translateX(0); }
+            10% { transform: translateX(-2px); }
+            20% { transform: translateX(2px); }
+            30% { transform: translateX(-1px); }
+            40% { transform: translateX(1px); }
+            50% { transform: translateX(-3px); }
+            60% { transform: translateX(3px); }
+            70% { transform: translateX(0); }
+            80% { transform: translateX(-2px); }
+            90% { transform: translateX(2px); }
+        }
+        
+        @keyframes nightmare {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg);
+                color: #ff00ff;
+            }
+            25% { 
+                transform: scale(1.1) rotate(1deg);
+                color: #ff0000;
+            }
+            50% { 
+                transform: scale(0.9) rotate(-1deg);
+                color: #0000ff;
+            }
+            75% { 
+                transform: scale(1.05) rotate(0.5deg);
+                color: #00ffff;
+            }
+        }
+        
+        /* Hidden class */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix Rain Background -->
+    <div class="matrix-rain" id="matrixRain"></div>
+    
+    <!-- Main Menu -->
+    <div class="main-menu" id="mainMenu">
+        <div class="game-title">the crappy game</div>
+        <div class="game-subtitle">Made with Apple bob</div>
+        
+        <div class="menu-options" id="menuOptions">
+            <div class="menu-option" onclick="showChapterSelect()">Continue</div>
+            <div class="menu-option" onclick="showChapterSelect()">New Game</div>
+            <div class="menu-option" onclick="showSettings()">Settings</div>
+            <div class="menu-option" onclick="showCredits()">Credits</div>
+        </div>
+        
+        <div class="chapter-select" id="chapterSelect">
+            <div class="chapter-option" onclick="selectChapter(1)">Chapter 1: A Look In</div>
+            <div class="chapter-option" onclick="selectChapter(2)">Chapter 2: The Nightmare</div>
+            <div class="back-button" onclick="hideChapterSelect()">← Back</div>
+        </div>
+    </div>
+    
+    <!-- Game Containers -->
+    <div class="game-container" id="gameContainer">
+        <!-- Chapter 1 Container -->
+        <div class="chapter1-container" id="chapter1Container">
+            <h1>CHAPTER 1: A LOOK IN</h1>
+            <p>The most boringest game ever but it is glitchy and scary</p>
+            <button onclick="startChapter1()">START CHAPTER 1</button>
+            <button onclick="returnToMenu()">← Back to Menu</button>
+        </div>
+        
+        <!-- Chapter 2 Container -->
+        <div class="chapter2-container" id="chapter2Container">
+            <h1>CHAPTER 2: THE NIGHTMARE</h1>
+            <p>Welcome to your worst nightmare...</p>
+            <button onclick="startChapter2()">START CHAPTER 2</button>
+            <button onclick="returnToMenu()">← Back to Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Rain Effect
+        function createMatrixRain() {
+            const matrixRain = document.getElementById('matrixRain');
+            const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+            const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const nums = '0123456789';
+            const alphabet = katakana + latin + nums;
+            
+            const fontSize = 16;
+            const columns = window.innerWidth / fontSize;
+            
+            for (let i = 0; i < columns; i++) {
+                const x = i * fontSize;
+                const y = Math.random() * -100;
+                const speed = Math.random() * 3 + 1;
+                
+                const drop = document.createElement('div');
+                drop.className = 'rain-drop';
+                drop.style.left = x + 'px';
+                drop.style.top = y + 'px';
+                drop.style.animationDuration = speed + 's';
+                drop.textContent = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                
+                matrixRain.appendChild(drop);
+            }
+        }
+        
+        // Menu Functions
+        function showChapterSelect() {
+            document.getElementById('menuOptions').style.display = 'none';
+            document.getElementById('chapterSelect').style.display = 'flex';
+        }
+        
+        function hideChapterSelect() {
+            document.getElementById('menuOptions').style.display = 'flex';
+            document.getElementById('chapterSelect').style.display = 'none';
+        }
+        
+        function selectChapter(chapter) {
+            // Remove selected class from all chapters
+            document.querySelectorAll('.chapter-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked chapter
+            event.target.classList.add('selected');
+            
+            // Start the selected chapter after a short delay
+            setTimeout(() => {
+                startChapter(chapter);
+            }, 500);
+        }
+        
+        function startChapter(chapter) {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'block';
+            
+            if (chapter === 1) {
+                document.getElementById('chapter1Container').style.display = 'block';
+                document.getElementById('chapter2Container').style.display = 'none';
+            } else if (chapter === 2) {
+                document.getElementById('chapter1Container').style.display = 'none';
+                document.getElementById('chapter2Container').style.display = 'block';
+            }
+        }
+        
+        function startChapter1() {
+            // This will load the original crappy game
+            window.location.href = 'chapter1.html';
+        }
+        
+        function startChapter2() {
+            // This will load the nightmare chapter
+            window.location.href = 'chapter2.html';
+        }
+        
+        function returnToMenu() {
+            document.getElementById('gameContainer').style.display = 'none';
+            document.getElementById('mainMenu').style.display = 'flex';
+            hideChapterSelect();
+        }
+        
+        function showSettings() {
+            alert('Settings: This game has no settings because it\'s crappy!');
+        }
+        
+        function showCredits() {
+            alert('Credits:\nMade by: Apple bob\nGame: The Crappy Game\nSpecial thanks to: Nobody, because this game is crappy!');
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            createMatrixRain();
+        });
+    </script>
+</body>
+</html>

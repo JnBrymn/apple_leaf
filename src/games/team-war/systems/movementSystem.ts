@@ -1,13 +1,13 @@
 import type { Soldier } from '../engine/types'
-import { isOutOfArena, overlapsObstacle } from '../world/obstacles'
+import { isOutOfArena, overlapsSolidAtHeight } from '../world/obstacles'
 
 export function tryMove(soldier: Soldier, dx: number, dz: number) {
   const nextX = soldier.x + dx
-  if (!overlapsObstacle(nextX, soldier.z) && !isOutOfArena(nextX, soldier.z)) {
+  if (!overlapsSolidAtHeight(nextX, soldier.z, soldier.y) && !isOutOfArena(nextX, soldier.z)) {
     soldier.x = nextX
   }
   const nextZ = soldier.z + dz
-  if (!overlapsObstacle(soldier.x, nextZ) && !isOutOfArena(soldier.x, nextZ)) {
+  if (!overlapsSolidAtHeight(soldier.x, nextZ, soldier.y) && !isOutOfArena(soldier.x, nextZ)) {
     soldier.z = nextZ
   }
 }

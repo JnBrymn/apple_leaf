@@ -1,0 +1,459 @@
+<!--
+Four - The Game
+A game played on an n x n board (like Othello)
+- Players alternate placing coins (black goes first, then white)
+- Players can place coins on empty squares or their own towers
+- Cannot place on opponent's coins
+- When a tower reaches height 4, it activates and redistributes
+- Middle: flower pattern (N, E, S, W - one coin each)
+- Edge: distribute to available directions + one stays underneath
+- Corner: special distribution rules (3 directions + 4th coin goes to pile)
+- Invading: enemy towers flip to your color (same height, no increment)
+- Upgrading: own towers increment when coins land on them
+- Cascading continues until no towers are at height 4
+- Win: player with most pieces wins
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Four - The Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .setup {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .board {
+            display: grid;
+            gap: 2px;
+            background: #8B4513;
+            padding: 5px;
+            border: 3px solid #654321;
+            max-width: 600px;
+            width: 100%;
+        }
+        .cell {
+            min-width: 50px;
+            min-height: 50px;
+            width: 100%;
+            aspect-ratio: 1;
+            background: #228B22;
+            border: 1px solid #006400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        .cell:hover {
+            background: #32CD32;
+        }
+        .cell.black {
+            background: #000;
+            color: white;
+        }
+        .cell.white {
+            background: #FFF;
+            color: black;
+            border: 2px solid #000;
+        }
+        .cell.opponent {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .info {
+            text-align: center;
+            font-size: 18px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .score {
+            display: flex;
+            gap: 30px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        input[type="number"] {
+            padding: 5px;
+            font-size: 16px;
+            width: 60px;
+        }
+        .winner {
+            font-size: 24px;
+            color: #FF6B00;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Four - The Game</h1>
+        <div class="setup" id="setup">
+            <label>Board Size: 
+                <input type="number" id="boardSize" min="4" max="12" value="8">
+            </label>
+            <button onclick="startGame()">Start Game</button>
+        </div>
+        <div id="gameArea" style="display: none;">
+            <div class="info" id="turnInfo">Black's Turn</div>
+            <div class="score">
+                <span>Black: <span id="blackScore">0</span></span>
+                <span>White: <span id="whiteScore">0</span></span>
+            </div>
+            <div id="board"></div>
+            <div id="winnerMessage"></div>
+            <button onclick="resetGame()">New Game</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let board = [];
+        let boardSize = 8;
+        let currentPlayer = 'black'; // 'black' or 'white'
+        let gameStarted = false;
+        let coinsInPile = 0; // Coins returned to pile from corners
+
+        function startGame() {
+            boardSize = parseInt(document.getElementById('boardSize').value);
+            if (boardSize < 4 || boardSize > 12) {
+                alert('Board size must be between 4 and 12!');
+                return;
+            }
+            
+            // Initialize empty board (8x8 by default)
+            board = [];
+            for (let r = 0; r < boardSize; r++) {
+                board[r] = [];
+                for (let c = 0; c < boardSize; c++) {
+                    board[r][c] = { height: 0, color: null };
+                }
+            }
+            
+            currentPlayer = 'black';
+            gameStarted = true;
+            coinsInPile = 0;
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+            document.getElementById('winnerMessage').innerHTML = '';
+            renderBoard();
+            updateScores();
+        }
+
+        function resetGame() {
+            gameStarted = false;
+            document.getElementById('setup').style.display = 'block';
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('winnerMessage').innerHTML = '';
+        }
+
+        function renderBoard() {
+            const boardDiv = document.getElementById('board');
+            boardDiv.style.display = 'grid';
+            boardDiv.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+            boardDiv.innerHTML = '';
+            
+            for (let r = 0; r < boardSize; r++) {
+                for (let c = 0; c < boardSize; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    const cellData = board[r][c];
+                    
+                    if (cellData.height > 0) {
+                        cell.className += ` ${cellData.color}`;
+                        cell.textContent = cellData.height;
+                        
+                        // Can't click on opponent's coins
+                        if (cellData.color !== currentPlayer) {
+                            cell.className += ' opponent';
+                        }
+                    }
+                    
+                    cell.onclick = () => handleClick(r, c);
+                    boardDiv.appendChild(cell);
+                }
+            }
+            
+            document.getElementById('turnInfo').textContent = 
+                `${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)}'s Turn`;
+        }
+
+        function handleClick(row, col) {
+            if (!gameStarted) return;
+            
+            const cell = board[row][col];
+            
+            // Can't place on opponent's coin
+            if (cell.height > 0 && cell.color !== currentPlayer) {
+                return;
+            }
+            
+            // Place coin
+            if (cell.height === 0) {
+                cell.height = 1;
+                cell.color = currentPlayer;
+            } else {
+                // Upgrade own tower
+                cell.height++;
+            }
+            
+            // Check for activation (height 4) and process cascades
+            processActivations();
+            
+            // Switch player
+            currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
+            updateScores();
+            renderBoard();
+            
+            // Check win condition
+            checkWin();
+        }
+
+        function processActivations() {
+            let changed = true;
+            while (changed) {
+                changed = false;
+                const toActivate = [];
+                
+                // Find all towers at height 4
+                for (let r = 0; r < boardSize; r++) {
+                    for (let c = 0; c < boardSize; c++) {
+                        if (board[r][c].height === 4) {
+                            toActivate.push({ row: r, col: c, color: board[r][c].color });
+                        }
+                    }
+                }
+                
+                // Activate all towers at height 4
+                for (const tower of toActivate) {
+                    distributeTower(tower.row, tower.col, tower.color);
+                    changed = true;
+                }
+            }
+        }
+
+        function distributeTower(row, col, color) {
+            // Reset the tower
+            board[row][col].height = 0;
+            board[row][col].color = null;
+            
+            const isCorner = (row === 0 && col === 0) || 
+                           (row === 0 && col === boardSize - 1) ||
+                           (row === boardSize - 1 && col === 0) ||
+                           (row === boardSize - 1 && col === boardSize - 1);
+            
+            const isEdge = !isCorner && (row === 0 || row === boardSize - 1 || 
+                          col === 0 || col === boardSize - 1);
+            
+            if (isCorner) {
+                distributeCorner(row, col, color);
+            } else if (isEdge) {
+                distributeEdge(row, col, color);
+            } else {
+                distributeMiddle(row, col, color);
+            }
+        }
+
+        function distributeMiddle(row, col, color) {
+            // Flower pattern: N, E, S, W (one coin each)
+            const directions = [
+                { r: -1, c: 0 }, // North
+                { r: 0, c: 1 },  // East
+                { r: 1, c: 0 },  // South
+                { r: 0, c: -1 }  // West
+            ];
+            
+            for (const dir of directions) {
+                const newR = row + dir.r;
+                const newC = col + dir.c;
+                
+                if (isValidPosition(newR, newC)) {
+                    handleDistribution(newR, newC, color);
+                }
+            }
+        }
+
+        function distributeEdge(row, col, color) {
+            // Edge: distribute to available directions + one stays underneath
+            const directions = [];
+            
+            // Check which directions are available
+            if (row > 0) directions.push({ r: -1, c: 0 }); // North
+            if (row < boardSize - 1) directions.push({ r: 1, c: 0 }); // South
+            if (col < boardSize - 1) directions.push({ r: 0, c: 1 }); // East
+            if (col > 0) directions.push({ r: 0, c: -1 }); // West
+            
+            // Distribute to available directions
+            let coinsDistributed = 0;
+            for (const dir of directions) {
+                const newR = row + dir.r;
+                const newC = col + dir.c;
+                
+                if (isValidPosition(newR, newC)) {
+                    handleDistribution(newR, newC, color);
+                    coinsDistributed++;
+                }
+            }
+            
+            // Remaining coins stay underneath (one coin stays on the original square)
+            if (coinsDistributed < 4) {
+                board[row][col].height = 1;
+                board[row][col].color = color;
+            }
+        }
+
+        function distributeCorner(row, col, color) {
+            // Corner distribution rules
+            if (row === 0 && col === 0) {
+                // Northwest corner: E, S, SE, 4th to pile
+                const targets = [
+                    { r: 0, c: 1 },   // East
+                    { r: 1, c: 0 },   // South
+                    { r: 1, c: 1 }    // Southeast
+                ];
+                for (const target of targets) {
+                    if (isValidPosition(target.r, target.c)) {
+                        handleDistribution(target.r, target.c, color);
+                    }
+                }
+                coinsInPile++;
+            } else if (row === 0 && col === boardSize - 1) {
+                // Northeast corner: W, S, SW, 4th to pile
+                const targets = [
+                    { r: 0, c: boardSize - 2 },  // West
+                    { r: 1, c: boardSize - 1 },   // South
+                    { r: 1, c: boardSize - 2 }   // Southwest
+                ];
+                for (const target of targets) {
+                    if (isValidPosition(target.r, target.c)) {
+                        handleDistribution(target.r, target.c, color);
+                    }
+                }
+                coinsInPile++;
+            } else if (row === boardSize - 1 && col === 0) {
+                // Southwest corner: N, E, NE, 4th to pile
+                const targets = [
+                    { r: boardSize - 2, c: 0 },   // North
+                    { r: boardSize - 1, c: 1 },   // East
+                    { r: boardSize - 2, c: 1 }    // Northeast
+                ];
+                for (const target of targets) {
+                    if (isValidPosition(target.r, target.c)) {
+                        handleDistribution(target.r, target.c, color);
+                    }
+                }
+                coinsInPile++;
+            } else if (row === boardSize - 1 && col === boardSize - 1) {
+                // Southeast corner: N, W, NW, 4th to pile
+                const targets = [
+                    { r: boardSize - 2, c: boardSize - 1 },  // North
+                    { r: boardSize - 1, c: boardSize - 2 },  // West
+                    { r: boardSize - 2, c: boardSize - 2 }   // Northwest
+                ];
+                for (const target of targets) {
+                    if (isValidPosition(target.r, target.c)) {
+                        handleDistribution(target.r, target.c, color);
+                    }
+                }
+                coinsInPile++;
+            }
+        }
+
+        function handleDistribution(row, col, color) {
+            const target = board[row][col];
+            
+            if (target.height === 0) {
+                // Empty square: place coin (height 1)
+                target.height = 1;
+                target.color = color;
+            } else if (target.color === color) {
+                // Own tower: upgrade (increment)
+                target.height++;
+                // Check if this increment caused activation (height 4)
+                if (target.height === 4) {
+                    // Process activations immediately to prevent towers exceeding 4
+                    processActivations();
+                }
+            } else {
+                // Enemy tower: invade (flip color, same height)
+                target.color = color;
+                // Height stays the same, so no activation check needed
+            }
+        }
+
+        function isValidPosition(row, col) {
+            return row >= 0 && row < boardSize && col >= 0 && col < boardSize;
+        }
+
+        function updateScores() {
+            let blackCount = 0;
+            let whiteCount = 0;
+            
+            for (let r = 0; r < boardSize; r++) {
+                for (let c = 0; c < boardSize; c++) {
+                    const cell = board[r][c];
+                    if (cell.color === 'black') {
+                        blackCount += cell.height;
+                    } else if (cell.color === 'white') {
+                        whiteCount += cell.height;
+                    }
+                }
+            }
+            
+            document.getElementById('blackScore').textContent = blackCount;
+            document.getElementById('whiteScore').textContent = whiteCount;
+        }
+
+        function checkWin() {
+            let blackCount = 0;
+            let whiteCount = 0;
+            
+            for (let r = 0; r < boardSize; r++) {
+                for (let c = 0; c < boardSize; c++) {
+                    const cell = board[r][c];
+                    if (cell.color === 'black') {
+                        blackCount += cell.height;
+                    } else if (cell.color === 'white') {
+                        whiteCount += cell.height;
+                    }
+                }
+            }
+            
+            // Check if board is full or game should end
+            // For now, we'll let players continue playing
+            // You can add a "End Game" button or automatic end condition
+        }
+    </script>
+</body>
+</html>

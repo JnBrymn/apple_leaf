@@ -1,0 +1,4177 @@
+<!DOCTYPE html>
+<!--
+CLIPPEY - Bo's creepy face clicker (KID-FRIENDLY)
+Plan:
+- ONE face on the screen
+- Click it and it gets creepier and creepier
+- 5000 clicks max, BUT progression uses a power curve (pow(n/MAX, 0.13))
+  so each click clearly changes the face, especially early on.
+  No discrete stages/level-ups - smooth continuous creepiness.
+- KID-FRIENDLY style: no blood, no red gore. Spooky cartoon palette
+  (sickly green -> ghostly purple -> midnight blue), glowing purple eyes
+  instead of bloodshot red.
+- Scary per-click sounds + BACKGROUND MUSIC that starts pretty (a little
+  C-major lullaby with a clean bass + sine chord pad) and gradually FALLS
+  APART: chord slides major -> minor -> diminished -> dissonant cluster,
+  bass drops in pitch, melody notes detune and play wrong notes at wrong
+  times, noise/wind grows, heartbeat kicks in mid-game and speeds up.
+  All sounds via Web Audio API (no files).
+- Mute button in top-right.
+- ENDINGS: bad, good, silent, true, rage, slow, baby, night, wake, clip, left,
+  538 endings — happy mode, wings, cloud, 30+ face buttons (left/right/bottom)!
+- Single file: index.html
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Clippey</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #d8e6c9;
+    font-family: 'Comic Sans MS', system-ui, sans-serif;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    transition: background 0.3s;
+  }
+  #playRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 12px 16px;
+    width: 100%;
+    max-width: 980px;
+    padding: 0 10px;
+    box-sizing: border-box;
+  }
+  #mainCol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 1 auto;
+  }
+  .sideCol {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    flex: 0 0 100px;
+    min-width: 92px;
+  }
+  .sideThing {
+    background: #fff;
+    border: 3px solid #222;
+    border-radius: 12px;
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #222;
+    box-shadow: 2px 2px 0 #222;
+    line-height: 1.3;
+  }
+  .sideThing .big {
+    font-size: 26px;
+    line-height: 1;
+    margin: 2px 0;
+  }
+  .sideMeterBar {
+    height: 10px;
+    background: #e0e0e0;
+    border: 2px solid #222;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 5px;
+  }
+  #sideMeterFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #69db7c, #ffd43b, #9775fa);
+    transition: width 0.12s ease-out;
+  }
+  #sideMeterFill.happy { background: linear-gradient(90deg, #ffe066, #69db7c, #4dabf7); }
+  #sideMeterFill.spooky { background: linear-gradient(90deg, #94d82a, #ff922b, #222); }
+  .gameBtn.side {
+    font-size: 13px;
+    padding: 7px 8px;
+    width: 100%;
+  }
+  .gameBtn.zap { background: #e1bee7; }
+  .gameBtn.bell { background: #fff9c4; }
+  .gameBtn.spark { background: #ffecb3; }
+  .gameBtn.sleep { background: #cfd8dc; }
+  .gameBtn.party { background: #f8bbd0; }
+  .gameBtn.gift { background: #ffcdd2; }
+  .gameBtn.star { background: #b3e5fc; }
+  .gameBtn.dizzy { background: #d1c4e9; }
+  .gameBtn.bonk { background: #ffccbc; }
+  .gameBtn.cookie { background: #d7ccc8; }
+  .gameBtn.boo { background: #b39ddb; }
+  .gameBtn.nice { background: #c8e6c9; }
+  .gameBtn.love { background: #f48fb1; }
+  .gameBtn.cool { background: #90caf9; }
+  .gameBtn.mad { background: #ef9a9a; }
+  .gameBtn.cry { background: #b3e5fc; }
+  .gameBtn.dance { background: #ce93d8; }
+  .gameBtn.yum { background: #ffcc80; }
+  .gameBtn.think { background: #e0e0e0; }
+  .gameBtn.hi { background: #fff176; }
+  @media (max-width: 800px) {
+    #playRow { flex-wrap: wrap; }
+    .sideCol {
+      flex: 1 1 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
+    }
+    .sideCol .sideThing { flex: 1 1 140px; max-width: 200px; }
+    .gameBtn.side { width: auto; min-width: 72px; flex: 1 1 72px; }
+  }
+  /* Big text (title, counter) - white with thick black outline */
+  #title, #counter {
+    color: #fff;
+    font-weight: bold;
+    text-shadow:
+      -3px -3px 0 #000,  3px -3px 0 #000,
+      -3px  3px 0 #000,  3px  3px 0 #000,
+      -3px  0   0 #000,  3px  0   0 #000,
+       0   -3px 0 #000,  0    3px 0 #000;
+  }
+  #title {
+    font-size: 44px;
+    margin: 10px;
+    letter-spacing: 2px;
+    cursor: pointer;
+  }
+  #counter {
+    font-size: 26px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  /* Bottom "Levels of creepy" text gets its own black pill background
+     so it's always crisp and readable, no matter the page color. */
+  #hint {
+    display: inline-block;
+    margin-top: 14px;
+    cursor: pointer;
+    padding: 6px 14px;
+    background: #000;
+    color: #fff;
+    font-weight: bold;
+    font-size: 22px;
+    border-radius: 999px;
+    border: 2px solid #fff;
+  }
+  #hint #level {
+    color: #ffe066;
+  }
+  #tips {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #2a3a1a;
+    max-width: 90vw;
+    text-align: center;
+    line-height: 1.4;
+  }
+  #stage {
+    width: 480px;
+    height: 480px;
+    max-width: 90vw;
+    max-height: 70vh;
+    aspect-ratio: 1 / 1;
+    cursor: pointer;
+    position: relative;
+  }
+  #stage.happyMode {
+    box-shadow: 0 0 0 4px #ffe066, 0 0 24px rgba(255, 220, 100, 0.55);
+    border-radius: 12px;
+  }
+  .cornerHint {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    font-size: 12px;
+    line-height: 14px;
+    text-align: center;
+    color: #ff9800;
+    opacity: 0.65;
+    pointer-events: none;
+    user-select: none;
+  }
+  .cornerHint.tl, .cornerHint.tr, .cornerHint.bl, .cornerHint.br {
+    margin: -7px 0 0 -7px;
+  }
+  #stage.happyMode .cornerHint { opacity: 0; }
+  #face {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transform-origin: center center;
+  }
+  #stage.happyMode #face {
+    transition: transform 0.08s ease-out;
+  }
+  #hint {
+    margin-top: 10px;
+    font-size: 18px;
+  }
+  .shake {
+    animation: shake 0.25s;
+  }
+  @keyframes shake {
+    0%   { transform: translate(0, 0) rotate(0); }
+    25%  { transform: translate(-6px, 4px) rotate(-1deg); }
+    50%  { transform: translate(5px, -3px) rotate(1.2deg); }
+    75%  { transform: translate(-3px, 5px) rotate(-0.8deg); }
+    100% { transform: translate(0, 0) rotate(0); }
+  }
+  .bigshake {
+    animation: bigshake 0.35s;
+  }
+  @keyframes spinFace {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  #face.spinning {
+    animation: spinFace 0.55s ease-in-out;
+  }
+  @keyframes bigshake {
+    0%   { transform: translate(0, 0) rotate(0) scale(1); }
+    15%  { transform: translate(-30px, 20px) rotate(-6deg) scale(1.08); }
+    30%  { transform: translate(28px, -18px) rotate(7deg) scale(0.92); }
+    45%  { transform: translate(-22px, 24px) rotate(-5deg) scale(1.10); }
+    60%  { transform: translate(24px, -16px) rotate(4deg) scale(0.94); }
+    75%  { transform: translate(-14px, 10px) rotate(-3deg) scale(1.05); }
+    100% { transform: translate(0, 0) rotate(0) scale(1); }
+  }
+  #flash {
+    position: fixed;
+    inset: 0;
+    background: white;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s;
+    z-index: 999;
+  }
+  #muteBtn {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 1000;
+    padding: 10px 14px;
+    font-family: 'Comic Sans MS', system-ui, sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    background: #fff;
+    color: #222;
+    border: 3px solid #222;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 #222;
+    user-select: none;
+  }
+  #muteBtn:hover {
+    background: #ffe;
+  }
+  #muteBtn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0 0 0 #222;
+  }
+  #endingsBar {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1000;
+    width: min(200px, 42vw);
+    background: #fff;
+    border: 3px solid #222;
+    border-radius: 10px;
+    padding: 6px 8px 8px;
+    box-shadow: 2px 2px 0 #222;
+    font-family: 'Comic Sans MS', system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    color: #222;
+    user-select: none;
+  }
+  #endingsBarLabel {
+    display: block;
+    text-align: center;
+    margin-bottom: 5px;
+    letter-spacing: 0.04em;
+  }
+  .endingsTrack {
+    height: 12px;
+    background: #e8e8e8;
+    border: 2px solid #222;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  #endingsFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #69db7c, #ffd43b, #9775fa);
+    transition: width 0.35s ease-out;
+  }
+  #endingContinue {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%);
+    z-index: 2100;
+    padding: 14px 28px;
+    font-family: 'Comic Sans MS', system-ui, sans-serif;
+    font-size: clamp(20px, 5vw, 32px);
+    font-weight: bold;
+    background: #fff;
+    color: #222;
+    border: 4px solid #222;
+    border-radius: 14px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 #222;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.15s ease;
+  }
+  #endingContinue.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #endingContinue:hover {
+    background: #fff9c4;
+  }
+  #endingContinue:active {
+    transform: translateX(-50%) translate(3px, 3px);
+    box-shadow: 1px 1px 0 #222;
+  }
+  #toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    max-width: 520px;
+    margin-top: 10px;
+    padding: 0 10px;
+    z-index: 100;
+  }
+  .gameBtn {
+    padding: 8px 12px;
+    font-family: 'Comic Sans MS', system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+    background: #fff;
+    color: #222;
+    border: 3px solid #222;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 #222;
+    user-select: none;
+  }
+  .gameBtn:hover { background: #ffe; }
+  .gameBtn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0 0 0 #222;
+  }
+  .gameBtn.pet { background: #ffd6e8; }
+  .gameBtn.tickle { background: #e8ffd6; }
+  .gameBtn.scare { background: #e6d6ff; }
+  .gameBtn.hug { background: #ffe0b2; }
+  .gameBtn.joke { background: #fff59d; }
+  #helpPanel {
+    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    width: min(420px, 92vw);
+    max-height: 50vh;
+    overflow-y: auto;
+    background: #fff;
+    border: 4px solid #222;
+    border-radius: 14px;
+    padding: 14px 16px;
+    z-index: 1500;
+    box-shadow: 4px 4px 0 #222;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  #helpPanel.show { display: block; }
+  #helpPanel h3 { margin: 0 0 8px; font-size: 20px; }
+  #helpPanel button { margin-top: 10px; }
+
+  /* ===== ENDINGS ===== */
+  #endingOverlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    overflow: hidden;
+    color: #fff;
+    font-family: 'Comic Sans MS', system-ui, sans-serif;
+  }
+  #endingOverlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  /* per-ending background colors */
+  #endingOverlay.bad    { background: #000; }
+  #endingOverlay.good   { background: linear-gradient(180deg,#ffe680,#ffb6d9); color:#3a1a4a; }
+  #endingOverlay.cornerhappy { background: linear-gradient(180deg,#fff9c4,#ffe680,#b3e5fc); color:#3a1a4a; }
+  #endingOverlay.cloudhappy { background: linear-gradient(180deg,#e8f4fc,#b3e5fc,#fffde7); color:#1a3a5c; }
+  #endingOverlay.silent { background: #050005; }
+  #endingOverlay.true   { background: linear-gradient(135deg,#311b6b,#7733cc,#ffcc66); }
+  #endingOverlay.rage   { background: #2a0000; }
+  #endingOverlay.slow   { background: linear-gradient(180deg,#1a3a5c,#0d1f33); }
+  #endingOverlay.baby   { background: linear-gradient(180deg,#e8f8ff,#b3e5fc,#81d4fa); color:#1a4a6a; }
+  #endingOverlay.night  { background: #020818; }
+  #endingOverlay.wake   { background: linear-gradient(180deg,#4a3728,#ffcc80,#fff8e1); color:#3e2723; }
+  #endingOverlay.clip   { background: linear-gradient(90deg,#ff6b9d,#c44dff,#6b9dff,#6bffb8); }
+  #endingOverlay.left   { background: linear-gradient(135deg,#1a0a2e,#3d1a6b); }
+
+  #jumpscare {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.05s steps(1);
+    background: #200033;
+  }
+  #jumpscare.show { opacity: 1; }
+  #jumpscare svg { width: 100vw; height: 100vh; }
+
+  #endingTitle {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(48px, 12vw, 160px);
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    text-align: center;
+    padding: 0 1rem;
+  }
+  #endingTitle.show { opacity: 1; }
+  #endingOverlay.bad    #endingTitle { color:#b30000; text-shadow: 0 0 30px rgba(179,0,0,.8), 0 0 4px #fff; }
+  #endingOverlay.good   #endingTitle { color:#2a7a3c; text-shadow: 0 0 18px #fff, 0 0 4px #ffeebb; }
+  #endingOverlay.cornerhappy #endingTitle { color:#f57c00; text-shadow: 0 0 18px #fff, 0 0 8px #ffe066; }
+  #endingOverlay.cloudhappy #endingTitle { color:#42a5f5; text-shadow: 0 0 20px #fff, 0 0 10px #90caf9; }
+  #endingOverlay.silent #endingTitle { color:#cccccc; text-shadow: 0 0 4px #000; }
+  #endingOverlay.true   #endingTitle { color:#ffd75a; text-shadow: 0 0 18px #ffcc66, 0 0 4px #fff; }
+  #endingOverlay.rage   #endingTitle { color:#ff3344; text-shadow: 0 0 24px #ff3344; animation: shakeText 0.18s infinite; }
+  #endingOverlay.slow   #endingTitle { color:#90caf9; text-shadow: 0 0 12px #1565c0; }
+  #endingOverlay.baby   #endingTitle { color:#0277bd; text-shadow: 0 0 16px #fff; }
+  #endingOverlay.night  #endingTitle { color:#5c6bc0; text-shadow: 0 0 30px #7986cb; }
+  #endingOverlay.wake   #endingTitle { color:#ff8f00; text-shadow: 0 0 18px #fff3e0; }
+  #endingOverlay.clip   #endingTitle { color:#fff; text-shadow: 0 0 24px #ff6b9d, 0 0 8px #fff; }
+  #endingOverlay.left   #endingTitle { color:#ce93d8; text-shadow: 0 0 20px #7b1fa2; transform: skewX(-8deg); }
+
+  @keyframes shakeText {
+    0%,100% { transform: translate(0,0); }
+    25%     { transform: translate(-3px, 2px); }
+    50%     { transform: translate(2px, -2px); }
+    75%     { transform: translate(-2px, 3px); }
+  }
+
+  #credits {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -100%;
+    text-align: center;
+    font-size: clamp(18px, 2.6vw, 28px);
+    line-height: 1.7;
+    padding: 0 1rem;
+    transition: none;
+    color: inherit;
+  }
+  #credits.show {
+    animation: roll 30s linear forwards;
+  }
+  #credits h2 {
+    font-size: clamp(28px, 5vw, 56px);
+    margin: 0 0 1.5rem;
+  }
+  #credits .role { font-weight: bold; }
+  #credits p { margin: 0.4em 0; }
+  #credits .end {
+    margin-top: 3rem;
+    font-size: clamp(36px, 7vw, 80px);
+  }
+  /* per-ending highlight color for h2/role/end */
+  #endingOverlay.bad    #credits h2,
+  #endingOverlay.bad    #credits .role,
+  #endingOverlay.bad    #credits .end    { color:#ffcc66; }
+  #endingOverlay.bad    #credits .end    { color:#b30000; }
+  #endingOverlay.good   #credits h2,
+  #endingOverlay.good   #credits .role,
+  #endingOverlay.good   #credits .end    { color:#2a7a3c; }
+  #endingOverlay.silent #credits h2,
+  #endingOverlay.silent #credits .role,
+  #endingOverlay.silent #credits .end    { color:#888; }
+  #endingOverlay.silent #credits         { color:#666; }
+  #endingOverlay.true   #credits h2,
+  #endingOverlay.true   #credits .role,
+  #endingOverlay.true   #credits .end    { color:#ffd75a; }
+  #endingOverlay.rage   #credits h2,
+  #endingOverlay.rage   #credits .role,
+  #endingOverlay.rage   #credits .end    { color:#ff3344; }
+  #endingOverlay.slow   #credits h2,
+  #endingOverlay.slow   #credits .role,
+  #endingOverlay.slow   #credits .end    { color:#90caf9; }
+  #endingOverlay.baby   #credits h2,
+  #endingOverlay.baby   #credits .role,
+  #endingOverlay.baby   #credits .end    { color:#0277bd; }
+  #endingOverlay.night  #credits h2,
+  #endingOverlay.night  #credits .role,
+  #endingOverlay.night  #credits .end    { color:#7986cb; }
+  #endingOverlay.night  #credits         { color:#5c6bc0; }
+  #endingOverlay.wake   #credits h2,
+  #endingOverlay.wake   #credits .role,
+  #endingOverlay.wake   #credits .end    { color:#ff8f00; }
+  #endingOverlay.clip   #credits h2,
+  #endingOverlay.clip   #credits .role,
+  #endingOverlay.clip   #credits .end    { color:#fff; }
+  #endingOverlay.left   #credits h2,
+  #endingOverlay.left   #credits .role,
+  #endingOverlay.left   #credits .end    { color:#ce93d8; }
+  /* 500 generated mega endings use --mega-accent (set in JS) */
+  #endingOverlay.mega #credits h2,
+  #endingOverlay.mega #credits .role,
+  #endingOverlay.mega #credits .end { color: var(--mega-accent, #ffd75a); }
+
+  @keyframes roll {
+    0%   { bottom: -100%; }
+    100% { bottom: 130%; }
+  }
+
+  /* Good-ending: a friendly smiley behind the title */
+  #happyFace {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+  #endingOverlay.good #happyFace,
+  #endingOverlay.baby #happyFace,
+  #endingOverlay.cornerhappy #happyFace,
+  #endingOverlay.cloudhappy #happyFace { display: flex; }
+  #happyFace.show { opacity: 1; }
+  #happyFace svg { width: min(60vw, 60vh); height: min(60vw, 60vh); }
+
+  body.victoryLobby,
+  body.gameBeaten {
+    background: #fff !important;
+  }
+  body.victoryLobby #toolbar,
+  body.victoryLobby #sideLeft,
+  body.victoryLobby #sideRight,
+  body.victoryLobby #hint,
+  body.victoryLobby #tips,
+  body.victoryLobby #title,
+  body.victoryLobby .cornerHint,
+  body.gameBeaten #toolbar,
+  body.gameBeaten #sideLeft,
+  body.gameBeaten #sideRight,
+  body.gameBeaten #hint,
+  body.gameBeaten #tips,
+  body.gameBeaten #title,
+  body.gameBeaten #counter,
+  body.gameBeaten #stage,
+  body.gameBeaten .cornerHint {
+    display: none !important;
+  }
+  body.victoryLobby #counter {
+    color: #333;
+    text-shadow: none;
+    font-size: 22px;
+  }
+
+  #beatOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2500;
+    background: #fff;
+    color: #222;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    overflow: hidden;
+    font-family: 'Comic Sans MS', system-ui, sans-serif;
+  }
+  #beatOverlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #beatCredits {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -100%;
+    text-align: center;
+    font-size: clamp(18px, 2.6vw, 28px);
+    line-height: 1.7;
+    padding: 0 1rem;
+    color: #222;
+  }
+  #beatCredits.show {
+    animation: roll 28s linear forwards;
+  }
+  #beatCredits h2 {
+    font-size: clamp(28px, 5vw, 56px);
+    margin: 0 0 1.5rem;
+    color: #2a7a3c;
+  }
+  #beatCredits .role { font-weight: bold; color: #5c6bc0; }
+  #beatCredits .end {
+    margin-top: 3rem;
+    font-size: clamp(40px, 9vw, 88px);
+    font-weight: 900;
+    color: #f57c00;
+    text-shadow: 0 0 18px #ffe066, 0 0 4px #fff;
+  }
+  #beatRestart {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 2601;
+    font-family: 'Comic Sans MS', system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 12px 22px;
+    border: 3px solid #2a7a3c;
+    border-radius: 12px;
+    background: #fff;
+    color: #2a7a3c;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+  }
+  #beatRestart:hover { background: #e8f5e9; }
+  #beatRestart:active { transform: scale(0.97); }
+  body.gameBeaten #beatRestart { display: block; }
+  #beatRestartConfirm {
+    position: fixed;
+    inset: 0;
+    z-index: 2602;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.92);
+    font-family: 'Comic Sans MS', system-ui, sans-serif;
+    text-align: center;
+    padding: 1.5rem;
+  }
+  #beatRestartConfirm.show { display: flex; flex-direction: column; gap: 1rem; }
+  #beatRestartText {
+    margin: 0;
+    font-size: clamp(22px, 4vw, 36px);
+    color: #222;
+    max-width: 28em;
+    line-height: 1.4;
+  }
+  #beatRestartYes, #beatRestartNo {
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px 28px;
+    margin: 0 8px;
+    border-radius: 10px;
+    border: 3px solid #333;
+    cursor: pointer;
+  }
+  #beatRestartYes {
+    background: #2a7a3c;
+    color: #fff;
+    border-color: #2a7a3c;
+  }
+  #beatRestartNo {
+    background: #fff;
+    color: #333;
+  }
+  #beatRestartBtnRow { display: flex; justify-content: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <button id="muteBtn" type="button">MUTE</button>
+  <div id="endingsBar" aria-label="How many endings you found">
+    <span id="endingsBarLabel">ENDINGS <span id="endingsGot">0</span>/<span id="endingsTotal">538</span></span>
+    <div class="endingsTrack"><div id="endingsFill"></div></div>
+  </div>
+  <div id="playRow">
+    <aside id="sideLeft" class="sideCol">
+      <div class="sideThing" id="sideMeterBox">
+        <div>CREEPY</div>
+        <div class="sideMeterBar"><div id="sideMeterFill"></div></div>
+      </div>
+      <div class="sideThing">BTN <span id="sideBtnCount">0</span></div>
+      <button class="gameBtn side zap" id="btnZap" type="button">ZAP</button>
+      <button class="gameBtn side bell" id="btnBell" type="button">BELL</button>
+      <button class="gameBtn side spark" id="btnSpark" type="button">SPARK</button>
+      <button class="gameBtn side sleep" id="btnSleep" type="button">SLEEP</button>
+      <button class="gameBtn side bonk" id="btnBonk" type="button">BONK</button>
+      <button class="gameBtn side cookie" id="btnCookie" type="button">COOKIE</button>
+      <button class="gameBtn side boo" id="btnBoo" type="button">BOO</button>
+      <button class="gameBtn side nice" id="btnNice" type="button">NICE</button>
+    </aside>
+    <div id="mainCol">
+  <div id="title">CLIPPEY</div>
+  <div id="counter">Click the face!</div>
+  <div id="stage">
+    <span class="cornerHint tl" aria-hidden="true">★</span>
+    <span class="cornerHint tr" aria-hidden="true">★</span>
+    <span class="cornerHint bl" aria-hidden="true">★</span>
+    <span class="cornerHint br" aria-hidden="true">★</span>
+    <svg id="face" viewBox="-100 -100 200 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- filters -->
+      <defs>
+        <filter id="warp">
+          <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.01" numOctaves="2" seed="3"/>
+          <feDisplacementMap id="disp" in="SourceGraphic" scale="0"/>
+        </filter>
+        <radialGradient id="bgGrad" cx="50%" cy="50%" r="60%">
+          <stop offset="0%" stop-color="#fff8c2"/>
+          <stop offset="100%" stop-color="#d8e6c9"/>
+        </radialGradient>
+      </defs>
+
+      <g id="warpGroup" filter="url(#warp)">
+        <g id="happyBack"></g>
+        <g id="angelWings"></g>
+        <!-- Head -->
+        <circle id="head" cx="0" cy="0" r="80" fill="#ffd9a3" stroke="#7a5a2a" stroke-width="2"/>
+        <!-- extra eyes container (added via JS) -->
+        <g id="extraEyes"></g>
+        <!-- left eye -->
+        <g id="leftEyeGroup">
+          <ellipse id="leftEyeWhite" cx="-30" cy="-15" rx="14" ry="14" fill="white" stroke="#222" stroke-width="1.5"/>
+          <circle id="leftPupil" cx="-30" cy="-15" r="6" fill="#222"/>
+          <circle id="leftShine" cx="-32" cy="-17" r="2" fill="white"/>
+        </g>
+        <!-- right eye -->
+        <g id="rightEyeGroup">
+          <ellipse id="rightEyeWhite" cx="30" cy="-15" rx="14" ry="14" fill="white" stroke="#222" stroke-width="1.5"/>
+          <circle id="rightPupil" cx="30" cy="-15" r="6" fill="#222"/>
+          <circle id="rightShine" cx="28" cy="-17" r="2" fill="white"/>
+        </g>
+        <!-- nose -->
+        <path id="nose" d="M -3 0 Q 0 12 3 0" fill="none" stroke="#7a5a2a" stroke-width="2" stroke-linecap="round"/>
+        <!-- mouth -->
+        <path id="mouth" d="M -25 30 Q 0 45 25 30" fill="none" stroke="#3a2a4a" stroke-width="3" stroke-linecap="round"/>
+        <!-- teeth (added via JS) -->
+        <g id="teeth"></g>
+        <!-- blood drips (added via JS) -->
+        <g id="blood"></g>
+        <!-- cracks (added via JS) -->
+        <g id="cracks"></g>
+        <!-- horns -->
+        <g id="horns"></g>
+        <g id="happyFront"></g>
+        <g id="angelHalos"></g>
+      </g>
+    </svg>
+  </div>
+    </div>
+    <aside id="sideRight" class="sideCol">
+      <div class="sideThing">
+        <div class="big" id="sideEmoji">🙂</div>
+        MOOD
+      </div>
+      <div class="sideThing" id="sideLastBtn">last: —</div>
+      <button class="gameBtn side party" id="btnParty" type="button">PARTY</button>
+      <button class="gameBtn side gift" id="btnGift" type="button">GIFT</button>
+      <button class="gameBtn side star" id="btnStar" type="button">STAR</button>
+      <button class="gameBtn side dizzy" id="btnDizzy" type="button">DIZZY</button>
+      <button class="gameBtn side love" id="btnLove" type="button">LOVE</button>
+      <button class="gameBtn side cool" id="btnCool" type="button">COOL</button>
+      <button class="gameBtn side mad" id="btnMad" type="button">MAD</button>
+      <button class="gameBtn side cry" id="btnCry" type="button">CRY</button>
+    </aside>
+  </div>
+  <div id="toolbar">
+    <button class="gameBtn pet" id="btnPet" type="button">PET</button>
+    <button class="gameBtn tickle" id="btnTickle" type="button">TICKLE</button>
+    <button class="gameBtn" id="btnWink" type="button">WINK</button>
+    <button class="gameBtn scare" id="btnScare" type="button">SCARE</button>
+    <button class="gameBtn hug" id="btnHug" type="button">HUG</button>
+    <button class="gameBtn" id="btnBoogie" type="button">BOOGIE</button>
+    <button class="gameBtn" id="btnSing" type="button">SING</button>
+    <button class="gameBtn" id="btnLucky" type="button">LUCKY</button>
+    <button class="gameBtn joke" id="btnJoke" type="button">JOKE</button>
+    <button class="gameBtn dance" id="btnDance" type="button">DANCE</button>
+    <button class="gameBtn yum" id="btnYum" type="button">YUM</button>
+    <button class="gameBtn think" id="btnThink" type="button">THINK</button>
+    <button class="gameBtn hi" id="btnHi" type="button">HI</button>
+    <button class="gameBtn" id="btnHelp" type="button">HELP</button>
+  </div>
+  <div id="helpPanel" aria-hidden="true">
+    <h3>Clippey help</h3>
+    <p><b>PET</b> nice · <b>TICKLE</b> shake · <b>WINK</b> wink · <b>SCARE</b> flash</p>
+    <p>Buttons change his <b>FACE</b>! Happy ones calm him. Spooky ones: <b>SCARE ZAP DIZZY BONK BOO MAD</b>.</p>
+    <p><b>Left:</b> ZAP BELL SPARK SLEEP BONK COOKIE BOO NICE</p>
+    <p><b>Right:</b> PARTY GIFT STAR DIZZY LOVE COOL MAD CRY</p>
+    <p><b>Bottom:</b> DANCE YUM THINK HI + all the rest!</p>
+    <p>Type CAT, PIZZA, and more. 538 endings!</p>
+    <button class="gameBtn" id="btnHelpClose" type="button">CLOSE</button>
+  </div>
+  <div id="hint">Levels of creepy: <span id="level">0</span> / 5000 · watch the ENDINGS bar!</div>
+  <div id="tips">Happy buttons = happier. Spooky: SCARE ZAP DIZZY BONK BOO MAD. Click a ★ corner for happy mode!</div>
+  <div id="flash"></div>
+
+  <!-- ===== ENDING OVERLAY (used by all endings) ===== -->
+  <div id="endingOverlay" aria-hidden="true">
+    <!-- Jumpscare (only shown for the BAD ending) -->
+    <div id="jumpscare">
+      <svg viewBox="-100 -100 200 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <circle cx="0" cy="0" r="92" fill="#3a2240" stroke="#000" stroke-width="2"/>
+        <ellipse cx="-32" cy="-12" rx="22" ry="22" fill="#fff" stroke="#000" stroke-width="2"/>
+        <ellipse cx="32"  cy="-12" rx="22" ry="22" fill="#fff" stroke="#000" stroke-width="2"/>
+        <circle cx="-32" cy="-10" r="11" fill="#7733cc"/>
+        <circle cx="32"  cy="-10" r="11" fill="#7733cc"/>
+        <circle cx="-32" cy="-10" r="4"  fill="#000"/>
+        <circle cx="32"  cy="-10" r="4"  fill="#000"/>
+        <path d="M -45 28 Q 0 80 45 28 Q 0 50 -45 28 Z" fill="#000" stroke="#3a1a3a" stroke-width="2"/>
+        <path d="M -38 30 L -32 50 L -26 30 Z" fill="#fff"/>
+        <path d="M -22 30 L -16 55 L -10 30 Z" fill="#fff"/>
+        <path d="M -6  30 L 0   58 L 6   30 Z" fill="#fff"/>
+        <path d="M 10  30 L 16  55 L 22  30 Z" fill="#fff"/>
+        <path d="M 26  30 L 32  50 L 38  30 Z" fill="#fff"/>
+        <path d="M -55 -75 Q -40 -130 -10 -85 Q -28 -78 -55 -75 Z" fill="#111" stroke="#000"/>
+        <path d="M  55 -75 Q  40 -130  10 -85 Q  28 -78  55 -75 Z" fill="#111" stroke="#000"/>
+      </svg>
+    </div>
+
+    <!-- Happy smiley (shown for GOOD ending) -->
+    <div id="happyFace">
+      <svg viewBox="-100 -100 200 200" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="0" cy="0" r="80" fill="#ffd9a3" stroke="#7a5a2a" stroke-width="2"/>
+        <ellipse cx="-30" cy="-15" rx="14" ry="14" fill="white" stroke="#222" stroke-width="1.5"/>
+        <circle cx="-30" cy="-15" r="6" fill="#222"/>
+        <circle cx="-32" cy="-17" r="2" fill="white"/>
+        <ellipse cx="30"  cy="-15" rx="14" ry="14" fill="white" stroke="#222" stroke-width="1.5"/>
+        <circle cx="30"  cy="-15" r="6" fill="#222"/>
+        <circle cx="28"  cy="-17" r="2" fill="white"/>
+        <path d="M -3 0 Q 0 12 3 0" fill="none" stroke="#7a5a2a" stroke-width="2" stroke-linecap="round"/>
+        <path d="M -25 30 Q 0 55 25 30" fill="none" stroke="#3a2a4a" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div id="endingTitle">ENDING</div>
+
+    <div id="credits"></div>
+    <button type="button" id="endingContinue">continue?</button>
+  </div>
+
+  <div id="beatOverlay" aria-hidden="true">
+    <div id="beatCredits"></div>
+    <button type="button" id="beatRestart">hard restart</button>
+    <div id="beatRestartConfirm" aria-hidden="true">
+      <p id="beatRestartText"></p>
+      <div id="beatRestartBtnRow">
+        <button type="button" id="beatRestartYes">yes</button>
+        <button type="button" id="beatRestartNo">no</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ==== STATE ====
+  const MAX = 5000;
+  const HAPPY_MAX = 500;
+  const HAPPY_CLOUD_AT = -500;
+  let clicks = 0;
+  let happyMode = false;
+  let happyClicks = 0;
+  let happyStartClicks = 0;
+  let muted = false;
+  let victoryLobby = false;
+  let gameBeaten = false;
+  let wakeWaitEnabled = false;
+  let wakeWaitTimer = null;
+
+  const counter = document.getElementById('counter');
+  const levelEl = document.getElementById('level');
+  const stage = document.getElementById('stage');
+  const face = document.getElementById('face');
+  const flash = document.getElementById('flash');
+  const body = document.body;
+
+  // SVG refs
+  const head      = document.getElementById('head');
+  const lEyeW     = document.getElementById('leftEyeWhite');
+  const rEyeW     = document.getElementById('rightEyeWhite');
+  const lPupil    = document.getElementById('leftPupil');
+  const rPupil    = document.getElementById('rightPupil');
+  const lShine    = document.getElementById('leftShine');
+  const rShine    = document.getElementById('rightShine');
+  const nose      = document.getElementById('nose');
+  const mouth     = document.getElementById('mouth');
+  const teethG    = document.getElementById('teeth');
+  const bloodG    = document.getElementById('blood');
+  const cracksG   = document.getElementById('cracks');
+  const hornsG    = document.getElementById('horns');
+  const happyBack = document.getElementById('happyBack');
+  const happyFront = document.getElementById('happyFront');
+  const angelWings = document.getElementById('angelWings');
+  const angelHalos = document.getElementById('angelHalos');
+  const extraG    = document.getElementById('extraEyes');
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const warpGroup = document.getElementById('warpGroup');
+  const turb      = document.getElementById('turb');
+  const disp      = document.getElementById('disp');
+
+  // ==== AUDIO ====
+  let audio = null;
+  function ensureAudio() {
+    if (!audio) {
+      try { audio = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e) {}
+    }
+    if (audio && audio.state === 'suspended') audio.resume();
+    return audio;
+  }
+  function rand(a, b) { return a + Math.random() * (b - a); }
+
+  // ==== BACKGROUND MUSIC ====
+  // A pretty music-box-ish lullaby that slowly falls apart as creepiness rises.
+  // Layers (all morphing with t = creepy 0..1):
+  //   - bassNote: clean low sine, drops in pitch as t grows
+  //   - chordPad: 3-note major chord that slides to minor, then dissonant cluster
+  //   - melody:   a repeating cute lullaby pattern that detunes, slows, breaks
+  //   - heartbeat: kicks in mid-creepy, gets faster
+  //   - noise:    wind/hiss that grows
+  const music = {
+    started: false,
+    currentT: 0,
+    happyHeal: 0,
+    masterGain: null,
+    // bass
+    bass: null, bassGain: null,
+    // chord (3 sustained notes)
+    chord: [],  // array of {osc, gain}
+    // melody
+    melodyTimer: null,
+    melodyStep: 0,
+    // noise
+    noiseGain: null, noiseFilter: null,
+    // heartbeat
+    heartbeatTimer: null,
+  };
+
+  // C major scale base frequencies (Hz) - we'll use these for the pretty melody
+  const SCALE_PRETTY = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]; // C4..C5
+  // 8-note lullaby melody (indices into SCALE_PRETTY)
+  const MELODY = [4, 6, 7, 6, 4, 2, 0, 2]; // G A C5 A G E C E - simple and pretty
+
+  function startMusic() {
+    const a = ensureAudio();
+    if (!a || music.started) return;
+    music.started = true;
+    const now = a.currentTime;
+
+    // master gain
+    music.masterGain = a.createGain();
+    music.masterGain.gain.value = 0;
+    music.masterGain.gain.linearRampToValueAtTime(0.9, now + 0.4);
+    music.masterGain.connect(a.destination);
+
+    // ---- BASS (single low sine, always audible, drops in pitch later) ----
+    music.bass = a.createOscillator();
+    music.bass.type = 'sine';
+    music.bass.frequency.value = 130.81; // C3
+    music.bassGain = a.createGain();
+    music.bassGain.gain.value = 0.18;
+    music.bass.connect(music.bassGain).connect(music.masterGain);
+    music.bass.start();
+
+    // ---- CHORD PAD (C major triad: C E G) ----
+    const chordFreqs = [261.63, 329.63, 392.00]; // C4 E4 G4
+    chordFreqs.forEach((f) => {
+      const o = a.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = f;
+      const g = a.createGain();
+      g.gain.value = 0.08;
+      o.connect(g).connect(music.masterGain);
+      o.start();
+      music.chord.push({osc: o, gain: g, baseFreq: f});
+    });
+
+    // ---- MELODY (lullaby loop) ----
+    function playMelodyNote() {
+      if (!music.started) return;
+      const t = music.currentT;
+      const h = music.happyHeal || 0;
+      const creepT = t * (1 - h * 0.9);
+      const ctx = audio;
+      const tnow = ctx.currentTime;
+
+      // Pick which note: pretty melody early; gets random/wrong as t grows
+      const idx = music.melodyStep % MELODY.length;
+      let baseNote = SCALE_PRETTY[MELODY[idx]];
+      if (h > 0.5 && Math.random() < 0.35) {
+        baseNote = SCALE_PRETTY[(idx + 2) % SCALE_PRETTY.length];
+      }
+      if (Math.random() < creepT * 0.9) {
+        baseNote = baseNote * (0.7 + Math.random() * 0.6);
+      }
+      const detune = 1 + (Math.random() - 0.5) * creepT * 0.12;
+      const freq = baseNote * detune;
+
+      const o = ctx.createOscillator();
+      o.type = creepT < 0.35 ? 'sine' : (creepT < 0.7 ? 'triangle' : 'sawtooth');
+      o.frequency.value = freq;
+
+      const g = ctx.createGain();
+      const dur = lerp(lerp(0.5, 0.42, h), 1.6, creepT);
+      const noteVol = 0.18 + h * 0.08;
+      g.gain.setValueAtTime(0.0001, tnow);
+      g.gain.exponentialRampToValueAtTime(noteVol, tnow + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, tnow + dur);
+
+      o.connect(g).connect(music.masterGain);
+      o.start(tnow);
+      o.stop(tnow + dur + 0.05);
+
+      music.melodyStep++;
+
+      const baseInterval = lerp(lerp(380, 280, h), 1100, creepT);
+      const jitter = Math.random() * creepT * 600;
+      music.melodyTimer = setTimeout(playMelodyNote, baseInterval + jitter);
+    }
+    playMelodyNote();
+
+    // ---- NOISE (wind / static, grows with creepy) ----
+    const dur = 4;
+    const buf = a.createBuffer(1, a.sampleRate * dur, a.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    const noise = a.createBufferSource();
+    noise.buffer = buf;
+    noise.loop = true;
+    music.noiseFilter = a.createBiquadFilter();
+    music.noiseFilter.type = 'bandpass';
+    music.noiseFilter.frequency.value = 1200;
+    music.noiseFilter.Q.value = 0.6;
+    music.noiseGain = a.createGain();
+    music.noiseGain.gain.value = 0;
+    noise.connect(music.noiseFilter).connect(music.noiseGain).connect(music.masterGain);
+    noise.start();
+
+    // ---- HEARTBEAT (kicks in mid-creepy, gets faster) ----
+    function scheduleHeartbeat() {
+      if (!music.started) return;
+      const t = music.currentT * (1 - (music.happyHeal || 0) * 0.95);
+      if (t > 0.35) {
+        const ctx = audio;
+        const tnow = ctx.currentTime;
+        const thump = (offset, vol) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(80, tnow + offset);
+          o.frequency.exponentialRampToValueAtTime(40, tnow + offset + 0.12);
+          g.gain.setValueAtTime(0.0001, tnow + offset);
+          g.gain.exponentialRampToValueAtTime(vol, tnow + offset + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, tnow + offset + 0.18);
+          o.connect(g).connect(music.masterGain);
+          o.start(tnow + offset);
+          o.stop(tnow + offset + 0.25);
+        };
+        thump(0,    0.40 * (0.5 + t));
+        thump(0.16, 0.55 * (0.5 + t));
+      }
+      const bpm = lerp(60, 200, clamp((t - 0.35) / 0.65, 0, 1));
+      const interval = 60000 / Math.max(40, bpm);
+      music.heartbeatTimer = setTimeout(scheduleHeartbeat, interval);
+    }
+    scheduleHeartbeat();
+  }
+
+  function updateMusic(t) {
+    if (!music.started || !audio) return;
+    const h = music.happyHeal || 0;
+    const creepT = t * (1 - h * 0.92);
+    music.currentT = creepT;
+    const a = audio;
+    const now = a.currentTime;
+    const ramp = 0.6;
+
+    let bassFreq = lerp(130.81, 41.20, creepT);
+    if (h > 0) bassFreq = lerp(bassFreq, lerp(196, 261.63, h), h * 0.55);
+    music.bass.frequency.cancelScheduledValues(now);
+    music.bass.frequency.linearRampToValueAtTime(bassFreq, now + ramp);
+    music.bass.type = creepT < 0.5 ? 'sine' : (creepT < 0.85 ? 'triangle' : 'sawtooth');
+    music.bassGain.gain.cancelScheduledValues(now);
+    music.bassGain.gain.linearRampToValueAtTime(lerp(0.18 + creepT * 0.20, 0.22, h), now + ramp);
+
+    // CHORD - C major (C E G) at t=0
+    // -> C minor (C Eb G) around t=0.4
+    // -> diminished (C Eb F#) around t=0.7
+    // -> dissonant cluster (C C#-ish D-ish) at t=1
+    // We do this by re-targeting each note's freq.
+    // Using ratios above C: 1, 5/4, 3/2 (major); 1, 6/5, 3/2 (minor); 1, 6/5, 17/12 (dim); 1, 1.06, 1.12 (cluster)
+    const cFreq = music.chord[0].baseFreq; // 261.63 (C4)
+    let r1 = 1, r2 = 5/4, r3 = 3/2;
+    if (creepT > 0.7) {
+      const k = (creepT - 0.7) / 0.3;
+      r2 = lerp(6/5, 1.06, k);
+      r3 = lerp(17/12, 1.12, k);
+    } else if (creepT > 0.4) {
+      const k = (creepT - 0.4) / 0.3;
+      r2 = 6/5;
+      r3 = lerp(3/2, 17/12, k);
+    } else {
+      const k = creepT / 0.4;
+      r2 = lerp(5/4, 6/5, k);
+      r3 = 3/2;
+    }
+    if (h > 0.15) {
+      r1 = 1;
+      r2 = lerp(r2, 5/4, h);
+      r3 = lerp(r3, 3/2, h);
+    }
+    const targets = [cFreq * r1, cFreq * r2, cFreq * r3];
+    music.chord.forEach((n, i) => {
+      const detune = 1 + (Math.sin((Date.now() / 1000) + i) * creepT * 0.04 * (1 - h));
+      n.osc.frequency.cancelScheduledValues(now);
+      n.osc.frequency.linearRampToValueAtTime(targets[i] * detune, now + ramp);
+      n.osc.type = creepT < 0.6 ? 'sine' : 'triangle';
+      n.gain.gain.cancelScheduledValues(now);
+      n.gain.gain.linearRampToValueAtTime(lerp(0.08 + creepT * 0.06, 0.14, h), now + ramp);
+    });
+
+    music.noiseGain.gain.cancelScheduledValues(now);
+    const noiseAmt = Math.max(0, creepT - 0.1) * 0.30 * (1 - h);
+    music.noiseGain.gain.linearRampToValueAtTime(noiseAmt, now + ramp);
+    music.noiseFilter.frequency.cancelScheduledValues(now);
+    music.noiseFilter.frequency.linearRampToValueAtTime(lerp(1200, 250, creepT), now + ramp);
+    music.noiseFilter.Q.cancelScheduledValues(now);
+    music.noiseFilter.Q.linearRampToValueAtTime(lerp(0.6, 5, creepT), now + ramp);
+  }
+
+  // In happy mode: scary going down (especially negative) = happier music.
+  function updateHappyMusic(n) {
+    const dropped = Math.max(0, happyStartClicks - clicks);
+    const healMax = happyStartClicks + HAPPY_MAX;
+    const heal = clamp(dropped / healMax, 0, 1);
+    const smile = happyT(n);
+    music.happyHeal = Math.min(1, heal * 0.95 + smile * 0.3);
+    const startT = clamp(Math.pow(Math.max(0, happyStartClicks) / MAX, 0.13), 0, 1);
+    const musicT = startT * (1 - music.happyHeal * 0.98);
+    updateMusic(Math.max(0, musicT));
+  }
+
+  function playCreepy(intensity) {
+    if (muted) return;
+    const a = ensureAudio();
+    if (!a) return;
+    const t0 = a.currentTime;
+
+    // base scary tone (lower freq + heavier as it gets creepier)
+    const o1 = a.createOscillator();
+    const g1 = a.createGain();
+    o1.type = 'sawtooth';
+    const baseFreq = 220 - intensity * 170; // 220 -> 50 Hz
+    o1.frequency.setValueAtTime(baseFreq * (1.4 + Math.random()*0.3), t0);
+    o1.frequency.exponentialRampToValueAtTime(Math.max(40, baseFreq * 0.6), t0 + 0.4 + intensity * 0.6);
+    g1.gain.setValueAtTime(0.0001, t0);
+    g1.gain.exponentialRampToValueAtTime(0.18 + intensity * 0.25, t0 + 0.02);
+    g1.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.5 + intensity * 0.5);
+    o1.connect(g1).connect(a.destination);
+    o1.start(t0);
+    o1.stop(t0 + 1.2);
+
+    // dissonant high whisper-screech
+    if (intensity > 0.1) {
+      const o2 = a.createOscillator();
+      const g2 = a.createGain();
+      o2.type = intensity > 0.6 ? 'square' : 'triangle';
+      o2.frequency.setValueAtTime(800 + Math.random() * 400 + intensity * 1200, t0);
+      o2.frequency.linearRampToValueAtTime(200 + Math.random() * 200, t0 + 0.3);
+      g2.gain.setValueAtTime(0.0001, t0);
+      g2.gain.exponentialRampToValueAtTime(0.05 + intensity * 0.18, t0 + 0.04);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3 + intensity * 0.4);
+      o2.connect(g2).connect(a.destination);
+      o2.start(t0);
+      o2.stop(t0 + 0.8);
+    }
+
+    // noise burst (whisper / static) - more as creepier
+    if (intensity > 0.05) {
+      const dur = 0.2 + intensity * 0.6;
+      const buf = a.createBuffer(1, a.sampleRate * dur, a.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i/data.length);
+      }
+      const noise = a.createBufferSource();
+      noise.buffer = buf;
+      const ng = a.createGain();
+      ng.gain.value = 0.05 + intensity * 0.25;
+      const filter = a.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 600 + intensity * 800;
+      filter.Q.value = 5;
+      noise.connect(filter).connect(ng).connect(a.destination);
+      noise.start(t0);
+      noise.stop(t0 + dur);
+    }
+
+    // demonic growl on high intensity
+    if (intensity > 0.5) {
+      const o3 = a.createOscillator();
+      const g3 = a.createGain();
+      o3.type = 'sawtooth';
+      o3.frequency.setValueAtTime(60 + Math.random() * 30, t0);
+      o3.frequency.linearRampToValueAtTime(35, t0 + 0.6);
+      g3.gain.setValueAtTime(0.0001, t0);
+      g3.gain.exponentialRampToValueAtTime(0.35, t0 + 0.05);
+      g3.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.7);
+      o3.connect(g3).connect(a.destination);
+      o3.start(t0);
+      o3.stop(t0 + 0.9);
+    }
+
+    // scream burst on max-ish levels
+    if (intensity > 0.85 && Math.random() < 0.3) {
+      const o4 = a.createOscillator();
+      const g4 = a.createGain();
+      o4.type = 'square';
+      o4.frequency.setValueAtTime(900, t0);
+      o4.frequency.exponentialRampToValueAtTime(180, t0 + 0.5);
+      g4.gain.setValueAtTime(0.0001, t0);
+      g4.gain.exponentialRampToValueAtTime(0.25, t0 + 0.03);
+      g4.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.6);
+      o4.connect(g4).connect(a.destination);
+      o4.start(t0);
+      o4.stop(t0 + 0.7);
+    }
+  }
+
+  // ==== HELPERS ====
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  // mix between several colors based on t (0..1)
+  function colorAt(t) {
+    // Kid-friendly creepy: cute peach -> pale -> sickly green -> dark green ->
+    // ghostly purple -> dark blue-purple. NO blood-like red shades.
+    const stops = [
+      [0.00, [255, 217, 163]],
+      [0.20, [220, 215, 175]],
+      [0.40, [165, 195, 150]],
+      [0.55, [115, 160, 130]],
+      [0.70, [100, 120, 145]],
+      [0.85, [ 80,  70, 130]],
+      [1.00, [ 30,  20,  60]],
+    ];
+    for (let i = 0; i < stops.length - 1; i++) {
+      const [t0, c0] = stops[i];
+      const [t1, c1] = stops[i+1];
+      if (t >= t0 && t <= t1) {
+        const k = (t - t0) / (t1 - t0);
+        return `rgb(${Math.round(lerp(c0[0],c1[0],k))},${Math.round(lerp(c0[1],c1[1],k))},${Math.round(lerp(c0[2],c1[2],k))})`;
+      }
+    }
+    return 'rgb(0,0,0)';
+  }
+  function bgRgbAt(t) {
+    // Kid-friendly creepy background: pale green -> dim grey-green ->
+    // dusky purple-blue -> deep midnight. No blood-red.
+    const stops = [
+      [0.00, [216, 230, 201]],
+      [0.30, [180, 195, 175]],
+      [0.55, [100, 110, 135]],
+      [0.80, [ 40,  35,  80]],
+      [1.00, [  5,   0,  20]],
+    ];
+    for (let i = 0; i < stops.length - 1; i++) {
+      const [t0, c0] = stops[i];
+      const [t1, c1] = stops[i+1];
+      if (t >= t0 && t <= t1) {
+        const k = (t - t0) / (t1 - t0);
+        return [
+          Math.round(lerp(c0[0],c1[0],k)),
+          Math.round(lerp(c0[1],c1[1],k)),
+          Math.round(lerp(c0[2],c1[2],k))
+        ];
+      }
+    }
+    return [0,0,0];
+  }
+  function bgColorAt(t) {
+    const [r,g,b] = bgRgbAt(t);
+    return `rgb(${r},${g},${b})`;
+  }
+  function invertColorAt(t) {
+    // Pick a color that always has high contrast against the background.
+    // We use perceived luminance (Rec. 709) to decide light or dark text.
+    const [r, g, b] = bgRgbAt(t);
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b; // 0..255
+    // If bg is dark, use bright yellow-white. If bg is light, use deep black.
+    return lum < 140 ? 'rgb(255, 240, 100)' : 'rgb(20, 10, 10)';
+  }
+
+  // deterministic-ish pseudo random based on seed (so face is stable per click count)
+  function srand(seed) {
+    let s = seed * 9301 + 49297;
+    return function() {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
+  }
+
+  // ==== APPLY CREEPY LEVEL ====
+  function applyLevel(n) {
+    clearHappyDecor();
+    music.happyHeal = 0;
+    // Power curve: clicks early in the game produce big visible changes,
+    // and it slows down toward the end so 5000 still feels far away.
+    const t = clamp(Math.pow(n / MAX, 0.13), 0, 1);
+    const r = srand(n + 1);             // per-level randomness, but stable
+    // tell the background music how creepy we are
+    updateMusic(t);
+
+    // ---- HEAD ----
+    head.setAttribute('fill', colorAt(t));
+    // head distorts shape a bit
+    const headRy = 80 + Math.sin(n * 0.03) * t * 18;
+    const headRx = 80 - Math.sin(n * 0.05) * t * 14;
+    head.setAttribute('rx', headRx);
+    head.setAttribute('ry', headRy);
+    if (head.tagName === 'circle') {
+      // convert to ellipse style by setting r large enough; but circle ignores rx/ry.
+    }
+    // Actually replace with ellipse attributes if needed - safer: leave as circle, vary r:
+    head.setAttribute('r', 80 + t * 8);
+
+    // ---- EYES ----
+    // pupils get bigger and darker, then turn red
+    const pupilR = 6 + t * 18;
+    lPupil.setAttribute('r', pupilR + r() * t * 4);
+    rPupil.setAttribute('r', pupilR + r() * t * 4);
+    // Kid-friendly creepy: pupils stay dark, then turn glowing PURPLE
+    // (not blood red). Eye whites turn ghostly yellow-green, not bloodshot.
+    const pupilColor = t < 0.6
+      ? '#222'
+      : `rgb(${Math.round(lerp(34, 160, (t-0.6)/0.4))}, ${Math.round(lerp(34, 60, (t-0.6)/0.4))}, ${Math.round(lerp(34, 220, (t-0.6)/0.4))})`;
+    lPupil.setAttribute('fill', pupilColor);
+    rPupil.setAttribute('fill', pupilColor);
+    const whiteColor = t < 0.4
+      ? 'white'
+      : `rgb(${Math.round(255 - (t-0.4)*120)}, ${Math.round(255 - (t-0.4)*60)}, ${Math.round(255 - (t-0.4)*220)})`;
+    lEyeW.setAttribute('fill', whiteColor);
+    rEyeW.setAttribute('fill', whiteColor);
+    // eyes get bigger and asymmetric
+    const lrx = 14 + t * 18 + Math.sin(n*0.1) * t * 4;
+    const lry = 14 + t * 14 - Math.sin(n*0.1) * t * 4;
+    const rrx = 14 + t * 16 - Math.cos(n*0.07) * t * 5;
+    const rry = 14 + t * 16 + Math.cos(n*0.07) * t * 5;
+    lEyeW.setAttribute('rx', lrx); lEyeW.setAttribute('ry', lry);
+    rEyeW.setAttribute('rx', rrx); rEyeW.setAttribute('ry', rry);
+    // eye position drifts (asymmetric / wandering)
+    const lx = -30 + Math.sin(n*0.13) * t * 10 + (r()-0.5) * t * 6;
+    const ly = -15 + Math.cos(n*0.11) * t * 12 + (r()-0.5) * t * 6;
+    const rx = 30 + Math.cos(n*0.09) * t * 10 + (r()-0.5) * t * 6;
+    const ry = -15 + Math.sin(n*0.15) * t * 12 + (r()-0.5) * t * 6;
+    lEyeW.setAttribute('cx', lx); lEyeW.setAttribute('cy', ly);
+    rEyeW.setAttribute('cx', rx); rEyeW.setAttribute('cy', ry);
+    setEyeBases(lx, ly, rx, ry, {
+      maxOff: lerp(5, 11, t),
+      pupilR: pupilR,
+      eyeRx: (lrx + rrx) / 2,
+      blend: 1 - t * 0.2,
+    });
+    // shines fade out
+    const shineOp = clamp(1 - t * 1.6, 0, 1);
+    lShine.setAttribute('opacity', shineOp);
+    rShine.setAttribute('opacity', shineOp);
+    lShine.setAttribute('cx', lx - 2);
+    lShine.setAttribute('cy', ly - 2);
+    rShine.setAttribute('cx', rx - 2);
+    rShine.setAttribute('cy', ry - 2);
+
+    // ---- MOUTH ----
+    // smile -> straight -> frown -> wide gaping
+    // we'll build a path from a few control points
+    const mouthY = 30 + t * 8;
+    const mouthW = 25 + t * 30; // width grows
+    // curve direction: smile (positive) at low t, frown (negative) high t
+    let curve;
+    if (t < 0.3) curve = 15 - t*70;          // smile fading
+    else if (t < 0.6) curve = (t-0.3) * (-50); // frown forming
+    else curve = -15 - (t-0.6)*40;            // big frown / open
+
+    const mouthOpen = t > 0.5;
+    let d;
+    if (!mouthOpen) {
+      d = `M ${-mouthW} ${mouthY} Q 0 ${mouthY + curve} ${mouthW} ${mouthY}`;
+      mouth.setAttribute('fill', 'none');
+    } else {
+      // gaping mouth shape (oval-ish)
+      const openH = (t - 0.5) * 80;
+      d = `M ${-mouthW} ${mouthY}
+           Q 0 ${mouthY - 10} ${mouthW} ${mouthY}
+           Q ${mouthW * 0.6} ${mouthY + openH} 0 ${mouthY + openH + 6}
+           Q ${-mouthW * 0.6} ${mouthY + openH} ${-mouthW} ${mouthY} Z`;
+      mouth.setAttribute('fill', t > 0.75 ? '#1a0030' : '#2a1a40');
+    }
+    mouth.setAttribute('d', d);
+    mouth.setAttribute('stroke', t > 0.7 ? '#000' : '#3a2a4a');
+    mouth.setAttribute('stroke-width', 2 + t * 3);
+
+    // ---- TEETH ----
+    teethG.innerHTML = '';
+    if (t > 0.45) {
+      const numTeeth = Math.floor(2 + (t - 0.45) * 22);
+      const openH = Math.max(10, (t - 0.5) * 80);
+      const startX = -mouthW + 4;
+      const span = (mouthW * 2) - 8;
+      for (let i = 0; i < numTeeth; i++) {
+        const k = i / Math.max(1, numTeeth - 1);
+        const tx = startX + k * span;
+        // top tooth
+        const th = 4 + r() * 8 + t * 8;
+        const tw = (span / numTeeth) * 0.7;
+        const top = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+        const cy = mouthY + 1;
+        top.setAttribute('points', `${tx-tw/2},${cy} ${tx+tw/2},${cy} ${tx},${cy + th}`);
+        top.setAttribute('fill', t > 0.85 ? '#cfcfcf' : '#fff8e0');
+        top.setAttribute('stroke', '#222');
+        top.setAttribute('stroke-width', '0.6');
+        teethG.appendChild(top);
+        // bottom tooth (only when very open)
+        if (t > 0.6) {
+          const bot = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+          const by = mouthY + openH + 4;
+          bot.setAttribute('points', `${tx-tw/2},${by} ${tx+tw/2},${by} ${tx},${by - th}`);
+          bot.setAttribute('fill', t > 0.85 ? '#cfcfcf' : '#fff8e0');
+          bot.setAttribute('stroke', '#222');
+          bot.setAttribute('stroke-width', '0.6');
+          teethG.appendChild(bot);
+        }
+      }
+    }
+
+    // ---- NOSE ----
+    // Starts as a tiny curve, then grows into a long pointy devil/witch
+    // hook nose with a curl at the tip.
+    const noseDrop = t * 28;
+    const hook = Math.max(0, t - 0.35) * 18;
+    nose.setAttribute(
+      'd',
+      `M -4 ${0 + noseDrop * 0.2}
+       Q 0 ${10 + noseDrop} ${4 + hook * 0.5} ${10 + noseDrop * 0.9}
+       Q ${4 + hook} ${4 + noseDrop * 0.6} ${1 + hook * 0.3} ${0 + noseDrop * 0.3}`
+    );
+    nose.setAttribute('stroke', t > 0.55 ? '#3a1a5a' : '#7a5a2a');
+    nose.setAttribute('stroke-width', 2 + t * 2.5);
+    nose.setAttribute('fill', t > 0.6 ? '#3a1a5a' : 'none');
+
+    // ---- BLOOD: removed for kid-friendly mode ----
+    bloodG.innerHTML = '';
+
+    // ---- CRACKS ----
+    // STRAIGHT cracks: each crack is just one straight line, with sometimes a
+    // single sharp kink (like real broken glass), plus an optional small
+    // branch shooting off at an angle. No squiggling.
+    cracksG.innerHTML = '';
+    if (t > 0.4) {
+      const numCracks = Math.floor((t - 0.4) * 18);
+      for (let i = 0; i < numCracks; i++) {
+        const startAng = r() * Math.PI * 2;
+        const startR = 25 + r() * 50;
+        const sx = Math.cos(startAng) * startR;
+        const sy = Math.sin(startAng) * startR;
+        // crack goes mostly outward from center
+        const dirAng = startAng + (r() - 0.5) * 0.4;
+        const totalLen = 18 + r() * 28;
+        // 50/50: single straight crack, or one with a single kink
+        let path = `M ${sx.toFixed(1)} ${sy.toFixed(1)}`;
+        let endX, endY;
+        if (r() < 0.5) {
+          endX = sx + Math.cos(dirAng) * totalLen;
+          endY = sy + Math.sin(dirAng) * totalLen;
+          path += ` L ${endX.toFixed(1)} ${endY.toFixed(1)}`;
+        } else {
+          const half = totalLen * (0.4 + r() * 0.3);
+          const midX = sx + Math.cos(dirAng) * half;
+          const midY = sy + Math.sin(dirAng) * half;
+          const kinkAng = dirAng + (r() < 0.5 ? -1 : 1) * (0.4 + r() * 0.5);
+          endX = midX + Math.cos(kinkAng) * (totalLen - half);
+          endY = midY + Math.sin(kinkAng) * (totalLen - half);
+          path += ` L ${midX.toFixed(1)} ${midY.toFixed(1)} L ${endX.toFixed(1)} ${endY.toFixed(1)}`;
+        }
+        // optional small straight branch from the end
+        if (r() < 0.4) {
+          const bAng = dirAng + (r() < 0.5 ? -1 : 1) * (0.7 + r() * 0.6);
+          const bLen = 5 + r() * 8;
+          const bx = endX + Math.cos(bAng) * bLen;
+          const by = endY + Math.sin(bAng) * bLen;
+          path += ` M ${endX.toFixed(1)} ${endY.toFixed(1)} L ${bx.toFixed(1)} ${by.toFixed(1)}`;
+        }
+        const c = document.createElementNS('http://www.w3.org/2000/svg','path');
+        c.setAttribute('d', path);
+        c.setAttribute('stroke', '#000');
+        c.setAttribute('stroke-width', 0.6 + r() * 1.0);
+        c.setAttribute('fill', 'none');
+        c.setAttribute('stroke-linecap', 'round');
+        c.setAttribute('stroke-linejoin', 'miter');
+        c.setAttribute('opacity', 0.55 + r() * 0.4);
+        cracksG.appendChild(c);
+      }
+    }
+
+    // ---- EXTRA EYES ----
+    extraG.innerHTML = '';
+    if (t > 0.65) {
+      const numExtra = Math.floor((t - 0.65) * 30);
+      for (let i = 0; i < numExtra; i++) {
+        const ang = r() * Math.PI * 2;
+        const dist = 30 + r() * 50;
+        const ex = Math.cos(ang) * dist;
+        const ey = Math.sin(ang) * dist;
+        const er = 3 + r() * 6;
+        const w = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+        w.setAttribute('cx', ex); w.setAttribute('cy', ey);
+        w.setAttribute('rx', er); w.setAttribute('ry', er * 0.85);
+        w.setAttribute('fill', t > 0.85 ? '#ffb' : 'white');
+        w.setAttribute('stroke', '#000');
+        w.setAttribute('stroke-width', '0.8');
+        extraG.appendChild(w);
+        const p = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        p.setAttribute('cx', ex + (r()-0.5)*er*0.6);
+        p.setAttribute('cy', ey + (r()-0.5)*er*0.6);
+        p.setAttribute('r', er * 0.45);
+        p.setAttribute('fill', t > 0.8 ? '#5030a0' : '#222');
+        extraG.appendChild(p);
+      }
+    }
+
+    // ---- HORNS ----
+    // Two main horns starting at level ~1500 (t = 0.3).
+    // More side/back horns sprouting as creepiness rises.
+    hornsG.innerHTML = '';
+    if (t > 0.3) {
+      // angle is measured around the head circle; 0 = top.
+      // baseR slightly outside the head radius.
+      const drawHornAt = (angDeg, len, width = 1) => {
+        const h = document.createElementNS('http://www.w3.org/2000/svg','path');
+        const a = (angDeg - 90) * Math.PI / 180; // SVG: 0deg = right; we want 0 = up
+        const baseR = 78;
+        // base of horn
+        const bx = Math.cos(a) * baseR;
+        const by = Math.sin(a) * baseR;
+        // tip of horn (out from head)
+        const tx = Math.cos(a) * (baseR + len);
+        const ty = Math.sin(a) * (baseR + len);
+        // mid bend (curve toward "up-and-out")
+        const bendA = a - 0.35;
+        const mx = Math.cos(bendA) * (baseR + len * 0.55);
+        const my = Math.sin(bendA) * (baseR + len * 0.55);
+        // perpendicular for horn thickness at base
+        const px = -Math.sin(a) * 6 * width;
+        const py =  Math.cos(a) * 6 * width;
+        h.setAttribute('d',
+          `M ${(bx-px).toFixed(1)} ${(by-py).toFixed(1)}
+           Q ${mx.toFixed(1)} ${my.toFixed(1)} ${tx.toFixed(1)} ${ty.toFixed(1)}
+           Q ${(mx+px*0.5).toFixed(1)} ${(my+py*0.5).toFixed(1)} ${(bx+px).toFixed(1)} ${(by+py).toFixed(1)} Z`);
+        h.setAttribute('fill', '#222');
+        h.setAttribute('stroke', '#000');
+        h.setAttribute('stroke-width', '1.2');
+        hornsG.appendChild(h);
+      };
+
+      // main top horns (always when t > 0.3)
+      const mainLen = 14 + (t - 0.3) * 180;
+      drawHornAt(-25, mainLen, 1.2);
+      drawHornAt( 25, mainLen, 1.2);
+
+      // side horns at t > 0.5
+      if (t > 0.5) {
+        const sideLen = 10 + (t - 0.5) * 110;
+        drawHornAt(-60, sideLen, 0.9);
+        drawHornAt( 60, sideLen, 0.9);
+      }
+
+      // back/spread horns at t > 0.7
+      if (t > 0.7) {
+        const backLen = 8 + (t - 0.7) * 120;
+        drawHornAt(-90, backLen, 0.8);
+        drawHornAt( 90, backLen, 0.8);
+      }
+
+      // extra little horns sprouting all over at t > 0.85
+      if (t > 0.85) {
+        const extraCount = Math.floor((t - 0.85) * 40);
+        for (let i = 0; i < extraCount; i++) {
+          const ang = -120 + r() * 240; // skip bottom of head
+          const len = 6 + r() * 14;
+          drawHornAt(ang, len, 0.5 + r() * 0.3);
+        }
+      }
+    }
+
+    // ---- WARP / DISPLACEMENT ----
+    // Keep displacement OFF so the eye outlines, mouth, and head edge stay
+    // smooth instead of looking like squiggly wavy lines.
+    disp.setAttribute('scale', 0);
+    turb.setAttribute('baseFrequency', '0.005');
+    turb.setAttribute('seed', (n % 50));
+
+    // ---- BACKGROUND ----
+    body.style.background = bgColorAt(t);
+
+    // ---- TITLE / TEXT ----
+    if (n === 0) {
+      counter.textContent = "Click the face!";
+    } else if (n < MAX) {
+      const phrases = [
+        "It feels weird...",
+        "Stop... please.",
+        "It sees you.",
+        "Don't blink.",
+        "It's smiling at you.",
+        "DON'T STOP NOW.",
+        "Help me.",
+        "Why?",
+        "I'M ALWAYS WATCHING",
+        "MORE",
+      ];
+      const idx = clamp(Math.floor(t * phrases.length), 0, phrases.length - 1);
+      counter.textContent = phrases[idx];
+    } else {
+      counter.textContent = "MAXIMUM CREEPY";
+    }
+    levelEl.textContent = n;
+    positionCornerHints();
+    updateSideWidgets();
+    applyEyeLook();
+  }
+
+  function getFaceRadius() {
+    const r = parseFloat(head.getAttribute('r'));
+    return Number.isFinite(r) ? r : 80;
+  }
+
+  function positionCornerHints() {
+    const r = getFaceRadius();
+    const off = ((r * Math.SQRT1_2) / 100) * 50;
+    const set = (cls, left, top, right, bottom) => {
+      const el = stage.querySelector('.cornerHint.' + cls);
+      if (!el) return;
+      el.style.left = left != null ? left + '%' : '';
+      el.style.top = top != null ? top + '%' : '';
+      el.style.right = right != null ? right + '%' : '';
+      el.style.bottom = bottom != null ? bottom + '%' : '';
+    };
+    set('tl', 50 - off, 50 - off, null, null);
+    set('tr', null, 50 - off, 50 - off, null);
+    set('bl', 50 - off, null, null, 50 - off);
+    set('br', null, null, 50 - off, 50 - off);
+  }
+
+  // Corner of the round face (not the square box around it).
+  function isFaceCorner(e) {
+    const p = stageToSvg(e);
+    const r = getFaceRadius();
+    if (dist(p.x, p.y, 0, 0) > r) return false;
+    const cornerMin = r * 0.46;
+    return Math.abs(p.x) >= cornerMin && Math.abs(p.y) >= cornerMin;
+  }
+
+  // Happy visuals ramp up faster than linear — early clicks feel big, still smooth to 500.
+  function happyT(n) {
+    return clamp(Math.pow(n / HAPPY_MAX, 0.2), 0, 1);
+  }
+
+  function clearHappyDecor() {
+    happyBack.innerHTML = '';
+    happyFront.innerHTML = '';
+    angelWings.innerHTML = '';
+    angelHalos.innerHTML = '';
+  }
+
+  function svgEl(tag, attrs) {
+    const el = document.createElementNS(SVG_NS, tag);
+    if (attrs) {
+      Object.keys(attrs).forEach((k) => {
+        if (attrs[k] != null) el.setAttribute(k, attrs[k]);
+      });
+    }
+    return el;
+  }
+
+  function drawSparkle(g, cx, cy, size, rot, fill) {
+    const s = size;
+    const p = svgEl('path', {
+      d: 'M ' + cx + ' ' + (cy - s) +
+        ' L ' + (cx + s * 0.28) + ' ' + (cy - s * 0.28) +
+        ' L ' + (cx + s) + ' ' + cy +
+        ' L ' + (cx + s * 0.28) + ' ' + (cy + s * 0.28) +
+        ' L ' + cx + ' ' + (cy + s) +
+        ' L ' + (cx - s * 0.28) + ' ' + (cy + s * 0.28) +
+        ' L ' + (cx - s) + ' ' + cy +
+        ' L ' + (cx - s * 0.28) + ' ' + (cy - s * 0.28) + ' Z',
+      fill,
+      transform: rot ? 'rotate(' + rot + ' ' + cx + ' ' + cy + ')' : null,
+    });
+    g.appendChild(p);
+  }
+
+  function drawHeart(g, cx, cy, scale, fill) {
+    const h = svgEl('path', {
+      d: 'M ' + cx + ' ' + (cy + 4 * scale) +
+        ' C ' + (cx - 10 * scale) + ' ' + (cy - 2 * scale) +
+        ' ' + (cx - 10 * scale) + ' ' + (cy - 12 * scale) +
+        ' ' + cx + ' ' + (cy - 8 * scale) +
+        ' C ' + (cx + 10 * scale) + ' ' + (cy - 12 * scale) +
+        ' ' + (cx + 10 * scale) + ' ' + (cy - 2 * scale) +
+        ' ' + cx + ' ' + (cy + 4 * scale),
+      fill,
+    });
+    g.appendChild(h);
+  }
+
+  function drawMusicNote(g, cx, cy, scale, fill) {
+    g.appendChild(svgEl('ellipse', {
+      cx, cy: cy + 3 * scale, rx: 5 * scale, ry: 4 * scale, fill,
+    }));
+    g.appendChild(svgEl('path', {
+      d: 'M ' + (cx + 4 * scale) + ' ' + (cy + 3 * scale) +
+        ' L ' + (cx + 4 * scale) + ' ' + (cy - 18 * scale) +
+        ' Q ' + (cx + 14 * scale) + ' ' + (cy - 20 * scale) +
+        ' ' + (cx + 12 * scale) + ' ' + (cy - 10 * scale),
+      fill: 'none', stroke: fill, 'stroke-width': (2 * scale).toFixed(1),
+    }));
+  }
+
+  function drawCloudPuff(g, cx, cy, scale, op) {
+    [[0, 0], [-14, 4], [14, 4], [-7, -6], [7, -6]].forEach(([dx, dy]) => {
+      g.appendChild(svgEl('ellipse', {
+        cx: cx + dx * scale, cy: cy + dy * scale,
+        rx: (12 + Math.abs(dx) * 0.3) * scale,
+        ry: (8 + Math.abs(dy) * 0.4) * scale,
+        fill: 'rgba(255,255,255,' + op.toFixed(2) + ')',
+      }));
+    });
+  }
+
+  function angelStage(n, start, span) {
+    return clamp((n - start) / span, 0, 1);
+  }
+
+  function drawAngelWing(side, wingT) {
+    const sign = side === 'left' ? -1 : 1;
+    const layers = [
+      { spread: 0.72, lift: 0.12, op: 0.4 },
+      { spread: 0.9, lift: 0.06, op: 0.55 },
+      { spread: 1.05, lift: 0, op: 0.7 },
+    ];
+    layers.forEach((L, i) => {
+      const w = (6 + wingT * 95) * L.spread;
+      const h = 8 + wingT * 105;
+      const p = document.createElementNS(SVG_NS, 'path');
+      p.setAttribute('d',
+        'M ' + (sign * 44) + ' ' + (8 + i * 3) +
+        ' Q ' + (sign * w * 0.45) + ' ' + (-h * 0.35) +
+        ' ' + (sign * w) + ' ' + (h * L.lift) +
+        ' Q ' + (sign * w * 0.65) + ' ' + (h * 0.55) +
+        ' ' + (sign * 52) + ' ' + (28 + i * 2) + ' Z');
+      const a = (L.op * wingT).toFixed(2);
+      p.setAttribute('fill', 'rgba(255,255,255,' + a + ')');
+      p.setAttribute('stroke', 'rgba(255, 220, 130, ' + (0.35 + wingT * 0.55).toFixed(2) + ')');
+      p.setAttribute('stroke-width', (1.2 + wingT * 1.2).toFixed(1));
+      angelWings.appendChild(p);
+    });
+  }
+
+  function drawHaloRing(cx, cy, rx, ry, rotDeg, ringOp) {
+    const e = document.createElementNS(SVG_NS, 'ellipse');
+    e.setAttribute('cx', cx);
+    e.setAttribute('cy', cy);
+    e.setAttribute('rx', rx);
+    e.setAttribute('ry', ry);
+    e.setAttribute('fill', 'none');
+    e.setAttribute('stroke', 'rgba(255, 240, 160, ' + ringOp.toFixed(2) + ')');
+    e.setAttribute('stroke-width', (2 + ringOp * 4).toFixed(1));
+    if (rotDeg) e.setAttribute('transform', 'rotate(' + rotDeg + ' ' + cx + ' ' + cy + ')');
+    angelHalos.appendChild(e);
+  }
+
+  // Happy decor unlocks slowly by click count (wings, halos, hearts, crown, etc.).
+  function drawHappyAngelExtras(n) {
+    clearHappyDecor();
+    if (n <= 0) return;
+
+    const sparkles = angelStage(n, 20, 70);
+    if (sparkles > 0) {
+      [[-70, -45, 12], [72, -38, 10], [-58, 50, 9], [65, 48, 11], [0, -95, 14]].forEach(([x, y, sz], i) => {
+        drawSparkle(happyFront, x, y, (3 + sparkles * sz * 0.35), i * 37, 'rgba(255,240,120,' + (sparkles * 0.85).toFixed(2) + ')');
+      });
+    }
+
+    const hearts = angelStage(n, 55, 85);
+    if (hearts > 0) {
+      drawHeart(happyFront, -58, 8, 0.55 + hearts * 0.45, 'rgba(255,90,120,' + (hearts * 0.75).toFixed(2) + ')');
+      drawHeart(happyFront, 58, 8, 0.55 + hearts * 0.45, 'rgba(255,90,120,' + (hearts * 0.75).toFixed(2) + ')');
+      if (hearts > 0.6) {
+        drawHeart(happyFront, 0, 52, 0.35 + hearts * 0.25, 'rgba(255,120,150,' + (hearts * 0.5).toFixed(2) + ')');
+      }
+    }
+
+    const sun = angelStage(n, 80, 100);
+    if (sun > 0) {
+      for (let i = 0; i < 12; i++) {
+        const ang = (i / 12) * Math.PI * 2 - Math.PI / 2;
+        const x1 = Math.cos(ang) * (52 + sun * 18);
+        const y1 = Math.sin(ang) * (52 + sun * 18);
+        const x2 = Math.cos(ang) * (95 + sun * 35);
+        const y2 = Math.sin(ang) * (95 + sun * 35);
+        happyBack.appendChild(svgEl('line', {
+          x1, y1, x2, y2,
+          stroke: 'rgba(255, 230, 100, ' + (sun * 0.45).toFixed(2) + ')',
+          'stroke-width': (2 + sun * 2).toFixed(1),
+          'stroke-linecap': 'round',
+        }));
+      }
+    }
+
+    const notes = angelStage(n, 150, 110);
+    if (notes > 0) {
+      [[-85, -20], [88, -5], [-78, 35], [82, 42]].forEach(([x, y], i) => {
+        drawMusicNote(happyFront, x, y - notes * 8, 0.7 + notes * 0.35, 'rgba(120,80,200,' + (notes * 0.8).toFixed(2) + ')');
+      });
+    }
+
+    const halo1 = angelStage(n, 40, 110);
+    if (halo1 > 0) {
+      drawHaloRing(0, -70 - halo1 * 14, 18 + halo1 * 48, 4 + halo1 * 9, 0, halo1 * 0.75);
+    }
+
+    const wings = angelStage(n, 120, 160);
+    if (wings > 0) {
+      drawAngelWing('left', wings);
+      drawAngelWing('right', wings);
+    }
+
+    const halo2 = angelStage(n, 220, 100);
+    if (halo2 > 0) {
+      drawHaloRing(0, -86 - halo2 * 10, 28 + halo2 * 38, 5 + halo2 * 6, 22, halo2 * 0.55);
+      drawHaloRing(0, -56, 20 + halo2 * 28, 4 + halo2 * 5, -18, halo2 * 0.4);
+    }
+
+    const orbit = angelStage(n, 320, 120);
+    if (orbit > 0) {
+      const orbitR = 40 + orbit * 35;
+      [[-1, 0.15], [1, 0.55], [-1, 0.95]].forEach(([sx, phase]) => {
+        const ang = phase * Math.PI * 2 + orbit * 0.6;
+        drawHaloRing(
+          Math.cos(ang) * orbitR * sx,
+          -18 + Math.sin(ang) * 22,
+          6 + orbit * 10, 3 + orbit * 4,
+          (ang * 57) | 0,
+          orbit * 0.55);
+      });
+    }
+
+    const rainbow = angelStage(n, 260, 130);
+    if (rainbow > 0) {
+      const colors = ['#ff6b6b', '#ffa94d', '#ffe066', '#69db7c', '#4dabf7', '#9775fa'];
+      colors.forEach((col, i) => {
+        const arc = svgEl('path', {
+          d: 'M ' + (-75 + i * 3) + ' 30 A ' + (80 + i * 5) + ' ' + (55 + i * 4) + ' 0 0 1 ' + (75 - i * 3) + ' 30',
+          fill: 'none',
+          stroke: col,
+          'stroke-width': (3 + rainbow * 2).toFixed(1),
+          opacity: (0.15 + rainbow * 0.55).toFixed(2),
+        });
+        happyBack.appendChild(arc);
+      });
+    }
+
+    const crown = angelStage(n, 280, 100);
+    if (crown > 0) {
+      const cy = -78 - crown * 8;
+      happyFront.appendChild(svgEl('path', {
+        d: 'M -28 ' + cy + ' L -18 ' + (cy - 16) + ' L -6 ' + (cy - 4) +
+          ' L 0 ' + (cy - 20) + ' L 6 ' + (cy - 4) + ' L 18 ' + (cy - 16) +
+          ' L 28 ' + cy + ' L 22 ' + (cy + 10) + ' L -22 ' + (cy + 10) + ' Z',
+        fill: 'rgba(255, 215, 60, ' + (0.4 + crown * 0.6).toFixed(2) + ')',
+        stroke: 'rgba(200, 150, 20, ' + (0.5 + crown * 0.5).toFixed(2) + ')',
+        'stroke-width': '2',
+      }));
+      for (let j = -2; j <= 2; j++) {
+        drawSparkle(happyFront, j * 12, cy - 6, 3 + crown * 4, j * 20, 'rgba(255,255,200,' + crown.toFixed(2) + ')');
+      }
+    }
+
+    const flowers = angelStage(n, 360, 90);
+    if (flowers > 0) {
+      [[-62, -35], [62, -35]].forEach(([fx, fy]) => {
+        for (let p = 0; p < 5; p++) {
+          const a = (p / 5) * Math.PI * 2;
+          happyFront.appendChild(svgEl('ellipse', {
+            cx: fx + Math.cos(a) * (8 + flowers * 5),
+            cy: fy + Math.sin(a) * (8 + flowers * 5),
+            rx: 5 + flowers * 3, ry: 7 + flowers * 4,
+            fill: 'rgba(255, 150, 200, ' + (flowers * 0.7).toFixed(2) + ')',
+          }));
+        }
+        happyFront.appendChild(svgEl('circle', {
+          cx: fx, cy: fy, r: 5 + flowers * 3,
+          fill: 'rgba(255, 220, 80, ' + (flowers * 0.9).toFixed(2) + ')',
+        }));
+      });
+    }
+
+    const burst = angelStage(n, 420, 80);
+    if (burst > 0) {
+      for (let i = 0; i < 8; i++) {
+        const ang = (i / 8) * Math.PI * 2 + burst;
+        drawSparkle(happyFront,
+          Math.cos(ang) * (100 + burst * 15),
+          Math.sin(ang) * (75 + burst * 12),
+          4 + burst * 6, i * 45,
+          'rgba(255,255,255,' + (burst * 0.9).toFixed(2) + ')');
+      }
+    }
+
+    if (clicks < -40) {
+      const cloudT = clamp((-clicks - 40) / 460, 0, 1);
+      const count = 1 + (cloudT * 5) | 0;
+      for (let i = 0; i < count; i++) {
+        const c = document.createElementNS(SVG_NS, 'circle');
+        const ang = (i / 7) * Math.PI * 2 + cloudT * 2;
+        c.setAttribute('cx', Math.cos(ang) * (80 + cloudT * 35));
+        c.setAttribute('cy', Math.sin(ang) * (45 + cloudT * 25) - 8);
+        c.setAttribute('r', 2 + cloudT * 5);
+        c.setAttribute('fill', 'rgba(255,255,255,' + (cloudT * 0.6).toFixed(2) + ')');
+        angelHalos.appendChild(c);
+      }
+    }
+
+    if (clicks < -60) {
+      const puffT = clamp((-clicks - 60) / 440, 0, 1);
+      drawCloudPuff(happyFront, -35, 78 + puffT * 8, 0.9 + puffT * 0.4, 0.35 + puffT * 0.45);
+      drawCloudPuff(happyFront, 35, 78 + puffT * 8, 0.9 + puffT * 0.4, 0.35 + puffT * 0.45);
+      if (puffT > 0.4) drawCloudPuff(happyFront, 0, 92, 1.1 + puffT * 0.3, 0.4 + puffT * 0.4);
+    }
+  }
+
+  function applyHappyLevel(n) {
+    const t = happyT(n);
+    updateHappyMusic(n);
+
+    const headFill = `rgb(${255}, ${Math.round(lerp(217, 200, t))}, ${Math.round(lerp(163, 140, t))})`;
+    head.setAttribute('fill', headFill);
+    head.setAttribute('r', 80 + t * 12);
+    face.style.transform = 'scale(' + (1 + t * 0.14).toFixed(3) + ')';
+
+    const lx = -30, ly = -15 + t * 4, rx = 30, ry = -15 + t * 4;
+    const eyeR = 14 + t * 14;
+    lEyeW.setAttribute('cx', lx); lEyeW.setAttribute('cy', ly);
+    rEyeW.setAttribute('cx', rx); rEyeW.setAttribute('cy', ry);
+    lEyeW.setAttribute('rx', eyeR); lEyeW.setAttribute('ry', eyeR);
+    rEyeW.setAttribute('rx', eyeR); rEyeW.setAttribute('ry', eyeR);
+    lEyeW.setAttribute('fill', 'white');
+    rEyeW.setAttribute('fill', 'white');
+    lPupil.setAttribute('r', 5 + t * 4);
+    rPupil.setAttribute('r', 5 + t * 4);
+    lPupil.setAttribute('fill', '#222');
+    rPupil.setAttribute('fill', '#222');
+    lShine.setAttribute('opacity', 1);
+    rShine.setAttribute('opacity', 1);
+    const shineR = 2 + t * 3;
+    lShine.setAttribute('r', shineR);
+    rShine.setAttribute('r', shineR);
+    setEyeBases(lx, ly, rx, ry, {
+      maxOff: lerp(5, 9, t),
+      pupilR: 5 + t * 4,
+      eyeRx: eyeR,
+      blend: 1,
+    });
+
+    const mouthY = 22 + t * 8;
+    const mouthW = 16 + t * 38;
+    const smile = 12 + t * 58;
+    mouth.setAttribute('d', `M ${-mouthW} ${mouthY} Q 0 ${mouthY + smile} ${mouthW} ${mouthY}`);
+    mouth.setAttribute('fill', 'none');
+    mouth.setAttribute('stroke', '#3a2a4a');
+    mouth.setAttribute('stroke-width', 3 + t * 2);
+
+    nose.setAttribute('d', 'M -3 0 Q 0 12 3 0');
+    nose.setAttribute('stroke', '#7a5a2a');
+    nose.setAttribute('stroke-width', '2');
+    nose.setAttribute('fill', 'none');
+
+    teethG.innerHTML = '';
+    bloodG.innerHTML = '';
+    cracksG.innerHTML = '';
+    extraG.innerHTML = '';
+    hornsG.innerHTML = '';
+    disp.setAttribute('scale', 0);
+    drawHappyAngelExtras(n);
+
+    if (t > 0.03) {
+      const blush = Math.min(1, (t - 0.03) / 0.4);
+      [[-50, 10], [50, 10]].forEach(([cx, cy]) => {
+        const e = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        e.setAttribute('cx', cx);
+        e.setAttribute('cy', cy);
+        e.setAttribute('rx', 10 + t * 14);
+        e.setAttribute('ry', 7 + t * 10);
+        e.setAttribute('fill', 'rgba(255,100,130,' + (0.2 + blush * 0.45).toFixed(2) + ')');
+        extraG.appendChild(e);
+      });
+    }
+
+    const r = 255;
+    const g = Math.round(lerp(230, 255, t));
+    const b = Math.round(lerp(200, 255, t));
+    body.style.background =
+      `linear-gradient(165deg, rgb(255,248,220), rgb(${r},${g},${b}), rgb(255,${210 + Math.round(t * 45)},${160 + Math.round(t * 95)}))`;
+    stage.style.boxShadow = '0 0 ' + Math.round(20 + t * 55) + 'px rgba(255,220,100,' + (0.25 + t * 0.55).toFixed(2) + ')';
+
+    if (n === 0) {
+      counter.textContent = 'Happy mode! Click the face — scary goes DOWN!';
+    } else if (n < HAPPY_MAX) {
+      const cheers = ['Yay!', 'Nice!', 'So happy!', 'Keep going!', 'Smiles!', 'Woo!'];
+      counter.textContent = cheers[n % cheers.length] + ' · happy ' + n + '/' + HAPPY_MAX;
+    } else {
+      counter.textContent = 'MAXIMUM HAPPY!';
+    }
+    levelEl.textContent = clicks;
+    positionCornerHints();
+    updateSideWidgets();
+    applyEyeLook();
+  }
+
+  function enterHappyMode() {
+    if (happyMode || endingFired || victoryLobby || gameBeaten) return;
+    happyMode = true;
+    happyClicks = 0;
+    happyStartClicks = clicks;
+    clearTimeout(goodEndingTimer);
+    clearTimeout(holdTimer);
+    stage.classList.add('happyMode');
+    playHappyChord();
+    applyHappyLevel(0);
+    flash.style.background = '#ffe680';
+    flash.style.opacity = '0.45';
+    setTimeout(() => { flash.style.opacity = '0'; }, 200);
+  }
+
+  function onHappyClick() {
+    happyClicks++;
+    clicks--;
+    applyHappyLevel(happyClicks);
+    playHappyChord();
+    if (happyClicks % 8 === 0) playMegaJingle(happyClicks % 30);
+
+    stage.classList.remove('bigshake');
+    void stage.offsetWidth;
+    stage.classList.add('shake');
+
+    flash.style.background = '#fff9c4';
+    flash.style.opacity = String(0.15 + happyT(happyClicks) * 0.4);
+    setTimeout(() => { flash.style.opacity = '0'; }, 60);
+
+    if (checkHappyEndings()) return;
+  }
+
+  function checkHappyEndings() {
+    if (clicks <= HAPPY_CLOUD_AT) {
+      triggerEnding('cloudhappy');
+      return true;
+    }
+    if (happyClicks >= HAPPY_MAX) {
+      triggerEnding('cornerhappy');
+      return true;
+    }
+    return false;
+  }
+
+  const BUTTON_MOOD = {
+    pet: 'happy', tickle: 'happy', wink: 'happy', scare: 'scary',
+    hug: 'happy', boogie: 'happy', sing: 'happy', lucky: 'happy', joke: 'happy',
+    zap: 'scary', bell: 'happy', spark: 'happy', sleep: 'happy',
+    party: 'happy', gift: 'happy', star: 'happy', dizzy: 'scary',
+    bonk: 'scary', cookie: 'happy', boo: 'scary', nice: 'happy',
+    love: 'happy', cool: 'happy', mad: 'scary', cry: 'happy',
+    dance: 'happy', yum: 'happy', think: 'happy', hi: 'happy',
+  };
+  const BTN_MOOD_STEP = 45;
+
+  function moodFeedback(mood) {
+    if (happyMode) {
+      return mood === 'happy'
+        ? ['He loves it!', 'So happy!', 'Yay button!', 'More smiles!']
+        : ['Uh oh...', 'Too spooky!', 'He flinched!', 'Not that one!'];
+    }
+    return mood === 'scary'
+      ? ['Getting creepier...', 'Spooky button!', 'He looks weird...', 'Yikes!']
+      : ['A bit nicer...', 'He likes that!', 'Softer...', 'Phew!'];
+  }
+
+  function applyButtonMood(mood) {
+    if (endingFired || victoryLobby || gameBeaten || !mood) return;
+    if (happyMode) {
+      if (mood === 'happy') {
+        if (happyClicks < HAPPY_MAX) {
+          happyClicks++;
+          clicks -= BTN_MOOD_STEP;
+          applyHappyLevel(happyClicks);
+          updateHappyMusic(happyClicks);
+        }
+      } else {
+        clicks += BTN_MOOD_STEP;
+        applyHappyLevel(happyClicks);
+        updateHappyMusic(happyClicks);
+      }
+      checkHappyEndings();
+    } else {
+      if (mood === 'scary') {
+        if (clicks < MAX) {
+          clicks += BTN_MOOD_STEP;
+          applyLevel(clicks);
+          armGoodEndingTimer();
+        }
+      } else {
+        clicks = Math.max(0, clicks - BTN_MOOD_STEP);
+        applyLevel(clicks);
+      }
+    }
+    updateSideWidgets();
+  }
+
+  // ==== ENDINGS ====
+  // Each ending has: title, credits[], and an optional "intro" callback
+  // for jumpscares / happy faces / sound design.
+  const ENDINGS = {
+    bad: {
+      title: 'BAD ENDING',
+      intro: (els) => {
+        // 1.3s of dread, then jumpscare frame + stacked screams
+        setTimeout(() => {
+          els.jumpscare.classList.add('show');
+          playCreepy(1);
+          setTimeout(() => playCreepy(1), 90);
+          setTimeout(() => playCreepy(1), 220);
+        }, 1300);
+        setTimeout(() => els.jumpscare.classList.remove('show'), 1900);
+      },
+      titleAt: 1900,
+      creditsAt: 4500,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['role', 'Directed by'], ['p', 'Bo'],
+        ['role', 'Created by'], ['p', 'Bo'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Music'], ['p', 'The Web Audio API'],
+        ['role', 'Starring'],
+        ['p', 'The Smiley Face\n...as Himself'],
+        ['p', 'The Devil\n...also as Himself'],
+        ['role', 'Special Thanks'],
+        ['p', 'Mom'], ['p', 'Dad'], ['p', 'The Family Dog'],
+        ['p', 'Whoever clicked 5000 times'],
+        ['p', 'The mute button (you ignored it)'],
+        ['role', 'Filmed in front of a live studio audience'],
+        ['p', '(There was no audience.)'],
+        ['role', 'No clippeys were harmed'],
+        ['p', '(...okay maybe one.)'],
+        ['end', 'THE END'],
+      ],
+    },
+    good: {
+      title: 'GOOD ENDING',
+      intro: (els) => {
+        // gentle happy chord
+        playHappyChord();
+        setTimeout(() => els.happy.classList.add('show'), 200);
+      },
+      titleAt: 1500,
+      creditsAt: 4000,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You waited. He calmed down.'],
+        ['p', 'You did not click past 5000.'],
+        ['p', 'A true friend.'],
+        ['role', 'Directed by'], ['p', 'Bo (the patient one)'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Starring'],
+        ['p', 'The Smiley Face\n...as Himself, happy again'],
+        ['role', 'Special Thanks'],
+        ['p', 'Patience'], ['p', 'Restraint'],
+        ['p', 'The mute button you almost pressed'],
+        ['role', 'Lesson'],
+        ['p', 'Maybe stop clicking sometimes.'],
+        ['end', 'THE END :)'],
+      ],
+    },
+    cornerhappy: {
+      title: 'CORNER HAPPY ENDING',
+      intro: (els) => {
+        playHappyChord();
+        setTimeout(() => playHappyChord(), 200);
+        setTimeout(() => els.happy.classList.add('show'), 300);
+      },
+      titleAt: 1500,
+      creditsAt: 4200,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You clicked the corner.'],
+        ['p', 'He turned happy.'],
+        ['p', 'You clicked 500 times and made him SUPER happy!'],
+        ['role', 'Directed by'], ['p', 'Bo (corner clicker)'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Starring'],
+        ['p', 'The Smiley Face\n...as Himself, happiest ever'],
+        ['role', 'Special Thanks'],
+        ['p', 'Corners'], ['p', 'Smiles'], ['p', '500 clicks of joy'],
+        ['end', 'THE HAPPY END :)'],
+      ],
+    },
+    cloudhappy: {
+      title: 'CLOUD ENDING',
+      intro: (els) => {
+        playMegaJingle(12);
+        playHappyChord();
+        setTimeout(() => els.happy.classList.add('show'), 250);
+      },
+      titleAt: 1400,
+      creditsAt: 4000,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You floated so happy the scary meter hit -500.'],
+        ['p', 'You floated through on a cloud.'],
+        ['p', 'Clippey is sky-high happy now.'],
+        ['role', 'Directed by'], ['p', 'Bo (cloud surfer)'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Starring'],
+        ['p', 'The Cloud\n...as Itself'],
+        ['p', 'The Smiley Face\n...on vacation in the sky'],
+        ['role', 'Special Thanks'],
+        ['p', 'Fluffy clouds'], ['p', 'Negative scary'], ['p', 'Happy clicks'],
+        ['end', 'CLOUD THE END ☁'],
+      ],
+    },
+    silent: {
+      title: 'SILENT ENDING',
+      intro: () => {
+        // hard cut all music
+        if (music.masterGain && audio) {
+          const now = audio.currentTime;
+          music.masterGain.gain.cancelScheduledValues(now);
+          music.masterGain.gain.setValueAtTime(0, now);
+        }
+      },
+      titleAt: 1800,
+      creditsAt: 5000,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You hit MUTE.'],
+        ['p', 'He was screaming.'],
+        ['p', 'Now you cannot hear him.'],
+        ['role', 'Directed by'], ['p', 'Silence'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Sound Design'],
+        ['p', '(none)'],
+        ['role', 'Special Thanks'],
+        ['p', 'The mute button'],
+        ['p', 'Your speakers'],
+        ['p', 'Whoever lives upstairs'],
+        ['end', 'THE END'],
+      ],
+    },
+    true: {
+      title: 'TRUE ENDING',
+      intro: () => {
+        // sparkly ascending chord
+        playTrueEndingChord();
+      },
+      titleAt: 1500,
+      creditsAt: 4500,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You typed his name.'],
+        ['p', 'B - O.'],
+        ['p', 'He smiles. He knew you knew.'],
+        ['role', 'Directed by'], ['p', 'BO'],
+        ['role', 'Created by'], ['p', 'BO'],
+        ['role', 'Starring'], ['p', 'BO'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Special Thanks'],
+        ['p', 'Bo'], ['p', 'Bo'], ['p', 'Bo'],
+        ['p', 'Whoever found this secret'],
+        ['end', 'THE TRUE END'],
+      ],
+    },
+    rage: {
+      title: 'RAGE ENDING',
+      intro: () => {
+        // angry burst
+        playCreepy(1); setTimeout(() => playCreepy(1), 120);
+      },
+      titleAt: 1200,
+      creditsAt: 3500,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You clicked TOO FAST.'],
+        ['p', 'He woke up early.'],
+        ['p', 'He was not ready.'],
+        ['role', 'Directed by'], ['p', 'Adrenaline'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Special Thanks'],
+        ['p', 'Your finger muscles'],
+        ['p', 'Your mouse'],
+        ['p', 'Slow down maybe?'],
+        ['end', 'THE END'],
+      ],
+    },
+    slow: {
+      title: 'SLOW ENDING',
+      intro: () => playSlowChord(),
+      titleAt: 2000,
+      creditsAt: 4800,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You waited.'],
+        ['p', 'Then you clicked ONE time.'],
+        ['p', 'He appreciated the break.'],
+        ['role', 'Directed by'], ['p', 'Chill'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Special Thanks'],
+        ['p', 'Snails'], ['p', 'Turtles'], ['p', 'Naps'],
+        ['end', '...THE END...'],
+      ],
+    },
+    baby: {
+      title: 'BABY ENDING',
+      intro: (els) => {
+        playHappyChord();
+        setTimeout(() => els.happy.classList.add('show'), 200);
+      },
+      titleAt: 1500,
+      creditsAt: 4000,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You clicked his NAME, not his face.'],
+        ['p', 'He is still a little baby smiley.'],
+        ['role', 'Directed by'], ['p', 'Bo (gentle edition)'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Special Thanks'],
+        ['p', 'The title text'], ['p', 'Curiosity'],
+        ['end', 'THE END (tiny)'],
+      ],
+    },
+    night: {
+      title: 'NIGHT ENDING',
+      intro: () => playNightChord(),
+      titleAt: 2200,
+      creditsAt: 5000,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You never clicked.'],
+        ['p', 'He fell asleep waiting.'],
+        ['p', 'Zzz...'],
+        ['role', 'Directed by'], ['p', 'Dreams'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Special Thanks'],
+        ['p', 'Your pillow'], ['p', 'The moon'],
+        ['end', 'zzz... THE END ...zzz'],
+      ],
+    },
+    wake: {
+      title: 'WAKE ENDING',
+      intro: () => playWakeChord(),
+      titleAt: 1600,
+      creditsAt: 4400,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You waited a long time.'],
+        ['p', 'Then ONE click woke him up.'],
+        ['p', 'Good morning!'],
+        ['role', 'Directed by'], ['p', 'Sunrise'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Special Thanks'],
+        ['p', 'Alarm clocks'], ['p', 'Breakfast'],
+        ['end', 'GOOD MORNING END'],
+      ],
+    },
+    clip: {
+      title: 'CLIP ENDING',
+      intro: () => playTrueEndingChord(),
+      titleAt: 1500,
+      creditsAt: 4500,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You typed C-L-I-P.'],
+        ['p', 'Half his name. He still loves you.'],
+        ['role', 'Directed by'], ['p', 'Bo'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Special Thanks'],
+        ['p', 'Keyboards'], ['p', 'Spelling class'],
+        ['end', 'CLIP! THE END PEY!'],
+      ],
+    },
+    left: {
+      title: 'LEFT ENDING',
+      intro: () => {
+        playCreepy(0.4);
+        setTimeout(() => playCreepy(0.6), 200);
+      },
+      titleAt: 1300,
+      creditsAt: 4000,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'You only clicked his LEFT side.'],
+        ['p', 'His right side feels lonely.'],
+        ['role', 'Directed by'], ['p', 'The Left Half'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Starring'],
+        ['p', 'Left Eye\n...as Himself'],
+        ['p', 'Right Eye\n...wondering what happened'],
+        ['role', 'Special Thanks'],
+        ['p', 'Left clicks only'],
+        ['end', 'THE LEFT END'],
+      ],
+    },
+  };
+
+  function makeActionEnding(title, triggerLine, starName, hueSeed) {
+    const hue = (hueSeed * 53.7) % 360;
+    return {
+      title: title,
+      hue,
+      titleAt: 1200,
+      creditsAt: 3600,
+      intro: () => playMegaJingle(hueSeed),
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', triggerLine],
+        ['p', 'You found a bonus ending by doing something extra!'],
+        ['role', 'Directed by'], ['p', starName],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Starring'], ['p', starName + '\n...as Itself'],
+        ['end', title.replace(' ENDING', '') + '!'],
+      ],
+    };
+  }
+
+  Object.assign(ENDINGS, {
+    nose: makeActionEnding('NOSE ENDING', 'You clicked his nose 12 times.', 'The Nose', 11),
+    hug: makeActionEnding('HUG ENDING', 'You held the face for 3 seconds.', 'A Warm Hug', 12),
+    spin: makeActionEnding('SPIN ENDING', 'You scrolled on the face 20 times.', 'The Scroll Wheel', 13),
+    hi: makeActionEnding('HI ENDING', 'You typed H-I.', 'A Friendly Hello', 14),
+    help: makeActionEnding('HELP ENDING', 'You typed H-E-L-P.', 'The Help Button', 15),
+    eye: makeActionEnding('EYE ENDING', 'You clicked his left eye 10 times.', 'Left Eyeball', 16),
+    counter: makeActionEnding('COUNTER ENDING', 'You clicked the click counter 12 times.', 'The Counter', 17),
+    sky: makeActionEnding('SKY ENDING', 'You clicked the background 8 times.', 'The Sky', 18),
+    polite: makeActionEnding('POLITE ENDING', 'You right-clicked the face.', 'Right Click', 19),
+    space: makeActionEnding('SPACE ENDING', 'You pressed SPACE 25 times.', 'The Space Bar', 21),
+    top: makeActionEnding('TOP ENDING', 'You clicked the top of his head 12 times.', 'His Hair', 22),
+    mouth: makeActionEnding('MOUTH ENDING', 'You clicked his mouth 12 times.', 'The Mouth', 23),
+    echo: makeActionEnding('ECHO ENDING', 'You muted then unmuted super fast.', 'Echo', 24),
+    center: makeActionEnding('CENTER ENDING', 'You clicked dead center 20 times.', 'The Center', 26),
+    code: makeActionEnding('CODE ENDING', 'You pressed UP UP DOWN DOWN.', 'The Secret Code', 27),
+    smile: makeActionEnding('SMILE ENDING', 'You typed S-M-I-L-E.', 'A Big Smile', 28),
+    chin: makeActionEnding('CHIN ENDING', 'You clicked his chin 12 times.', 'The Chin', 29),
+    dance: makeActionEnding('DANCE ENDING', 'You typed D-A-N-C-E.', 'Dance Moves', 30),
+    love: makeActionEnding('LOVE ENDING', 'You typed L-O-V-E.', 'Love', 31),
+    cool: makeActionEnding('COOL ENDING', 'You typed C-O-O-L.', 'Coolness', 32),
+    wow: makeActionEnding('WOW ENDING', 'You typed W-O-W.', 'Wow', 33),
+    ear: makeActionEnding('EAR ENDING', 'You clicked near his ears 10 times.', 'The Ears', 34),
+    ring: makeActionEnding('RING ENDING', 'You typed R-I-N-G.', 'A Bell Ring', 35),
+    ctrl: makeActionEnding('CTRL ENDING', 'You ctrl-clicked the face.', 'Control Key', 36),
+    ghost: makeActionEnding('GHOST ENDING', 'You alt-clicked the face.', 'A Ghost', 37),
+  });
+
+  // ==== 100 MORE ENDINGS (mega1 – mega100) ====
+  const MEGA_THEMES = [
+    'Cosmic','Pizza','Sock','Moon','Banana','Robot','Ghost','Dino','Wizard',
+    'Ninja','Taco','Cloud','Star','Frog','Dragon','Cupcake','Rocket','Pirate',
+    'Unicorn','Slime','Yet','Pickle','Llama','Comet','Jelly','Muffin','Koala',
+  ];
+  const MEGA_FLAVORS = [
+    'You found a secret nobody expected.',
+    'Clippey blinks twice. That means yes.',
+    'The face whispers: nice typing.',
+    'A cosmic high-five from Bo.',
+    'Your mouse deserves a medal.',
+    'Somewhere, a pizza cheers for you.',
+    'The socks in your drawer are proud.',
+    'Moon dust sprinkles on the screen.',
+    'Banana power activated.',
+    'Beep boop — ending unlocked.',
+    'A ghost claps with no hands.',
+    'Rawr, but politely.',
+    'Wizard hat tips to you.',
+    'Silent ninja nod.',
+    'Extra cheese on this ending.',
+    'You floated through on a cloud.',
+    'A star sticker appears. You earned it.',
+    'Ribbit! That is applause.',
+    'Dragon smoke spells THANK YOU.',
+    'Sprinkles fall upward.',
+    'Rocket fuel: your curiosity.',
+    'Arr! Treasure ending ahoy.',
+    'Unicorn sparkles everywhere.',
+    'Squish. Slimy but friendly.',
+    'Yeti gives a thumbs up.',
+    'Pickle jar opens. Secret inside.',
+    'Llama hums a tiny song.',
+    'Comet tail draws a smiley.',
+    'Wobble wobble jelly ending.',
+    'Fresh muffin smell (imaginary).',
+    'Koala hug from Australia.',
+    'You typed like a champion.',
+    'Secret code accepted. Wow.',
+    'The left eye winks. The right eye jealous.',
+    'You waited. Time is a friend.',
+    'Mute button salutes you.',
+    'Title text does a little dance.',
+    'Shift-click power move.',
+    'Double-click combo complete.',
+    'Hint bar glows gold.',
+    'Counter numbers cheer.',
+    'Clippey remembers this forever.',
+    'Ending collector level up.',
+    'Secret #? You are unstoppable.',
+    'The creepy is still kid-friendly.',
+    'No clippeys harmed. Pinky promise.',
+    'Bo says: good find!',
+    'Cursor says: nice code hunt.',
+    'Your keyboard is legendary.',
+    'Your finger is a hero.',
+    'Spooky but silly. Perfect.',
+    'Purple eyes twinkle.',
+    'Green fog clears for one second.',
+    'Music hiccups then smiles.',
+    'Credits roll like a movie.',
+    'Popcorn optional but recommended.',
+    'Director yells: CUT! Beautiful.',
+    'Behind the scenes: you win.',
+    'Easter egg basket overfloweth.',
+    'Achievement unlocked vibes.',
+    'Hall of fame entry submitted.',
+    'Sticker chart gets a star.',
+    'High five through the screen.',
+    'The dog wags tail. Good ending.',
+    'Mom says bedtime... after this.',
+    'Dad says one more ending only.',
+    'Grandma would love this.',
+    'Little sibling jealous.',
+    'Best ending? All of them.',
+    'Worst ending? Still fun.',
+    'True ending? Maybe mega100.',
+    'Bad ending? Not this one.',
+    'Good ending? Yes please.',
+    'Silent ending? Shhh nearby.',
+    'Lucky ending? Maybe next run.',
+    'Slow ending? Tortoise approved.',
+    'Baby ending? Aw.',
+    'Night ending? Zzz nearby.',
+    'Wake ending? Morning sun.',
+    'Clip ending? Half name gang.',
+    'Left ending? Right side waves.',
+    'Rage ending? Calm down champ.',
+    'Mega ending? MEGA YES.',
+    'Five hundred endings? You are here.',
+    'One more secret? Always.',
+    'Thanks for playing Clippey.',
+    'See you on the next playthrough.',
+    'The face waves goodbye.',
+    'THE END (but make it mega).',
+    'Roll credits. Roll dice. Roll fun.',
+    'You are the main character.',
+    'Plot twist: you win again.',
+    'Sequel: Clippey 2 someday.',
+    'Post-credits scene: a wink.',
+    'Fin.',
+  ];
+
+  const MEGA_COUNT = 500;
+
+  function megaWordHasNestedEnding(word, allWords, extraBlocks) {
+    if (!word || word.length < 3) return true;
+    for (const v of extraBlocks) {
+      if (v.length >= 3 && word.includes(v)) return true;
+    }
+    for (const v of allWords) {
+      if (v === word || v.length < 3) continue;
+      if (word.includes(v)) return true;
+    }
+    return false;
+  }
+
+  function buildMegaWordList(n) {
+    const reserved = new Set(['BO', 'CLIP', 'PEY', 'ZAP']);
+    const typedSecrets = ['HI', 'HELP', 'SMILE', 'DANCE', 'LOVE', 'COOL', 'WOW', 'RING'];
+    const extraBlocks = [...reserved, ...typedSecrets];
+    const bad = (w) => !w || w.length < 3 || reserved.has(w) || w.endsWith('BO');
+    const banks = [
+      'CAT DOG FOX OWL BEE ANT PIG COW BAT RAT HEN YAK EMU ELK APE MOLE TOAD CRAB SNAIL WORM FISH BASS TUNA CLAM SQUID WHALE SHARK EEL RAY FROG NEWT DUCK SWAN HAWK CROW DOVE WOLF BEAR LION TIGER ZEBRA PANDA CAMEL LLAMA OTTER SEAL GECKO IGUANA SLOTH VULTURE PARROT ROBIN SPARROW TURTLE RABBIT HAMSTER GERBIL FERRET MOUSE LIZARD PYTHON COBRA EAGLE FALCON HERON PELICAN FLAMINGO PENGUIN OSTRICH GIRAFFE RHINO HIPPO CHEETAH LEOPARD JAGUAR COUGAR LYNX BISON DEER MOOSE REINDEER DONKEY MULE GOAT SHEEP LAMB COLT STALLION MARE PONY RAVEN MAGPIE JAY CARDINAL FINCH CANARY GOLDFISH BETTA KOI CARP TROUT SALMON MARLIN SWORDFISH STARFISH JELLYFISH SEAHORSE MANATEE WALRUS NARWHAL ORCA PLATYPUS WOMBAT KANGAROO KOALA WALLABY',
+      'PIE CAKE TACO SOUP STEW CURRY SALAD BREAD TOAST BAGEL MUFFIN DONUT COOKIE BROWNIE CANDY CHOCOLATE GUMDROP LOLLIPOP POPCORN PRETZEL CHIP CRACKER WAFFLE PANCAKE SYRUP HONEY BUTTER CHEESE YOGURT MILK JUICE SODA LEMONADE TEA COFFEE COCOA SMOOTHIE SHAKE SUNDAE PARFAIT PUDDING JELLO NOODLE RAMEN PASTA PIZZA BURGER HOTDOG CORN DOG NACHOS FRIES KETCHUP MUSTARD RELISH PICKLE OLIVE AVOCADO TOMATO POTATO CARROT CELERY ONION GARLIC PEPPER MUSHROOM BROCCOLI SPINACH LETTUCE CABBAGE BEAN PEA CORN RICE NOODLE NOUGAT CINNAMON VANILLA SUGAR FLOUR DOUGH BATTER CRUST FILLING TOPPING SPRINKLE FROSTING ICING GLAZE CARAMEL TOFFEE FUDGE MARSHMALLOW WHIPPED CREAM',
+      'SUN MOON STAR CLOUD RAIN SNOW WIND STORM FOG MIST DEW FROST HAIL SLEET RAINBOW THUNDER LIGHTNING SKY SPACE COMET METEOR GALAXY PLANET ORBIT ROCKET SHUTTLE SATELLITE ASTEROID NEBULA COSMOS UNIVERSE GRAVITY ORBITAL LUNAR SOLAR ECLIPSE SUNRISE SUNSET TWILIGHT DAWN DUSK HORIZON VALLEY CANYON MOUNTAIN HILL CLIFF CAVE FOREST JUNGLE DESERT BEACH OCEAN RIVER LAKE POND STREAM WATERFALL ISLAND VOLCANO MEADOW PRAIRIE TUNDRA GLACIER ICEBERG WAVE TIDE CURRENT REEF LAGOON BAY COAST SHORE SANDSTONE GRANITE CRYSTAL GEMSTONE DIAMOND RUBY EMERALD SAPPHIRE AMETHYST OPAL PEARL QUARTZ MARBLE',
+      'ROCK STONE PEBBLE BOULDER BRICK BLOCK PLANK BEAM NAIL SCREW HAMMER WRENCH DRILL SAW LADDER ROPE CHAIN HOOK PULLEY GEAR WHEEL AXLE ENGINE MOTOR BATTERY WIRE CIRCUIT ROBOT COMPUTER KEYBOARD MOUSE SCREEN MONITOR SPEAKER HEADPHONE CAMERA PHONE TABLET NOTEBOOK PENCIL ERASER CRAYON MARKER PAINT BRUSH CANVAS EASEL SCULPTURE STATUE CASTLE TOWER BRIDGE FORTRESS GATE DOOR WINDOW ROOF CHIMNEY FENCE GARDEN FLOWER ROSE TULIP DAISY LILY ORCHID VIOLET PANSY SUNFLOWER DAFFODIL LOTUS CACTUS VINE MOSS FERN ALGAE SEAWEED KELP CORAL',
+      'HAPPY SILLY MEGA TINY HUGE FAST SLOW COOL WILD BRAVE SWEET BOLD LUCKY CUTE ZANY GOOFY WACKY DAPPY NINJA MAGIC MYSTIC ANCIENT FUTURE RETRO MODERN CLASSIC EPIC LEGEND ULTIMATE SECRET HIDDEN LOST FOUND ANCIENT CURSED BLESSED HOLY SHADOW GLOWING SHINY SPARKLY GLITTERY FUZZY FLUFFY SQUISHY BOUNCY WIGGLY JIGGLY WOBLY SILLY GOOFY CLEVER SMART WISE FUNNY JOLLY MERRY CHEERFUL GIGGLY SNICKERY WHISPER SHOUT SPARKLE TWINKLE DAZZLE GLIMMER SHIMMER FLICKER FLASH BLAZE FLAME SPARK EMBER COAL ASH SMOKE STEAM BUBBLE FOAM FIZZ POP CRACKLE SNAP RUSTLE SWISH SWOOSH WHOOSH ZOOM ZIP ZAP ZING PING DING RING CHIME BELLS',
+      'KING QUEEN PRINCE PRINCESS KNIGHT WIZARD WITCH WARLOCK FAIRY ELF DWARF TROLL GOBLIN ORC DRAGON GRIFFIN PHOENIX UNICORN MERMAID PIRATE SAILOR CAPTAIN CREW TREASURE MAP COMPASS SWORD SHIELD ARMOR HELMET CROWN THRONE CASTLE DUNGEON DRAGON SLAYER HERO VILLAIN SIDEKICK MENTOR GUARDIAN CHAMPION LEGEND MYTH FABLE TALE STORY CHAPTER QUEST ADVENTURE JOURNEY VOYAGE EXPEDITION MISSION TASK CHALLENGE TRIAL PUZZLE RIDDLE SECRET CODE CLUE KEY LOCK CHEST VAULT PORTAL GATEWAY BRIDGE PATH TRAIL ROAD LANE STREET AVENUE PLAZA MARKET SHOP STORE BAKERY LIBRARY SCHOOL CLASSROOM DESK CHAIR TABLE SHELF BOOK PAGE STORY POEM SONG DANCE MUSIC MELODY RHYTHM BEAT TEMPO HARMONY CHORD NOTE TUNE ANTHEM BALLAD LULLABY JINGLE CHORUS VERSE',
+      'ROBOT ALIEN MONSTER GHOST ZOMBIE VAMPIRE WEREWOLF MUMMY SKELETON SPIRIT PHANTOM SHADE WRAITH POLTERGEIST BOOGEYMAN BIGFOOT YETI LOCH NESS CHUPACABRA KRAKEN HYDRA CYCLOPS MINOTAUR MEDUSA GORGON BASILISK CHIMERA CERBERUS PEGASUS CENTAUR SATYR NYMPH DRYAD SPRITE PIXIE GREMLIN IMP DEMON ANGEL CHERUB SERAPH HALO WINGS FEATHER PLUME QUILL SCROLL TOME SPELL CHARM CURSE POTION ELIXIR BREW DISTILL ALCHEMY ENCHANT RUNE SIGIL TALISMAN AMULET RELIC ARTIFACT RELIC SHRINE TEMPLE ALTAR OFFERING CANDLE TORCH LANTERN LAMP GLOW LIGHT BEAM RAY GLARE GLEAM GLOW SHINE BRIGHT DIM DARK NIGHT DAY MORNING NOON EVENING MIDNIGHT HOUR MINUTE SECOND MOMENT INSTANT ETERNITY FOREVER ALWAYS NEVER MAYBE PERHAPS',
+      'SOCCER BASEBALL BASKETBALL FOOTBALL TENNIS GOLF HOCKEY RUGBY CRICKET VOLLEYBALL BADMINTON TABLETENNIS SKATEBOARD SURFBOARD SKI SNOWBOARD SLED SCOOTER BICYCLE TRICYCLE WAGON CART WHEELBARROW KITE BALLOON FRISBEE YOYO TOP SPINNER MARBLE JACKS DICE CARDS CHECKERS CHESS BOARDGAME PUZZLE LEGO BLOCK TOY DOLL ACTIONFIGURE STUFFED PLUSH TEDDY PUPPET THEATER COSTUME MASK CAPE CLOAK ROBE SUIT TUXEDO DRESS SKIRT SHIRT PANTS SOCKS SHOES BOOTS SNEAKERS SANDALS SLIPPERS HAT CAP HELMET SCARF GLOVES MITTENS COAT JACKET HOODIE SWEATER VEST TIE BELT BUCKLE ZIPPER BUTTON POCKET PURSE WALLET BACKPACK SUITCASE LUGGAGE TRUNK CHEST DRAWER CLOSET WARDROBE MIRROR FRAME PICTURE PHOTO ALBUM POSTER BANNER FLAG PENNANT TROPHY MEDAL RIBBON PRIZE AWARD GIFT PRESENT SURPRISE PARTY CELEBRATION FESTIVAL CARNIVAL PARADE FIREWORKS CONFETTI BALLOON STREAMER',
+      'MOM DAD SISTER BROTHER AUNT UNCLE COUSIN GRANDMA GRANDPA FAMILY FRIEND BUDDY PAL CHUM MATE PARTNER TEAMMATE NEIGHBOR GUEST HOST VISITOR TRAVELER EXPLORER PIONEER INVENTOR ARTIST WRITER POET ACTOR SINGER DANCER CHEF BAKER FARMER GARDENER BUILDER MAKER CREATOR DESIGNER ENGINEER SCIENTIST DOCTOR NURSE TEACHER COACH REFEREE UMPIRE JUDGE MAYOR SHERIFF DETECTIVE SPY AGENT RANGER SCOUT CAMPER HIKER CLIMBER DIVER SWIMMER RUNNER JUMPER THROWER CATCHER KICKER SHOOTER SCORER WINNER LOSER PLAYER COACH FAN CHEER LEADER MASCOT CROWD STADIUM ARENA FIELD COURT TRACK POOL GYM ARENA PLAYGROUND PARK SWING SLIDE SEESAW SANDBOX MONKEYBARS CLIMBING',
+    ];
+    const candidates = [];
+    const seen = new Set();
+    for (const bank of banks) {
+      for (const raw of bank.split(/\s+/)) {
+        const w = raw.toUpperCase().replace(/[^A-Z]/g, '');
+        if (bad(w) || seen.has(w)) continue;
+        seen.add(w);
+        candidates.push(w);
+      }
+    }
+    const filtered = candidates.filter(
+      (w) => !megaWordHasNestedEnding(w, candidates, extraBlocks)
+    );
+    return filtered.slice(0, n);
+  }
+
+  function megaFlavorLine(i, word) {
+    const extra = MEGA_FLAVORS[(i - 1) % MEGA_FLAVORS.length];
+    if (!word) return extra;
+    return 'You typed ' + word + '! ' + extra;
+  }
+
+  function megaCreditsList(i, triggerHint, triggerVal) {
+    const word = triggerHint === 'word' ? String(triggerVal).toUpperCase() : '';
+    const theme = word || MEGA_THEMES[(i - 1) % MEGA_THEMES.length];
+    let triggerLine = 'You discovered a hidden path.';
+    if (triggerHint === 'word') triggerLine = 'Type the word: ' + word;
+    if (triggerHint === 'pey') triggerLine = 'Type P-E-Y.';
+    if (triggerHint === 'right') triggerLine = 'Click the right side ' + triggerVal + ' times in a row.';
+    if (triggerHint === 'hint') triggerLine = 'Click the creepy meter bar ' + triggerVal + ' times.';
+    if (triggerHint === 'mute') triggerLine = 'Hit MUTE at creepy level ' + triggerVal + '.';
+    if (triggerHint === 'title') triggerLine = 'Click CLIPPEY title ' + triggerVal + ' times (stay under 50 face clicks).';
+    if (triggerHint === 'shift') triggerLine = 'Shift-click the face at 500+ creepy.';
+    if (triggerHint === 'dbl') triggerLine = 'Double-click the face ' + triggerVal + ' times fast.';
+    if (triggerHint === 'pause') triggerLine = 'Wait 3 seconds, then click at 1500+ creepy.';
+    if (triggerHint === 'zap') triggerLine = 'Type Z-A-P.';
+    const titleName = word || theme.toUpperCase();
+    return {
+      title: titleName + ' ENDING #' + i,
+      word,
+      triggerHint,
+      triggerVal,
+      credits: [
+        ['h2', 'CLIPPEY'],
+        ['p', 'Mega secret ending ' + i + ' of ' + MEGA_COUNT + '.'],
+        ['p', megaFlavorLine(i, word)],
+        ['p', triggerLine],
+        ['role', 'Directed by'], ['p', (word || theme) + ' Studios'],
+        ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+        ['role', 'Starring'],
+        ['p', word ? (word + ' the Word\n...as Itself') : (theme + '\n...as Itself')],
+        ['role', 'Special Thanks'], ['p', word ? ('Everyone who loves ' + word) : theme],
+        ['end', (word || 'MEGA') + ' THE END'],
+      ],
+    };
+  }
+
+  function makeMegaCfg(i, triggerHint, triggerVal) {
+    const hue = (i * 137.508) % 360;
+    const built = megaCreditsList(i, triggerHint, triggerVal);
+    return {
+      title: built.title,
+      word: built.word,
+      triggerHint,
+      triggerVal,
+      hue,
+      titleAt: 1100 + (i % 8) * 140,
+      creditsAt: 3000 + (i % 9) * 260,
+      intro: () => playMegaJingle(i),
+      credits: built.credits,
+    };
+  }
+
+  const MEGA_KEY_MAP = {};
+  const MEGA_MUTE_MAP = {};
+  const MEGA_TITLE_MAP = {};
+  let MEGA_RIGHT_ID = null;
+  let MEGA_HINT_ID = null;
+  let MEGA_SHIFT_ID = null;
+  let MEGA_DBL_ID = null;
+  let MEGA_DBL_NEED = 0;
+  let MEGA_PAUSE_ID = null;
+  let MEGA_PEY_ID = null;
+  let MEGA_ZAP_ID = null;
+
+  (function installMegaEndings() {
+    const MEGA_SPECIALS = 29;
+    const keyCount = MEGA_COUNT - MEGA_SPECIALS;
+    const words = buildMegaWordList(keyCount);
+    words.forEach((word, idx) => {
+      const i = idx + 1;
+      const id = 'mega' + i;
+      MEGA_KEY_MAP[word] = id;
+      ENDINGS[id] = makeMegaCfg(i, 'word', word);
+    });
+    let s = keyCount + 1;
+    MEGA_PEY_ID = 'mega' + s;
+    ENDINGS[MEGA_PEY_ID] = makeMegaCfg(s++, 'pey', 'PEY');
+    MEGA_RIGHT_ID = 'mega' + s;
+    MEGA_RIGHT_NEED = 15;
+    ENDINGS[MEGA_RIGHT_ID] = makeMegaCfg(s++, 'right', MEGA_RIGHT_NEED);
+    MEGA_HINT_ID = 'mega' + s;
+    ENDINGS[MEGA_HINT_ID] = makeMegaCfg(s++, 'hint', 5);
+    [50, 100, 200, 400, 600, 800, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4250].forEach((lv) => {
+      const id = 'mega' + s;
+      MEGA_MUTE_MAP[lv] = id;
+      ENDINGS[id] = makeMegaCfg(s++, 'mute', lv);
+    });
+    [8, 10, 12, 15, 18, 20, 25, 30].forEach((tc) => {
+      const id = 'mega' + s;
+      MEGA_TITLE_MAP[tc] = id;
+      ENDINGS[id] = makeMegaCfg(s++, 'title', tc);
+    });
+    MEGA_SHIFT_ID = 'mega' + s;
+    ENDINGS[MEGA_SHIFT_ID] = makeMegaCfg(s++, 'shift', 500);
+    MEGA_DBL_ID = 'mega' + s;
+    MEGA_DBL_NEED = 8;
+    ENDINGS[MEGA_DBL_ID] = makeMegaCfg(s++, 'dbl', MEGA_DBL_NEED);
+    MEGA_PAUSE_ID = 'mega' + s;
+    ENDINGS[MEGA_PAUSE_ID] = makeMegaCfg(s++, 'pause', 3);
+    MEGA_ZAP_ID = 'mega' + s;
+    ENDINGS[MEGA_ZAP_ID] = makeMegaCfg(s++, 'zap', 'ZAP');
+  })();
+  const ENDING_TOTAL = Object.keys(ENDINGS).length;
+  const ENDINGS_SAVE_KEY = 'clippeyGotEndings';
+  const FULL_RESET_FLAG = 'clippeyFullReset';
+  const gotEndings = new Set();
+  let continueShowTimers = [];
+
+  const CLIPPEY_STORAGE_KEYS = [
+    ENDINGS_SAVE_KEY,
+    'clippeyBeaten',
+    'clippeyResetTest537',
+    FULL_RESET_FLAG,
+  ];
+
+  function stripHardRestartFromUrl() {
+    try {
+      const url = new URL(location.href);
+      url.searchParams.delete('hardrestart');
+      url.searchParams.delete('_');
+      const qs = url.searchParams.toString();
+      history.replaceState(null, '', url.pathname + (qs ? '?' + qs : '') + url.hash);
+    } catch (_) {
+      history.replaceState(null, '', location.href.split('?')[0].split('#')[0] + location.hash);
+    }
+  }
+
+  function resetAllEndingsStorage() {
+    gotEndings.clear();
+    try {
+      CLIPPEY_STORAGE_KEYS.forEach((k) => {
+        localStorage.removeItem(k);
+        sessionStorage.removeItem(k);
+      });
+      localStorage.setItem(ENDINGS_SAVE_KEY, '[]');
+    } catch (_) {}
+  }
+
+  function loadGotEndings() {
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.get('hardrestart') === '1' || sessionStorage.getItem(FULL_RESET_FLAG) === '1') {
+        resetAllEndingsStorage();
+        stripHardRestartFromUrl();
+        return;
+      }
+      const raw = localStorage.getItem(ENDINGS_SAVE_KEY);
+      if (!raw || raw === '[]') return;
+      const list = JSON.parse(raw);
+      if (!Array.isArray(list) || list.length === 0) return;
+      list.forEach((id) => { if (id) gotEndings.add(id); });
+    } catch (_) {
+      resetAllEndingsStorage();
+    }
+  }
+
+  function recordGotEnding(id) {
+    if (!id) return;
+    const wasNew = !gotEndings.has(id);
+    gotEndings.add(id);
+    if (wasNew) {
+      try {
+        localStorage.setItem(ENDINGS_SAVE_KEY, JSON.stringify([...gotEndings]));
+      } catch (_) {}
+    }
+    updateEndingsBar();
+  }
+
+  function updateEndingsBar() {
+    const n = gotEndings.size;
+    const label = document.getElementById('endingsBarLabel');
+    if (label) {
+      label.innerHTML = 'ENDINGS <span id="endingsGot">' + n + '</span>/<span id="endingsTotal">' + ENDING_TOTAL + '</span>';
+    }
+    const fillEl = document.getElementById('endingsFill');
+    if (fillEl) fillEl.style.width = (ENDING_TOTAL ? (n / ENDING_TOTAL) * 100 : 0) + '%';
+  }
+
+  function hideEndingContinue() {
+    document.getElementById('endingContinue')?.classList.remove('visible');
+    continueShowTimers.forEach((id) => clearTimeout(id));
+    continueShowTimers = [];
+  }
+
+  function showEndingContinue() {
+    document.getElementById('endingContinue')?.classList.add('visible');
+  }
+
+  function scheduleEndingContinue(cfg) {
+    hideEndingContinue();
+    const times = [
+      cfg.titleAt + 1800,
+      cfg.creditsAt,
+      cfg.creditsAt + 2500,
+    ];
+    times.forEach((ms) => {
+      continueShowTimers.push(setTimeout(showEndingContinue, ms));
+    });
+  }
+
+  function hasAllEndings() {
+    return gotEndings.size >= ENDING_TOTAL;
+  }
+
+  function armWakeEndingTimer() {
+    clearTimeout(wakeWaitTimer);
+    wakeWaitEnabled = false;
+    wakeWaitTimer = setTimeout(() => {
+      wakeWaitEnabled = true;
+    }, 25000);
+  }
+
+  function resetGameTrackers() {
+    secretBuf = '';
+    arrowBuf = '';
+    spaceCount = 0;
+    rageTimes = [];
+    leftStreak = 0;
+    rightStreak = 0;
+    titleClicks = 0;
+    hintClicks = 0;
+    dblTimes = [];
+    noseClicks = 0;
+    eyeClicks = 0;
+    topClicks = 0;
+    mouthClicks = 0;
+    chinClicks = 0;
+    centerClicks = 0;
+    earClicks = 0;
+    counterClicks = 0;
+    bgClicks = 0;
+    scrollCount = 0;
+  }
+
+  function closeEndingOverlay() {
+    const overlay = document.getElementById('endingOverlay');
+    const jumpscare = document.getElementById('jumpscare');
+    const happy = document.getElementById('happyFace');
+    const titleEl = document.getElementById('endingTitle');
+    const creditsEl = document.getElementById('credits');
+    if (!overlay) return;
+    overlay.classList.remove('show');
+    overlay.className = '';
+    overlay.style.cssText = 'display:none;opacity:0;pointer-events:none;';
+    overlay.setAttribute('aria-hidden', 'true');
+    titleEl.classList.remove('show');
+    titleEl.style.cssText = '';
+    creditsEl.classList.remove('show');
+    creditsEl.style.cssText = '';
+    creditsEl.onanimationend = null;
+    jumpscare.classList.remove('show');
+    happy.classList.remove('show');
+    hideEndingContinue();
+  }
+
+  function restartGame() {
+    closeEndingOverlay();
+    victoryLobby = false;
+    gameBeaten = false;
+    body.classList.remove('victoryLobby', 'gameBeaten');
+    endingFired = false;
+    clicks = 0;
+    happyMode = false;
+    happyClicks = 0;
+    happyStartClicks = 0;
+    clearHappyDecor();
+    stage.classList.remove('happyMode');
+    face.classList.remove('spinning');
+    stage.classList.remove('shake', 'bigshake');
+    face.style.transform = '';
+    face.style.opacity = '';
+    counter.style.opacity = '';
+    body.style.background = '';
+    stage.style.boxShadow = '';
+    if (warpGroup) {
+      warpGroup.style.opacity = '1';
+      warpGroup.style.transform = '';
+      warpGroup.style.transition = '';
+    }
+    teethG.innerHTML = '';
+    bloodG.innerHTML = '';
+    cracksG.innerHTML = '';
+    hornsG.innerHTML = '';
+    extraG.innerHTML = '';
+    disp.setAttribute('scale', '0');
+    resetGameTrackers();
+    clearTimeout(goodEndingTimer);
+    clearTimeout(holdTimer);
+    clearTimeout(exprRestoreTimer);
+    clearTimeout(nightTimer);
+    clearTimeout(wakeWaitTimer);
+    armWakeEndingTimer();
+    exprUntil = 0;
+    laughUntil = 0;
+    const beatOverlay = document.getElementById('beatOverlay');
+    if (beatOverlay) {
+      beatOverlay.classList.remove('show');
+      beatOverlay.setAttribute('aria-hidden', 'true');
+      const beatCredits = document.getElementById('beatCredits');
+      if (beatCredits) {
+        beatCredits.classList.remove('show');
+        beatCredits.style.cssText = '';
+      }
+    }
+    hideBeatRestartConfirm();
+    nightTimer = setTimeout(() => {
+      if (!endingFired && !victoryLobby && !gameBeaten && clicks === 0) {
+        triggerEnding('night');
+      }
+    }, 45000);
+    applyLevel(0);
+    if (typeof btnCounts === 'object') {
+      Object.keys(btnCounts).forEach((k) => { delete btnCounts[k]; });
+    }
+    if (typeof sideBtnTotal !== 'undefined') sideBtnTotal = 0;
+    music.currentT = 0;
+    if (!muted && audio) {
+      ensureAudio();
+      if (!music.started) startMusic();
+      if (music.masterGain) {
+        const now = audio.currentTime;
+        music.masterGain.gain.cancelScheduledValues(now);
+        music.masterGain.gain.setValueAtTime(0.9, now);
+      }
+      updateMusic(0);
+    }
+    updateEndingsBar();
+    updateSideWidgets();
+    positionCornerHints();
+    applyEyeLook();
+  }
+
+  function enterVictoryLobby() {
+    restartGame();
+    victoryLobby = true;
+    body.classList.add('victoryLobby');
+    body.style.background = '#fff';
+    stage.style.boxShadow = 'none';
+    counter.textContent = 'Every ending found! Click Clippey…';
+    applyLevel(0);
+    playHappyChord();
+    if (music.masterGain && audio) {
+      const now = audio.currentTime;
+      music.masterGain.gain.cancelScheduledValues(now);
+      music.masterGain.gain.linearRampToValueAtTime(0.22, now + 0.5);
+    }
+  }
+
+  function startBeatGame() {
+    if (gameBeaten || !victoryLobby) return;
+    victoryLobby = false;
+    gameBeaten = true;
+    endingFired = true;
+    try { localStorage.setItem('clippeyBeaten', '1'); } catch (_) {}
+    body.classList.remove('victoryLobby');
+    body.classList.add('gameBeaten');
+    clearTimeout(nightTimer);
+    clearTimeout(goodEndingTimer);
+    playHappyChord();
+    warpGroup.style.transition = 'opacity 0.55s ease, transform 0.55s ease';
+    warpGroup.style.opacity = '0';
+    warpGroup.style.transform = 'scale(0.15)';
+    counter.style.opacity = '0';
+    setTimeout(showBeatCredits, 650);
+  }
+
+  let beatRestartStep = 0;
+
+  function hideBeatRestartConfirm() {
+    beatRestartStep = 0;
+    const box = document.getElementById('beatRestartConfirm');
+    const text = document.getElementById('beatRestartText');
+    const yes = document.getElementById('beatRestartYes');
+    const no = document.getElementById('beatRestartNo');
+    const row = document.getElementById('beatRestartBtnRow');
+    if (box) {
+      box.classList.remove('show');
+      box.setAttribute('aria-hidden', 'true');
+    }
+    if (yes) yes.style.display = '';
+    if (no) no.style.display = '';
+    if (row) row.style.display = '';
+    if (text) text.textContent = '';
+  }
+
+  function showBeatRestartConfirm(message, opts) {
+    const box = document.getElementById('beatRestartConfirm');
+    const text = document.getElementById('beatRestartText');
+    const yes = document.getElementById('beatRestartYes');
+    const no = document.getElementById('beatRestartNo');
+    const row = document.getElementById('beatRestartBtnRow');
+    if (!box || !text) return;
+    text.textContent = message;
+    const hideBtns = opts && opts.hideButtons;
+    if (row) row.style.display = hideBtns ? 'none' : '';
+    if (yes) yes.style.display = hideBtns ? 'none' : '';
+    if (no) no.style.display = hideBtns ? 'none' : '';
+    box.classList.add('show');
+    box.setAttribute('aria-hidden', 'false');
+  }
+
+  function hardRestartGame() {
+    hideBeatRestartConfirm();
+    resetAllEndingsStorage();
+    try {
+      sessionStorage.setItem(FULL_RESET_FLAG, '1');
+    } catch (_) {}
+    const bare = location.href.split('#')[0].split('?')[0];
+    location.assign(bare + '?hardrestart=1&_=' + Date.now());
+  }
+
+  function onBeatRestartClick(e) {
+    e.stopPropagation();
+    beatRestartStep = 1;
+    showBeatRestartConfirm('are you sure you want to restart?');
+  }
+
+  function onBeatRestartYes(e) {
+    e.stopPropagation();
+    if (beatRestartStep === 1) {
+      beatRestartStep = 2;
+      showBeatRestartConfirm('are you SURE?');
+      return;
+    }
+    if (beatRestartStep === 2) {
+      beatRestartStep = 3;
+      showBeatRestartConfirm('Alright, suit yourself.', { hideButtons: true });
+      setTimeout(hardRestartGame, 1400);
+    }
+  }
+
+  function onBeatRestartNo(e) {
+    e.stopPropagation();
+    hideBeatRestartConfirm();
+  }
+
+  function showBeatCredits() {
+    const overlay = document.getElementById('beatOverlay');
+    const creditsEl = document.getElementById('beatCredits');
+    if (!overlay || !creditsEl) return;
+    hideBeatRestartConfirm();
+    creditsEl.classList.remove('show');
+    creditsEl.style.cssText = '';
+    buildCredits(creditsEl, [
+      ['h2', 'CLIPPEY'],
+      ['p', 'You found all ' + ENDING_TOTAL + ' endings!'],
+      ['role', 'Created by'], ['p', 'Bo'],
+      ['role', 'Programmed by'], ['p', 'Bo & Cursor'],
+      ['role', 'Starring'], ['p', 'Clippey the smiley face'],
+      ['p', 'Thanks for clicking everything.'],
+      ['p', 'Thanks for typing secret words.'],
+      ['p', 'Thanks for not giving up.'],
+      ['end', 'You Beat the game!'],
+    ]);
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden', 'false');
+    setTimeout(() => creditsEl.classList.add('show'), 400);
+    if (music.masterGain && audio) {
+      const now = audio.currentTime;
+      music.masterGain.gain.cancelScheduledValues(now);
+      music.masterGain.gain.linearRampToValueAtTime(0.35, now + 0.6);
+    }
+  }
+
+  function dismissEnding() {
+    endingFired = false;
+    updateEndingsBar();
+    if (hasAllEndings()) {
+      enterVictoryLobby();
+    } else {
+      restartGame();
+    }
+  }
+
+  function playMegaJingle(i) {
+    const a = ensureAudio();
+    if (!a || muted) return;
+    const t0 = a.currentTime;
+    const base = 180 + (i % 40) * 10;
+    [1, 1.25, 1.5, 2].forEach((mul, j) => {
+      const o = a.createOscillator();
+      const g = a.createGain();
+      o.type = j % 2 ? 'triangle' : 'sine';
+      o.frequency.value = base * mul;
+      const s = t0 + j * 0.09;
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(0.11, s + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.45);
+      o.connect(g).connect(a.destination);
+      o.start(s);
+      o.stop(s + 0.5);
+    });
+  }
+
+  function checkMegaKeys() {
+    const hit = MEGA_KEY_MAP[secretBuf];
+    if (hit) {
+      triggerEnding(hit);
+      return true;
+    }
+    if (secretBuf === 'PEY' && MEGA_PEY_ID) { triggerEnding(MEGA_PEY_ID); return true; }
+    if (secretBuf === 'ZAP' && MEGA_ZAP_ID) { triggerEnding(MEGA_ZAP_ID); return true; }
+    return false;
+  }
+
+  function buildCredits(el, list) {
+    el.innerHTML = '';
+    for (const [kind, text] of list) {
+      let node;
+      if (kind === 'h2') {
+        node = document.createElement('h2');
+      } else if (kind === 'role') {
+        node = document.createElement('p');
+        const span = document.createElement('span');
+        span.className = 'role';
+        span.textContent = text;
+        node.appendChild(span);
+      } else if (kind === 'end') {
+        node = document.createElement('p');
+        node.className = 'end';
+      } else {
+        node = document.createElement('p');
+      }
+      if (kind !== 'role') {
+        node.innerHTML = (node.innerHTML || '') + (text || '').replace(/\n/g,'<br>');
+      }
+      el.appendChild(node);
+    }
+  }
+
+  let endingFired = false;
+  function triggerEnding(type) {
+    if (endingFired || victoryLobby || gameBeaten) return;
+    if (!ENDINGS[type]) return;
+    endingFired = true;
+    recordGotEnding(type);
+    hideEndingContinue();
+
+    const cfg = ENDINGS[type];
+    const overlay  = document.getElementById('endingOverlay');
+    const jumpscare= document.getElementById('jumpscare');
+    const happy    = document.getElementById('happyFace');
+    const titleEl  = document.getElementById('endingTitle');
+    const creditsEl= document.getElementById('credits');
+
+    overlay.className = '';
+    overlay.style.cssText = '';
+    overlay.style.display = '';
+    overlay.setAttribute('aria-hidden', 'false');
+    titleEl.style.cssText = '';
+    creditsEl.style.cssText = '';
+    creditsEl.onanimationend = null;
+    const isMega = type.startsWith('mega');
+    const useHueStyle = cfg.hue != null;
+    overlay.classList.add('show');
+    overlay.classList.add(useHueStyle ? 'mega' : type);
+    if (useHueStyle) {
+      const h = cfg.hue;
+      const accent = 'hsl(' + h + ',88%,68%)';
+      overlay.style.setProperty('--mega-accent', accent);
+      overlay.style.background =
+        'linear-gradient(165deg, hsl(' + h + ',50%,10%), hsl(' + ((h + 55) % 360) + ',60%,32%), hsl(' + ((h + 110) % 360) + ',45%,18%))';
+      overlay.style.color = '#fff';
+      titleEl.style.color = accent;
+      titleEl.style.textShadow = '0 0 22px ' + accent + ', 0 0 8px #fff';
+    }
+    titleEl.textContent = cfg.title;
+    titleEl.classList.remove('show');
+    jumpscare.classList.remove('show');
+    happy.classList.remove('show');
+    creditsEl.classList.remove('show');
+    if (isMega && cfg.triggerHint === 'word' && cfg.word) {
+      const num = parseInt(String(type).replace('mega', ''), 10) || 0;
+      const rebuilt = megaCreditsList(num, 'word', cfg.word);
+      titleEl.textContent = rebuilt.title;
+      buildCredits(creditsEl, rebuilt.credits);
+    } else {
+    buildCredits(creditsEl, cfg.credits);
+    }
+
+    if (type !== 'good' && type !== 'silent' && !useHueStyle && music.masterGain && audio) {
+      const now = audio.currentTime;
+      music.masterGain.gain.cancelScheduledValues(now);
+      music.masterGain.gain.linearRampToValueAtTime(0, now + 0.4);
+    }
+    if ((type === 'good' || type === 'baby' || type === 'wake' || type === 'cornerhappy' || type === 'cloudhappy') && music.masterGain && audio) {
+      const now = audio.currentTime;
+      music.masterGain.gain.cancelScheduledValues(now);
+      music.masterGain.gain.linearRampToValueAtTime(0.3, now + 0.6);
+    }
+    if (type === 'night' && music.masterGain && audio) {
+      const now = audio.currentTime;
+      music.masterGain.gain.cancelScheduledValues(now);
+      music.masterGain.gain.linearRampToValueAtTime(0.08, now + 1.2);
+    }
+    if (useHueStyle && music.masterGain && audio) {
+      const now = audio.currentTime;
+      music.masterGain.gain.cancelScheduledValues(now);
+      music.masterGain.gain.linearRampToValueAtTime(0.12, now + 0.5);
+    }
+
+    if (cfg.intro) cfg.intro({ overlay, jumpscare, happy, titleEl, creditsEl });
+    scheduleEndingContinue(cfg);
+    setTimeout(() => titleEl.classList.add('show'), cfg.titleAt);
+    setTimeout(() => {
+      titleEl.classList.remove('show');
+      creditsEl.classList.add('show');
+    }, cfg.creditsAt);
+  }
+
+  // simple one-shot happy chord (C major) for good ending
+  let laughUntil = 0;
+
+  let exprUntil = 0;
+  let exprRestoreTimer = null;
+
+  function restoreFaceExpr() {
+    if (happyMode) applyHappyLevel(happyClicks);
+    else applyLevel(clicks);
+  }
+
+  function addBlush() {
+    [[-48, 10], [48, 10]].forEach(([cx, cy]) => {
+      extraG.appendChild(svgEl('ellipse', {
+        cx, cy, rx: 11, ry: 7, fill: 'rgba(255,120,150,0.45)',
+      }));
+    });
+  }
+
+  function setSmileMouth(mouthY, mouthW, smile, sw) {
+    mouth.setAttribute('d', 'M ' + (-mouthW) + ' ' + mouthY + ' Q 0 ' + (mouthY + smile) + ' ' + mouthW + ' ' + mouthY);
+    mouth.setAttribute('fill', 'none');
+    mouth.setAttribute('stroke', '#4a3058');
+    mouth.setAttribute('stroke-width', sw || 3);
+    mouth.setAttribute('stroke-linecap', 'round');
+  }
+
+  function showFaceExpression(kind, ms, msg) {
+    if (endingFired || victoryLobby || gameBeaten) return;
+    clearTimeout(exprRestoreTimer);
+    ms = ms || 850;
+    exprUntil = performance.now() + ms;
+    eyeLook.winkLock = exprUntil;
+    if (kind === 'laugh') laughUntil = exprUntil;
+
+    if (msg) counter.textContent = msg;
+
+    const lx = parseFloat(lEyeW.getAttribute('cx')) || -30;
+    const ly = parseFloat(lEyeW.getAttribute('cy')) || -15;
+    const rx = parseFloat(rEyeW.getAttribute('cx')) || 30;
+    const ry = parseFloat(rEyeW.getAttribute('cy')) || -15;
+
+    teethG.innerHTML = '';
+    extraG.innerHTML = '';
+    lEyeW.setAttribute('opacity', '1');
+    rEyeW.setAttribute('opacity', '1');
+    lPupil.setAttribute('opacity', '1');
+    rPupil.setAttribute('opacity', '1');
+    lShine.setAttribute('opacity', '1');
+    rShine.setAttribute('opacity', '1');
+    lEyeW.setAttribute('fill', 'white');
+    rEyeW.setAttribute('fill', 'white');
+    lPupil.setAttribute('fill', '#222');
+    rPupil.setAttribute('fill', '#222');
+    head.setAttribute('fill', '#ffd9a3');
+
+    if (kind === 'laugh') {
+      head.setAttribute('fill', '#ffd5b0');
+      lEyeW.setAttribute('ry', '5');
+      rEyeW.setAttribute('ry', '5');
+      setSmileMouth(28, 30, 36, 4);
+      teethG.appendChild(svgEl('ellipse', { cx: 0, cy: 44, rx: 12, ry: 7, fill: '#ff9eb0' }));
+      addBlush();
+    } else if (kind === 'happy') {
+      lEyeW.setAttribute('ry', '12');
+      rEyeW.setAttribute('ry', '12');
+      setSmileMouth(30, 24, 22);
+      addBlush();
+    } else if (kind === 'hug') {
+      lEyeW.setAttribute('ry', '2');
+      rEyeW.setAttribute('ry', '2');
+      lPupil.setAttribute('opacity', '0');
+      rPupil.setAttribute('opacity', '0');
+      setSmileMouth(32, 22, 18);
+      addBlush();
+    } else if (kind === 'wink') {
+      lEyeW.setAttribute('ry', '3');
+      rEyeW.setAttribute('ry', '14');
+      setSmileMouth(30, 26, 20);
+    } else if (kind === 'shocked') {
+      lEyeW.setAttribute('rx', '17');
+      lEyeW.setAttribute('ry', '19');
+      rEyeW.setAttribute('rx', '17');
+      rEyeW.setAttribute('ry', '19');
+      lPupil.setAttribute('r', '6');
+      rPupil.setAttribute('r', '6');
+      mouth.setAttribute('d', 'M -12 32 A 12 11 0 1 1 12 32 A 12 11 0 1 1 -12 32');
+      mouth.setAttribute('fill', '#ffccd8');
+      mouth.setAttribute('stroke', '#6a4060');
+      mouth.setAttribute('stroke-width', '2');
+    } else if (kind === 'silly') {
+      lEyeW.setAttribute('ry', '16');
+      rEyeW.setAttribute('ry', '9');
+      mouth.setAttribute('d', 'M -26 32 Q -8 46 0 35 T 26 32');
+      mouth.setAttribute('fill', 'none');
+      mouth.setAttribute('stroke', '#4a3058');
+      mouth.setAttribute('stroke-width', '3');
+      mouth.setAttribute('stroke-linecap', 'round');
+    } else if (kind === 'sing') {
+      lEyeW.setAttribute('ry', '11');
+      rEyeW.setAttribute('ry', '11');
+      mouth.setAttribute('d', 'M -11 28 A 11 13 0 0 0 11 28 A 11 13 0 0 0 -11 28');
+      mouth.setAttribute('fill', '#e8a0c8');
+      mouth.setAttribute('stroke', '#5a3850');
+      mouth.setAttribute('stroke-width', '2');
+    } else if (kind === 'sparkle') {
+      lPupil.setAttribute('opacity', '0');
+      rPupil.setAttribute('opacity', '0');
+      drawSparkle(extraG, lx, ly - 2, 6, 0, '#ffe066');
+      drawSparkle(extraG, rx, ry - 2, 6, 25, '#ffe066');
+      setSmileMouth(30, 28, 24);
+    } else if (kind === 'sleepy') {
+      lPupil.setAttribute('opacity', '0');
+      rPupil.setAttribute('opacity', '0');
+      lEyeW.setAttribute('opacity', '0');
+      rEyeW.setAttribute('opacity', '0');
+      extraG.appendChild(svgEl('path', {
+        d: 'M -38 -16 Q -30 -9 -22 -16', fill: 'none', stroke: '#333',
+        'stroke-width': '3', 'stroke-linecap': 'round',
+      }));
+      extraG.appendChild(svgEl('path', {
+        d: 'M 22 -16 Q 30 -9 38 -16', fill: 'none', stroke: '#333',
+        'stroke-width': '3', 'stroke-linecap': 'round',
+      }));
+      mouth.setAttribute('d', 'M -18 38 Q 0 42 18 38');
+      mouth.setAttribute('fill', 'none');
+      mouth.setAttribute('stroke', '#4a3058');
+      mouth.setAttribute('stroke-width', '3');
+      const z = document.createElementNS(SVG_NS, 'text');
+      z.setAttribute('x', '48');
+      z.setAttribute('y', '-48');
+      z.setAttribute('font-size', '20');
+      z.setAttribute('fill', '#8a9abb');
+      z.setAttribute('font-family', 'Comic Sans MS, sans-serif');
+      z.textContent = 'Z z z';
+      extraG.appendChild(z);
+    } else if (kind === 'party') {
+      lEyeW.setAttribute('ry', '10');
+      rEyeW.setAttribute('ry', '10');
+      setSmileMouth(28, 30, 30, 4);
+      extraG.appendChild(svgEl('path', {
+        d: 'M -24 -76 L 0 -92 L 24 -76 L 18 -70 L -18 -70 Z',
+        fill: '#ff6b6b', stroke: '#222', 'stroke-width': '1.5',
+      }));
+    } else if (kind === 'dizzy') {
+      lPupil.setAttribute('opacity', '0');
+      rPupil.setAttribute('opacity', '0');
+      [[-30, -15], [30, -15]].forEach(([cx, cy]) => {
+        extraG.appendChild(svgEl('path', {
+          d: 'M ' + (cx - 7) + ' ' + cy + ' A 7 7 0 1 1 ' + (cx + 7) + ' ' + cy,
+          fill: 'none', stroke: '#6644aa', 'stroke-width': '2.5',
+        }));
+      });
+      mouth.setAttribute('d', 'M -20 34 Q 0 28 20 34');
+      mouth.setAttribute('fill', 'none');
+      mouth.setAttribute('stroke', '#4a3058');
+      mouth.setAttribute('stroke-width', '3');
+      face.classList.add('spinning');
+    } else if (kind === 'love') {
+      lEyeW.setAttribute('ry', '10');
+      rEyeW.setAttribute('ry', '10');
+      setSmileMouth(30, 26, 22);
+      addBlush();
+      [[-30, -20], [30, -20]].forEach(([cx, cy]) => {
+        extraG.appendChild(svgEl('path', {
+          d: 'M ' + cx + ' ' + cy + ' c -5 -8 0 -14 0 -14 c 0 0 5 6 0 14 c -5 -8 0 -14 0 -14',
+          fill: '#ff4d6d', stroke: '#c9184a', 'stroke-width': '1',
+        }));
+      });
+    } else if (kind === 'cool') {
+      extraG.appendChild(svgEl('rect', {
+        x: -52, y: -24, width: 44, height: 14, rx: 4, fill: '#1a1a2e',
+      }));
+      extraG.appendChild(svgEl('rect', {
+        x: 8, y: -24, width: 44, height: 14, rx: 4, fill: '#1a1a2e',
+      }));
+      extraG.appendChild(svgEl('line', {
+        x1: -8, y1: -17, x2: 8, y2: -17, stroke: '#1a1a2e', 'stroke-width': 3,
+      }));
+      setSmileMouth(32, 22, 10);
+    } else if (kind === 'mad') {
+      head.setAttribute('fill', '#ffc4a8');
+      extraG.appendChild(svgEl('path', {
+        d: 'M -44 -26 L -16 -18', fill: 'none', stroke: '#333',
+        'stroke-width': 4, 'stroke-linecap': 'round',
+      }));
+      extraG.appendChild(svgEl('path', {
+        d: 'M 44 -26 L 16 -18', fill: 'none', stroke: '#333',
+        'stroke-width': 4, 'stroke-linecap': 'round',
+      }));
+      mouth.setAttribute('d', 'M -22 40 Q 0 32 22 40');
+      mouth.setAttribute('fill', 'none');
+      mouth.setAttribute('stroke', '#4a3058');
+      mouth.setAttribute('stroke-width', '3');
+    } else if (kind === 'cry') {
+      lEyeW.setAttribute('ry', '8');
+      rEyeW.setAttribute('ry', '12');
+      extraG.appendChild(svgEl('ellipse', {
+        cx: 36, cy: 2, rx: 4, ry: 11, fill: '#7ec8e3', opacity: '0.85',
+      }));
+      mouth.setAttribute('d', 'M -18 38 Q 0 34 18 38');
+      mouth.setAttribute('fill', 'none');
+      mouth.setAttribute('stroke', '#4a3058');
+      mouth.setAttribute('stroke-width', '3');
+    } else if (kind === 'think') {
+      lPupil.setAttribute('cy', String(ly - 6));
+      rPupil.setAttribute('cy', String(ry - 6));
+      extraG.appendChild(svgEl('ellipse', {
+        cx: 58, cy: 10, rx: 13, ry: 16, fill: '#ffd9a3', stroke: '#7a5a2a', 'stroke-width': 2,
+      }));
+      mouth.setAttribute('d', 'M -10 36 L 10 36');
+      mouth.setAttribute('fill', 'none');
+      mouth.setAttribute('stroke', '#4a3058');
+      mouth.setAttribute('stroke-width', '3');
+      mouth.setAttribute('stroke-linecap', 'round');
+    } else if (kind === 'yum') {
+      lEyeW.setAttribute('ry', '11');
+      rEyeW.setAttribute('ry', '11');
+      setSmileMouth(30, 20, 15);
+      teethG.appendChild(svgEl('ellipse', { cx: 14, cy: 42, rx: 9, ry: 6, fill: '#ff9eb0' }));
+      extraG.appendChild(svgEl('ellipse', {
+        cx: -8, cy: -78, rx: 10, ry: 10, fill: '#c68642', stroke: '#5d4037', 'stroke-width': '1.5',
+      }));
+    } else if (kind === 'boo') {
+      lEyeW.setAttribute('rx', '15');
+      lEyeW.setAttribute('ry', '17');
+      rEyeW.setAttribute('rx', '15');
+      rEyeW.setAttribute('ry', '17');
+      mouth.setAttribute('d', 'M -10 32 A 10 9 0 1 1 10 32 A 10 9 0 1 1 -10 32');
+      mouth.setAttribute('fill', '#ffe0f0');
+      mouth.setAttribute('stroke', '#6a4060');
+      mouth.setAttribute('stroke-width', '2');
+      extraG.appendChild(svgEl('path', {
+        d: 'M -78 -10 L -58 -30 L -50 0 Z', fill: '#ffd9a3', stroke: '#7a5a2a', 'stroke-width': '1.5',
+      }));
+      extraG.appendChild(svgEl('path', {
+        d: 'M 78 -10 L 58 -30 L 50 0 Z', fill: '#ffd9a3', stroke: '#7a5a2a', 'stroke-width': '1.5',
+      }));
+    } else if (kind === 'wave') {
+      setSmileMouth(30, 28, 20);
+      addBlush();
+      extraG.appendChild(svgEl('path', {
+        d: 'M 62 -20 L 78 -38 L 74 -8 L 88 -28',
+        fill: 'none', stroke: '#ffd9a3', 'stroke-width': '10', 'stroke-linecap': 'round',
+      }));
+      extraG.appendChild(svgEl('path', {
+        d: 'M 62 -20 L 78 -38 L 74 -8 L 88 -28',
+        fill: 'none', stroke: '#7a5a2a', 'stroke-width': '2', 'stroke-linecap': 'round',
+      }));
+    }
+
+    const canLook = kind !== 'sleepy' && kind !== 'dizzy' && kind !== 'sparkle' && kind !== 'hug' && kind !== 'think' && kind !== 'cool';
+    setEyeBases(lx, ly, rx, ry, { maxOff: canLook ? 5 : 0, pupilR: 5, eyeRx: 14, blend: canLook ? 1 : 0 });
+    if (canLook) applyEyeLook();
+
+    stage.classList.remove('shake', 'bigshake');
+    if (kind === 'laugh' || kind === 'silly' || kind === 'party' || kind === 'mad') {
+      void stage.offsetWidth;
+      stage.classList.add('shake');
+    }
+
+    exprRestoreTimer = setTimeout(() => {
+      exprUntil = 0;
+      face.classList.remove('spinning');
+      stage.classList.remove('shake', 'bigshake');
+      restoreFaceExpr();
+    }, ms);
+  }
+
+  function doLaugh() {
+    const laughs = ['HA!', 'HA HA!', 'He loves it!', 'LOL!'];
+    showFaceExpression('laugh', 900, laughs[Math.floor(Math.random() * laughs.length)]);
+  }
+
+  function playHappyChord() {
+    const a = ensureAudio();
+    if (!a || muted) return;
+    const t0 = a.currentTime;
+    [261.63, 329.63, 392.00, 523.25].forEach((f, i) => {
+      const o = a.createOscillator();
+      const g = a.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.05 + i*0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.6 + i*0.05);
+      o.connect(g).connect(a.destination);
+      o.start(t0);
+      o.stop(t0 + 1.8);
+    });
+  }
+  function playSlowChord() {
+    const a = ensureAudio();
+    if (!a || muted) return;
+    const t0 = a.currentTime;
+    [196, 246.94, 293.66].forEach((f, i) => {
+      const o = a.createOscillator();
+      const g = a.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.14, t0 + 0.8 + i * 0.2);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.5);
+      o.connect(g).connect(a.destination);
+      o.start(t0);
+      o.stop(t0 + 2.6);
+    });
+  }
+  function playNightChord() {
+    const a = ensureAudio();
+    if (!a || muted) return;
+    const t0 = a.currentTime;
+    [130.81, 164.81, 196].forEach((f, i) => {
+      const o = a.createOscillator();
+      const g = a.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      const s = t0 + i * 0.4;
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(0.1, s + 0.5);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 2.2);
+      o.connect(g).connect(a.destination);
+      o.start(s);
+      o.stop(s + 2.3);
+    });
+  }
+  function playWakeChord() {
+    const a = ensureAudio();
+    if (!a || muted) return;
+    const t0 = a.currentTime;
+    [261.63, 329.63, 392, 523.25].forEach((f, i) => {
+      const o = a.createOscillator();
+      const g = a.createGain();
+      o.type = 'triangle';
+      o.frequency.value = f;
+      const s = t0 + i * 0.15;
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(0.12, s + 0.08);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.7);
+      o.connect(g).connect(a.destination);
+      o.start(s);
+      o.stop(s + 0.8);
+    });
+  }
+  // sparkly ascending arpeggio for true ending
+  function playTrueEndingChord() {
+    const a = ensureAudio();
+    if (!a || muted) return;
+    const t0 = a.currentTime;
+    [261.63, 329.63, 392.00, 523.25, 659.25, 783.99].forEach((f, i) => {
+      const o = a.createOscillator();
+      const g = a.createGain();
+      o.type = 'triangle';
+      o.frequency.value = f;
+      const s = t0 + i*0.12;
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(0.16, s + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.9);
+      o.connect(g).connect(a.destination);
+      o.start(s);
+      o.stop(s + 1.0);
+    });
+  }
+
+  // ==== EXTRA ENDING TRIGGERS ====
+  // GOOD ENDING: at level MAX, don't click for 10 seconds.
+  let goodEndingTimer = null;
+  function armGoodEndingTimer() {
+    clearTimeout(goodEndingTimer);
+    if (clicks >= MAX) {
+      goodEndingTimer = setTimeout(() => triggerEnding('good'), 10000);
+    }
+  }
+  // SILENT ENDING: click MUTE while at level >= 4500.
+  // (wired further down where the mute button handler lives)
+  // TRUE ENDING: type "BO". CLIP ENDING: type "CLIP".
+  let secretBuf = '';
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      arrowBuf = (arrowBuf + (e.key === 'ArrowUp' ? 'U' : 'D')).slice(-4);
+      if (arrowBuf === 'UUDD') triggerEnding('code');
+      return;
+    }
+    if (e.key === ' ') {
+      e.preventDefault();
+      spaceCount++;
+      if (spaceCount >= 25) triggerEnding('space');
+      return;
+    }
+    const k = (e.key || '').toUpperCase();
+    if (k.length !== 1 || !/[A-Z]/.test(k)) return;
+    secretBuf = (secretBuf + k).slice(-20);
+    if (secretBuf === 'CLIP') { triggerEnding('clip'); return; }
+    if (secretBuf === 'BO') { triggerEnding('true'); return; }
+    if (secretBuf === 'HI') { triggerEnding('hi'); return; }
+    if (secretBuf === 'HELP') { triggerEnding('help'); return; }
+    if (secretBuf === 'SMILE') { triggerEnding('smile'); return; }
+    if (secretBuf === 'DANCE') { triggerEnding('dance'); return; }
+    if (secretBuf === 'LOVE') { triggerEnding('love'); return; }
+    if (secretBuf === 'COOL') { triggerEnding('cool'); return; }
+    if (secretBuf === 'WOW') { triggerEnding('wow'); return; }
+    if (secretBuf === 'RING') { triggerEnding('ring'); return; }
+    if (checkMegaKeys()) return;
+  });
+  // RAGE ENDING: 10+ clicks within 1 second, before reaching MAX.
+  let rageTimes = [];
+  let lastClickAt = performance.now();
+  let leftStreak = 0;
+  let rightStreak = 0;
+  let titleClicks = 0;
+  let hintClicks = 0;
+  let dblTimes = [];
+
+  armWakeEndingTimer();
+
+  // NIGHT ENDING: never click the face for 45 seconds.
+  let nightTimer = setTimeout(() => {
+    if (!endingFired && !victoryLobby && !gameBeaten && clicks === 0) {
+      triggerEnding('night');
+    }
+  }, 45000);
+
+  document.getElementById('title').addEventListener('click', (e) => {
+    e.stopPropagation();
+    titleClicks++;
+    if (!endingFired && titleClicks >= 7 && clicks < 25) triggerEnding('baby');
+    if (!endingFired && clicks < 50 && MEGA_TITLE_MAP[titleClicks]) {
+      triggerEnding(MEGA_TITLE_MAP[titleClicks]);
+    }
+  });
+  document.getElementById('hint').addEventListener('click', (e) => {
+    e.stopPropagation();
+    hintClicks++;
+    if (!endingFired && hintClicks >= 5 && MEGA_HINT_ID) triggerEnding(MEGA_HINT_ID);
+  });
+  counter.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (endingFired) return;
+    counterClicks++;
+    if (counterClicks >= 12) triggerEnding('counter');
+  });
+
+  // ==== FACE PART HELPERS & ACTION TRACKERS ====
+  let noseClicks = 0, eyeClicks = 0, topClicks = 0, mouthClicks = 0, chinClicks = 0;
+  let centerClicks = 0, earClicks = 0, counterClicks = 0, bgClicks = 0;
+  let scrollCount = 0, spaceCount = 0;
+  let holdTimer = null, lastMuteAt = 0;
+  let arrowBuf = '';
+
+  function stageToSvg(e) {
+    const rect = stage.getBoundingClientRect();
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * 200 - 100,
+      y: ((e.clientY - rect.top) / rect.height) * 200 - 100,
+    };
+  }
+  function dist(x1, y1, x2, y2) {
+    return Math.hypot(x1 - x2, y1 - y2);
+  }
+
+  const eyeLook = {
+    lx: -30, ly: -15, rx: 30, ry: -15,
+    maxOff: 7, pupilR: 6, eyeRx: 14, blend: 1,
+    cursorX: 0, cursorY: 0, hasCursor: false, winkLock: 0,
+  };
+
+  function setEyeBases(lx, ly, rx, ry, opts) {
+    eyeLook.lx = lx;
+    eyeLook.ly = ly;
+    eyeLook.rx = rx;
+    eyeLook.ry = ry;
+    if (opts) {
+      if (opts.maxOff != null) eyeLook.maxOff = opts.maxOff;
+      if (opts.pupilR != null) eyeLook.pupilR = opts.pupilR;
+      if (opts.eyeRx != null) eyeLook.eyeRx = opts.eyeRx;
+      if (opts.blend != null) eyeLook.blend = opts.blend;
+    }
+  }
+
+  function pupilLookOffset(ex, ey) {
+    if (!eyeLook.hasCursor || endingFired) return { x: 0, y: 0 };
+    const dx = eyeLook.cursorX - ex;
+    const dy = eyeLook.cursorY - ey;
+    const len = Math.hypot(dx, dy) || 1;
+    const limit = Math.max(2.5, eyeLook.maxOff * (eyeLook.eyeRx / 14));
+    const dist = Math.min(limit, len * 0.4) * eyeLook.blend;
+    return { x: (dx / len) * dist, y: (dy / len) * dist };
+  }
+
+  function applyEyeLook() {
+    if (endingFired || performance.now() < eyeLook.winkLock || performance.now() < laughUntil) return;
+    if (performance.now() < exprUntil && eyeLook.blend === 0) return;
+    const lo = pupilLookOffset(eyeLook.lx, eyeLook.ly);
+    const ro = pupilLookOffset(eyeLook.rx, eyeLook.ry);
+    const lpx = eyeLook.lx + lo.x;
+    const lpy = eyeLook.ly + lo.y;
+    const rpx = eyeLook.rx + ro.x;
+    const rpy = eyeLook.ry + ro.y;
+    lPupil.setAttribute('cx', lpx);
+    lPupil.setAttribute('cy', lpy);
+    rPupil.setAttribute('cx', rpx);
+    rPupil.setAttribute('cy', rpy);
+    if (parseFloat(lShine.getAttribute('opacity') || 0) > 0.05) {
+      lShine.setAttribute('cx', lpx - 2);
+      lShine.setAttribute('cy', lpy - 2);
+      rShine.setAttribute('cx', rpx - 2);
+      rShine.setAttribute('cy', rpy - 2);
+    }
+  }
+
+  function updateCursorLook(e) {
+    if (!e || endingFired) return;
+    const p = stageToSvg(e);
+    eyeLook.cursorX = p.x;
+    eyeLook.cursorY = p.y;
+    eyeLook.hasCursor = true;
+    applyEyeLook();
+  }
+
+  function facePartAt(e) {
+    const p = stageToSvg(e);
+    if (dist(p.x, p.y, 0, 6) < 16) return 'nose';
+    if (dist(p.x, p.y, -30, -15) < 20) return 'eye';
+    if (dist(p.x, p.y, 30, -15) < 20) return 'eyeR';
+    if (dist(p.x, p.y, -55, -25) < 18 || dist(p.x, p.y, 55, -25) < 18) return 'ear';
+    if (p.y > 18 && Math.abs(p.x) < 32) return 'mouth';
+    if (p.y > 28 && Math.abs(p.x) < 40) return 'chin';
+    if (p.y < -42) return 'top';
+    if (dist(p.x, p.y, 0, 0) < 22) return 'center';
+    return 'cheek';
+  }
+
+  // ==== CLICK ====
+  function onClick(e) {
+    if (gameBeaten) return;
+    if (victoryLobby) {
+      startBeatGame();
+      return;
+    }
+    if (endingFired) return;
+    clearTimeout(nightTimer);
+    ensureAudio();
+    startMusic();
+
+    if (e && isFaceCorner(e)) {
+      if (!happyMode) enterHappyMode();
+      return;
+    }
+
+    if (happyMode) {
+      onHappyClick();
+      return;
+    }
+
+    const now = performance.now();
+    if (clicks === 0 && wakeWaitEnabled) {
+      triggerEnding('wake');
+      return;
+    }
+
+    if (clicks >= MAX) {
+      // user clicked past the max -> bad ending
+      clicks++;
+      triggerEnding('bad');
+      return;
+    }
+    const gap = now - lastClickAt;
+    lastClickAt = now;
+
+    let onLeft = false;
+    if (e) {
+      const rect = stage.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      onLeft = cx < rect.width / 2;
+      if (onLeft) {
+        leftStreak++;
+        rightStreak = 0;
+      } else {
+        rightStreak++;
+        leftStreak = 0;
+      }
+    }
+
+    clicks++;
+
+    if (leftStreak >= 15 && clicks >= 301 && clicks < MAX - 100) {
+      triggerEnding('left');
+      return;
+    }
+    if (MEGA_RIGHT_ID && rightStreak >= MEGA_RIGHT_NEED && clicks >= 301 && clicks < MAX - 100) {
+      triggerEnding(MEGA_RIGHT_ID);
+      return;
+    }
+
+    rageTimes.push(now);
+    rageTimes = rageTimes.filter(t => now - t < 1000);
+    if (rageTimes.length >= 10 && clicks > 200 && clicks < MAX - 100 && leftStreak < 10 && rightStreak < 10) {
+      triggerEnding('rage');
+      return;
+    }
+    if (gap >= 6000 && clicks >= 2000 && clicks < MAX) {
+      triggerEnding('slow');
+      return;
+    }
+    if (gap >= 3000 && clicks >= 1500 && clicks < MAX && MEGA_PAUSE_ID) {
+      triggerEnding(MEGA_PAUSE_ID);
+      return;
+    }
+
+    if (e && e.shiftKey && clicks >= 500 && clicks < MAX && MEGA_SHIFT_ID) {
+      triggerEnding(MEGA_SHIFT_ID);
+      return;
+    }
+
+    if (e) {
+      const part = facePartAt(e);
+      if (part === 'nose') { noseClicks++; if (noseClicks >= 12) { triggerEnding('nose'); return; } }
+      if (part === 'eye') { eyeClicks++; if (eyeClicks >= 10) { triggerEnding('eye'); return; } }
+      if (part === 'ear' || part === 'eyeR') { earClicks++; if (earClicks >= 10) { triggerEnding('ear'); return; } }
+      if (part === 'top') { topClicks++; if (topClicks >= 12) { triggerEnding('top'); return; } }
+      if (part === 'mouth') { mouthClicks++; if (mouthClicks >= 12) { triggerEnding('mouth'); return; } }
+      if (part === 'chin') { chinClicks++; if (chinClicks >= 12) { triggerEnding('chin'); return; } }
+      if (part === 'center') { centerClicks++; if (centerClicks >= 20) { triggerEnding('center'); return; } }
+      if (e.ctrlKey) { triggerEnding('ctrl'); return; }
+      if (e.altKey) { triggerEnding('ghost'); return; }
+    }
+
+    applyLevel(clicks);
+    armGoodEndingTimer();
+    const intensity = clicks / MAX;
+    playCreepy(intensity);
+
+    // shake - always big, every click feels like a punch
+    stage.classList.remove('shake', 'bigshake');
+    void stage.offsetWidth; // restart animation
+    stage.classList.add('bigshake');
+
+    // flash on EVERY click; color and strength scale up (kid-friendly: no red)
+    flash.style.background = intensity > 0.7 ? '#9966ff' : (intensity > 0.4 ? '#cce' : 'white');
+    flash.style.opacity = String(0.25 + intensity * 0.65);
+    setTimeout(() => { flash.style.opacity = '0'; }, 80);
+  }
+
+  stage.addEventListener('click', (e) => onClick(e));
+  document.addEventListener('mousemove', updateCursorLook);
+  stage.addEventListener('pointermove', updateCursorLook);
+  document.addEventListener('mouseleave', () => {
+    eyeLook.hasCursor = false;
+    applyEyeLook();
+  });
+  stage.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if (!endingFired) triggerEnding('polite');
+  });
+  stage.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (endingFired) return;
+    scrollCount++;
+    if (scrollCount >= 20) triggerEnding('spin');
+  }, { passive: false });
+  stage.addEventListener('pointerdown', (e) => {
+    if (happyMode || isFaceCorner(e)) return;
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => {
+      if (!endingFired) triggerEnding('hug');
+    }, 3000);
+  });
+  stage.addEventListener('pointerup', () => clearTimeout(holdTimer));
+  stage.addEventListener('pointerleave', () => clearTimeout(holdTimer));
+  document.body.addEventListener('click', (e) => {
+    if (endingFired) return;
+    if (e.target === document.body || e.target === document.documentElement) {
+      bgClicks++;
+      if (bgClicks >= 8) triggerEnding('sky');
+    }
+  });
+  stage.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    if (endingFired) return;
+    const now = performance.now();
+    dblTimes.push(now);
+    dblTimes = dblTimes.filter(t => now - t < 5000);
+    if (MEGA_DBL_ID && dblTimes.length >= MEGA_DBL_NEED) triggerEnding(MEGA_DBL_ID);
+  });
+  // Start music on the very first interaction anywhere (browsers block audio
+  // until the user touches the page once). After that, the smiley-face level
+  // music plays even before clicking the face.
+  function bootMusicOnFirstInteraction() {
+    ensureAudio();
+    startMusic();
+  }
+  document.addEventListener('pointerdown', bootMusicOnFirstInteraction, { once: true });
+  document.addEventListener('keydown',      bootMusicOnFirstInteraction, { once: true });
+  // keep resuming audio on every later pointerdown (some browsers suspend it)
+  document.addEventListener('pointerdown', ensureAudio, { once: false });
+
+  // ==== MUTE BUTTON ====
+  const muteBtn = document.getElementById('muteBtn');
+  function applyMute() {
+    muteBtn.textContent = muted ? 'UNMUTE' : 'MUTE';
+    if (music.masterGain && audio) {
+      const now = audio.currentTime;
+      music.masterGain.gain.cancelScheduledValues(now);
+      music.masterGain.gain.linearRampToValueAtTime(muted ? 0 : 0.9, now + 0.15);
+    }
+  }
+  // ==== TOOLBAR & SIDE BUTTONS ====
+  const helpPanel = document.getElementById('helpPanel');
+  const sideMeterFill = document.getElementById('sideMeterFill');
+  const sideEmoji = document.getElementById('sideEmoji');
+  const sideBtnCountEl = document.getElementById('sideBtnCount');
+  const sideLastBtnEl = document.getElementById('sideLastBtn');
+  const btnCounts = {};
+  let sideBtnTotal = 0;
+
+  function updateSideWidgets() {
+    if (!sideMeterFill) return;
+    let pct;
+    if (happyMode) {
+      const dropped = Math.max(0, happyStartClicks - clicks);
+      const healMax = happyStartClicks + HAPPY_MAX;
+      pct = clamp((dropped / healMax) * 100, 0, 100);
+      sideMeterFill.className = clicks < 0 ? 'happy' : 'happy';
+    } else {
+      pct = clamp((clicks / MAX) * 100, 0, 100);
+      sideMeterFill.className = pct > 60 ? 'spooky' : '';
+    }
+    sideMeterFill.style.width = pct + '%';
+    if (sideEmoji) {
+      const emojis = happyMode
+        ? ['😊', '😇', '⭐', '☁', '💖', '🌈', '👼']
+        : ['🙂', '😅', '😬', '👀', '😈', '💀', '🌙'];
+      const idx = Math.floor((happyMode ? happyClicks : clicks) / 40) % emojis.length;
+      sideEmoji.textContent = emojis[idx];
+    }
+    if (sideBtnCountEl) sideBtnCountEl.textContent = sideBtnTotal;
+  }
+
+  function btnPress(key, effect, label, mood) {
+    if (endingFired || victoryLobby || gameBeaten) return;
+    ensureAudio();
+    startMusic();
+    const m = mood || BUTTON_MOOD[key];
+    if (m) applyButtonMood(m);
+    effect();
+    btnCounts[key] = (btnCounts[key] || 0) + 1;
+    sideBtnTotal++;
+    if (label && sideLastBtnEl) sideLastBtnEl.textContent = 'last: ' + label;
+    updateSideWidgets();
+  }
+
+  function btnFace(key, expr, ms, label) {
+    const mood = BUTTON_MOOD[key] || 'happy';
+    const msg = moodFeedback(mood)[Math.floor(Math.random() * 4)];
+    btnPress(key, () => showFaceExpression(expr, ms, msg), label, mood);
+  }
+
+  function wireBtn(id, key, expr, ms, label) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btnFace(key, expr, ms, label);
+    });
+  }
+
+  document.getElementById('btnPet').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('pet', 'happy', 700, 'PET');
+  });
+  document.getElementById('btnTickle').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('tickle', 'silly', 800, 'TICKLE');
+  });
+  document.getElementById('btnWink').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('wink', 'wink', 450, 'WINK');
+  });
+  document.getElementById('btnScare').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('scare', 'shocked', 650, 'SCARE');
+  });
+  document.getElementById('btnHug').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('hug', 'hug', 900, 'HUG');
+  });
+  document.getElementById('btnBoogie').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('boogie', 'silly', 750, 'BOOGIE');
+  });
+  document.getElementById('btnSing').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('sing', 'sing', 850, 'SING');
+  });
+  document.getElementById('btnLucky').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('lucky', 'sparkle', 800, 'LUCKY');
+  });
+  document.getElementById('btnJoke').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnPress('joke', () => doLaugh(), 'JOKE', 'happy');
+  });
+  document.getElementById('btnHelp').addEventListener('click', (e) => {
+    e.stopPropagation();
+    helpPanel.classList.add('show');
+    helpPanel.setAttribute('aria-hidden', 'false');
+    btnPress('help', () => {}, 'HELP');
+  });
+  document.getElementById('btnHelpClose').addEventListener('click', (e) => {
+    e.stopPropagation();
+    helpPanel.classList.remove('show');
+    helpPanel.setAttribute('aria-hidden', 'true');
+  });
+
+  document.getElementById('btnZap').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('zap', 'shocked', 600, 'ZAP');
+  });
+  document.getElementById('btnBell').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('bell', 'happy', 650, 'BELL');
+  });
+  document.getElementById('btnSpark').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('spark', 'sparkle', 800, 'SPARK');
+  });
+  document.getElementById('btnSleep').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('sleep', 'sleepy', 1100, 'SLEEP');
+  });
+  document.getElementById('btnParty').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('party', 'party', 900, 'PARTY');
+  });
+  document.getElementById('btnGift').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('gift', 'happy', 850, 'GIFT');
+  });
+  document.getElementById('btnStar').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('star', 'sparkle', 850, 'STAR');
+  });
+  document.getElementById('btnDizzy').addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFace('dizzy', 'dizzy', 950, 'DIZZY');
+  });
+
+  wireBtn('btnBonk', 'bonk', 'shocked', 550, 'BONK');
+  wireBtn('btnCookie', 'cookie', 'yum', 900, 'COOKIE');
+  wireBtn('btnBoo', 'boo', 'boo', 700, 'BOO');
+  wireBtn('btnNice', 'nice', 'happy', 750, 'NICE');
+  wireBtn('btnLove', 'love', 'love', 900, 'LOVE');
+  wireBtn('btnCool', 'cool', 'cool', 800, 'COOL');
+  wireBtn('btnMad', 'mad', 'mad', 850, 'MAD');
+  wireBtn('btnCry', 'cry', 'cry', 950, 'CRY');
+  wireBtn('btnDance', 'dance', 'party', 900, 'DANCE');
+  wireBtn('btnYum', 'yum', 'yum', 850, 'YUM');
+  wireBtn('btnThink', 'think', 'think', 1000, 'THINK');
+  wireBtn('btnHi', 'hi', 'wave', 750, 'HI');
+
+  muteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const now = performance.now();
+    const wasOn = muted;
+    muted = !muted;
+    if (wasOn && !muted && now - lastMuteAt < 2000) triggerEnding('echo');
+    lastMuteAt = now;
+    applyMute();
+    // SILENT ENDING: muting while it is loud and creepy
+    if (muted && clicks >= 4500) {
+      triggerEnding('silent');
+    }
+    if (muted && MEGA_MUTE_MAP[clicks]) {
+      triggerEnding(MEGA_MUTE_MAP[clicks]);
+    }
+  });
+
+  loadGotEndings();
+  updateEndingsBar();
+  document.getElementById('endingContinue')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dismissEnding();
+  });
+  document.getElementById('beatRestart')?.addEventListener('click', onBeatRestartClick);
+  document.getElementById('beatRestartYes')?.addEventListener('click', onBeatRestartYes);
+  document.getElementById('beatRestartNo')?.addEventListener('click', onBeatRestartNo);
+  try {
+    if (localStorage.getItem('clippeyBeaten') === '1') {
+      gameBeaten = true;
+      body.classList.add('gameBeaten');
+      showBeatCredits();
+    }
+  } catch (_) {}
+
+  positionCornerHints();
+  updateSideWidgets();
+  applyEyeLook();
+
+</script>
+</body>
+</html>

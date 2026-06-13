@@ -1,0 +1,3542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Crappy Game - The Most Boringest Game Ever</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier Prime', monospace;
+            background: #000;
+            color: #00ff00;
+            overflow: hidden;
+            cursor: crosshair;
+            user-select: none;
+        }
+        
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px #00ff00;
+            animation: glitch 2s infinite;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.7;
+            text-align: center;
+        }
+        
+        .boring-button {
+            font-size: 2rem;
+            padding: 20px 40px;
+            background: #333;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            cursor: pointer;
+            transition: all 0.1s;
+            font-family: 'Courier Prime', monospace;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .boring-button:hover {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 30px #00ff00;
+        }
+        
+        .boring-button:active {
+            transform: scale(0.95);
+        }
+        
+        .score {
+            font-size: 1.5rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .boring-stats {
+            font-size: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+            opacity: 0.7;
+            line-height: 1.5;
+        }
+        
+        .glitch-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .glitch-line {
+            position: absolute;
+            background: #ff0000;
+            height: 2px;
+            width: 100%;
+            animation: glitchMove 0.1s linear infinite;
+        }
+        
+        .glitch-text {
+            position: absolute;
+            color: #ff0000;
+            font-size: 1rem;
+            white-space: nowrap;
+            animation: glitchText 0.2s linear infinite;
+        }
+        
+        .creepy-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #000;
+            color: #ff0000;
+            padding: 20px;
+            border: 2px solid #ff0000;
+            font-size: 1.5rem;
+            text-align: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.5s;
+            max-width: 80%;
+            box-shadow: 0 0 50px #ff0000;
+        }
+        
+        .static-noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23000"/><circle cx="20" cy="20" r="2" fill="%23fff"/><circle cx="80" cy="40" r="1" fill="%23fff"/><circle cx="40" cy="80" r="1.5" fill="%23fff"/><circle cx="90" cy="90" r="1" fill="%23fff"/></svg>');
+            opacity: 0;
+            pointer-events: none;
+            z-index: 999;
+            transition: opacity 0.3s;
+        }
+        
+        .screen-shake {
+            animation: shake 0.1s linear infinite;
+        }
+        
+        .corrupted-text {
+            color: #ff0000;
+            text-shadow: 2px 2px 4px #000;
+            animation: corruption 1s infinite;
+        }
+        
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            10% { transform: translate(-2px, 2px); }
+            20% { transform: translate(-2px, -2px); }
+            30% { transform: translate(2px, 2px); }
+            40% { transform: translate(2px, -2px); }
+            50% { transform: translate(-2px, 2px); }
+            60% { transform: translate(-2px, -2px); }
+            70% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            90% { transform: translate(-2px, 2px); }
+        }
+        
+        @keyframes glitchMove {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100vw); }
+        }
+        
+        @keyframes glitchText {
+            0%, 100% { transform: translate(0); }
+            25% { transform: translate(-1px, 1px); }
+            50% { transform: translate(1px, -1px); }
+            75% { transform: translate(-1px, -1px); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translate(0); }
+            10% { transform: translate(-1px, -1px); }
+            20% { transform: translate(-1px, 0); }
+            30% { transform: translate(-1px, 1px); }
+            40% { transform: translate(1px, -1px); }
+            50% { transform: translate(1px, 0); }
+            60% { transform: translate(1px, 1px); }
+            70% { transform: translate(-1px, -1px); }
+            80% { transform: translate(-1px, 0); }
+            90% { transform: translate(-1px, 1px); }
+        }
+        
+        @keyframes corruption {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(180deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .flicker {
+            animation: flicker 0.1s infinite;
+        }
+        
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 500;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .rain-drop {
+            position: absolute;
+            color: #00ff00;
+            font-size: 1.2rem;
+            animation: rainFall 3s linear infinite;
+        }
+        
+        @keyframes rainFall {
+            0% { transform: translateY(-100vh); }
+            100% { transform: translateY(100vh); }
+        }
+        
+        @keyframes matrixRain {
+            0% { transform: translateY(-100vh); }
+            100% { transform: translateY(100vh); }
+        }
+        
+        @keyframes annoyingBlink {
+            0%, 50% { opacity: 1; }
+            25%, 75% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes annoyingRotate {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+        
+        @keyframes annoyingScale {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes annoyingColor {
+            0% { color: #00ff00; }
+            25% { color: #ff0000; }
+            50% { color: #0000ff; }
+            75% { color: #ffff00; }
+            100% { color: #00ff00; }
+        }
+        
+        @keyframes boringFade {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes boringMove {
+            0%, 100% { transform: translateX(0px); }
+            50% { transform: translateX(2px); }
+        }
+        
+        @keyframes boringScale {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.01); }
+        }
+        
+        @keyframes boringRotate {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(0.5deg); }
+        }
+        
+        @keyframes crappyGlitch {
+            0%, 100% { transform: translateX(0px) translateY(0px); }
+            10% { transform: translateX(-2px) translateY(1px); }
+            20% { transform: translateX(2px) translateY(-1px); }
+            30% { transform: translateX(-1px) translateY(2px); }
+            40% { transform: translateX(1px) translateY(-2px); }
+            50% { transform: translateX(-3px) translateY(0px); }
+            60% { transform: translateX(3px) translateY(0px); }
+            70% { transform: translateX(0px) translateY(-3px); }
+            80% { transform: translateX(0px) translateY(3px); }
+            90% { transform: translateX(-2px) translateY(-2px); }
+        }
+        
+        @keyframes crappyShake {
+            0%, 100% { transform: translateX(0px) translateY(0px) rotate(0deg); }
+            25% { transform: translateX(-5px) translateY(-3px) rotate(-1deg); }
+            50% { transform: translateX(5px) translateY(3px) rotate(1deg); }
+            75% { transform: translateX(-3px) translateY(5px) rotate(-0.5deg); }
+        }
+        
+        @keyframes crappyCorrupt {
+            0%, 100% { filter: none; }
+            25% { filter: hue-rotate(90deg) saturate(2); }
+            50% { filter: hue-rotate(180deg) invert(0.5); }
+            75% { filter: hue-rotate(270deg) brightness(1.5); }
+        }
+        
+        @keyframes crappyBreak {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            33% { transform: scale(0.8) rotate(-5deg); }
+            66% { transform: scale(1.2) rotate(5deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="title" id="title">THE CRAPPY GAME</h1>
+        <p class="subtitle" id="subtitle">The Most Boringest Game Ever</p>
+        
+        <button class="boring-button" id="boringButton" onclick="clickButton()">
+            CLICK ME (IT'S BORING)
+        </button>
+        
+        <div class="score" id="score">Clicks: 0</div>
+        <div class="boring-stats" id="boringStats">
+            <div>Time Wasted: <span id="timeWasted">0</span> seconds</div>
+            <div>Boredom Level: <span id="boredomLevel">0</span>%</div>
+            <div>Productivity Lost: <span id="productivityLost">0</span> minutes</div>
+            <div>Regret Level: <span id="regretLevel">0</span>%</div>
+        </div>
+    </div>
+    
+    <div class="glitch-overlay" id="glitchOverlay"></div>
+    <div class="static-noise" id="staticNoise"></div>
+    <div class="matrix-rain" id="matrixRain"></div>
+    
+    <div class="creepy-message" id="creepyMessage"></div>
+    
+    <audio id="glitchSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" type="audio/wav">
+    </audio>
+    
+    <audio id="glitchSound2" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" type="audio/wav">
+    </audio>
+    
+    <audio id="glitchSound3" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" type="audio/wav">
+    </audio>
+    
+    <audio id="staticSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" type="audio/wav">
+    </audio>
+    
+    <audio id="creepySound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" type="audio/wav">
+    </audio>
+    
+    <audio id="clickSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" type="audio/wav">
+    </audio>
+    
+    <script>
+        // Game state
+        let clicks = 0;
+        let glitchLevel = 0;
+        let clickTime = 0;
+        let gameStartTime = Date.now();
+        let gameStarted = false;
+        let endingTriggered = false;
+        let timeWasted = 0;
+        let boredomLevel = 0;
+        let productivityLost = 0;
+        let regretLevel = 0;
+        let boringMessages = [
+            "This is really boring...",
+            "Why are you still clicking?",
+            "You could be doing something productive...",
+            "This game has no point...",
+            "You're wasting your time...",
+            "There's nothing to achieve here...",
+            "This is the most boring game ever...",
+            "You should probably stop...",
+            "This is getting tedious...",
+            "Nothing interesting will happen...",
+            "You're just clicking a button...",
+            "This is pointless...",
+            "You could be reading a book...",
+            "This is a waste of time...",
+            "Nothing will change...",
+            "You're still here?",
+            "This is really dull...",
+            "Why continue?",
+            "This is monotonous...",
+            "You're not achieving anything..."
+        ];
+        
+        // Sound functions - Generate glitch sounds programmatically
+        let audioContext;
+        
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Audio context not supported');
+            }
+        }
+        
+        function playGlitchSound() {
+            if (!audioContext) return;
+            
+            try {
+                // Create multiple oscillators for chaotic glitch
+                const numOscillators = Math.floor(Math.random() * 5) + 2;
+                
+                for (let i = 0; i < numOscillators; i++) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    const filter = audioContext.createBiquadFilter();
+                    
+                    oscillator.connect(filter);
+                    filter.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Random glitchy frequency with extreme variations
+                    const baseFreq = Math.random() * 5000 + 50;
+                    const glitchFreq = baseFreq * (Math.random() * 10 + 0.1);
+                    
+                    oscillator.frequency.setValueAtTime(baseFreq, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(glitchFreq, audioContext.currentTime + Math.random() * 0.05);
+                    oscillator.frequency.setValueAtTime(baseFreq * 0.1, audioContext.currentTime + Math.random() * 0.1);
+                    
+                    // Random filter settings for distortion
+                    filter.type = ['lowpass', 'highpass', 'bandpass'][Math.floor(Math.random() * 3)];
+                    filter.frequency.setValueAtTime(Math.random() * 2000 + 100, audioContext.currentTime);
+                    filter.Q.setValueAtTime(Math.random() * 20 + 1, audioContext.currentTime);
+                    
+                    // Chaotic volume changes
+                    gainNode.gain.setValueAtTime(Math.random() * 0.3 + 0.05, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + Math.random() * 0.02);
+                    gainNode.gain.setValueAtTime(Math.random() * 0.2, audioContext.currentTime + Math.random() * 0.05);
+                    
+                    const duration = Math.random() * 0.2 + 0.05;
+                    oscillator.start(audioContext.currentTime + Math.random() * 0.1);
+                    oscillator.stop(audioContext.currentTime + duration);
+                }
+                
+                // Add random noise bursts
+                if (Math.random() < 0.7) {
+                    const bufferSize = audioContext.sampleRate * 0.05;
+                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                    const output = buffer.getChannelData(0);
+                    
+                    for (let i = 0; i < bufferSize; i++) {
+                        output[i] = (Math.random() * 2 - 1) * Math.random();
+                    }
+                    
+                    const noise = audioContext.createBufferSource();
+                    noise.buffer = buffer;
+                    
+                    const noiseGain = audioContext.createGain();
+                    noiseGain.gain.setValueAtTime(Math.random() * 0.1, audioContext.currentTime);
+                    
+                    noise.connect(noiseGain);
+                    noiseGain.connect(audioContext.destination);
+                    
+                    noise.start(audioContext.currentTime + Math.random() * 0.1);
+                    noise.stop(audioContext.currentTime + 0.05);
+                }
+                
+            } catch (e) {
+                console.log('Glitch sound failed:', e);
+            }
+        }
+        
+        function playStaticSound() {
+            if (!audioContext) return;
+            
+            try {
+                // Create multiple static layers
+                const numLayers = Math.floor(Math.random() * 4) + 2;
+                
+                for (let layer = 0; layer < numLayers; layer++) {
+                    const bufferSize = audioContext.sampleRate * (Math.random() * 0.2 + 0.05);
+                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                    const output = buffer.getChannelData(0);
+                    
+                    // Create glitchy static with patterns
+                    for (let i = 0; i < bufferSize; i++) {
+                        if (Math.random() < 0.1) {
+                            // Add glitch bursts
+                            output[i] = (Math.random() * 2 - 1) * 2;
+                        } else if (Math.random() < 0.3) {
+                            // Add silence gaps
+                            output[i] = 0;
+                        } else {
+                            // Normal static
+                            output[i] = (Math.random() * 2 - 1) * Math.random();
+                        }
+                    }
+                    
+                    const staticNoise = audioContext.createBufferSource();
+                    staticNoise.buffer = buffer;
+                    
+                    const gainNode = audioContext.createGain();
+                    const filter = audioContext.createBiquadFilter();
+                    
+                    // Random filter for distortion
+                    filter.type = ['lowpass', 'highpass'][Math.floor(Math.random() * 2)];
+                    filter.frequency.setValueAtTime(Math.random() * 3000 + 100, audioContext.currentTime);
+                    
+                    // Chaotic volume changes
+                    gainNode.gain.setValueAtTime(Math.random() * 0.1 + 0.02, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + Math.random() * 0.03);
+                    gainNode.gain.setValueAtTime(Math.random() * 0.08, audioContext.currentTime + Math.random() * 0.05);
+                    
+                    staticNoise.connect(filter);
+                    filter.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    const delay = Math.random() * 0.1;
+                    const duration = Math.random() * 0.15 + 0.05;
+                    
+                    staticNoise.start(audioContext.currentTime + delay);
+                    staticNoise.stop(audioContext.currentTime + delay + duration);
+                }
+                
+                // Add random frequency sweeps
+                if (Math.random() < 0.5) {
+                    const sweepOsc = audioContext.createOscillator();
+                    const sweepGain = audioContext.createGain();
+                    
+                    sweepOsc.connect(sweepGain);
+                    sweepGain.connect(audioContext.destination);
+                    
+                    sweepOsc.frequency.setValueAtTime(50, audioContext.currentTime);
+                    sweepOsc.frequency.exponentialRampToValueAtTime(5000, audioContext.currentTime + 0.1);
+                    
+                    sweepGain.gain.setValueAtTime(0.02, audioContext.currentTime);
+                    sweepGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    
+                    sweepOsc.start(audioContext.currentTime);
+                    sweepOsc.stop(audioContext.currentTime + 0.1);
+                }
+                
+            } catch (e) {
+                console.log('Static sound failed:', e);
+            }
+        }
+        
+        function playCreepySound() {
+            if (!audioContext) return;
+            
+            try {
+                // Create multiple creepy layers
+                const numLayers = Math.floor(Math.random() * 3) + 2;
+                
+                for (let layer = 0; layer < numLayers; layer++) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    const filter = audioContext.createBiquadFilter();
+                    
+                    oscillator.connect(filter);
+                    filter.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Glitchy creepy frequencies
+                    const baseFreq = Math.random() * 100 + 20;
+                    oscillator.frequency.setValueAtTime(baseFreq, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(baseFreq * 0.5, audioContext.currentTime + Math.random() * 0.2);
+                    oscillator.frequency.setValueAtTime(baseFreq * 2, audioContext.currentTime + Math.random() * 0.4);
+                    oscillator.frequency.setValueAtTime(baseFreq * 0.1, audioContext.currentTime + Math.random() * 0.6);
+                    
+                    // Distortion filter
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(Math.random() * 500 + 50, audioContext.currentTime);
+                    filter.Q.setValueAtTime(Math.random() * 10 + 1, audioContext.currentTime);
+                    
+                    // Chaotic volume
+                    gainNode.gain.setValueAtTime(Math.random() * 0.2 + 0.05, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + Math.random() * 0.1);
+                    gainNode.gain.setValueAtTime(Math.random() * 0.15, audioContext.currentTime + Math.random() * 0.2);
+                    
+                    const duration = Math.random() * 0.8 + 0.3;
+                    oscillator.start(audioContext.currentTime + Math.random() * 0.1);
+                    oscillator.stop(audioContext.currentTime + duration);
+                }
+                
+                // Add glitchy reverb effect
+                if (Math.random() < 0.6) {
+                    const delay = audioContext.createDelay();
+                    const feedback = audioContext.createGain();
+                    
+                    delay.delayTime.setValueAtTime(Math.random() * 0.3 + 0.1, audioContext.currentTime);
+                    feedback.gain.setValueAtTime(Math.random() * 0.3, audioContext.currentTime);
+                    
+                    delay.connect(feedback);
+                    feedback.connect(delay);
+                    delay.connect(audioContext.destination);
+                    
+                    // Create a short burst for reverb
+                    const reverbOsc = audioContext.createOscillator();
+                    const reverbGain = audioContext.createGain();
+                    
+                    reverbOsc.connect(reverbGain);
+                    reverbGain.connect(delay);
+                    
+                    reverbOsc.frequency.setValueAtTime(Math.random() * 200 + 50, audioContext.currentTime);
+                    reverbGain.gain.setValueAtTime(0.05, audioContext.currentTime);
+                    reverbGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    
+                    reverbOsc.start(audioContext.currentTime);
+                    reverbOsc.stop(audioContext.currentTime + 0.2);
+                }
+                
+            } catch (e) {
+                console.log('Creepy sound failed:', e);
+            }
+        }
+        
+        function playClickSound() {
+            if (!audioContext) return;
+            
+            try {
+                // Create glitchy click with multiple layers
+                const numClicks = Math.floor(Math.random() * 3) + 1;
+                
+                for (let i = 0; i < numClicks; i++) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    const filter = audioContext.createBiquadFilter();
+                    
+                    oscillator.connect(filter);
+                    filter.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Glitchy click frequencies
+                    const baseFreq = Math.random() * 1000 + 200;
+                    oscillator.frequency.setValueAtTime(baseFreq, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(baseFreq * 2, audioContext.currentTime + 0.01);
+                    oscillator.frequency.setValueAtTime(baseFreq * 0.5, audioContext.currentTime + 0.02);
+                    
+                    // Distortion filter
+                    filter.type = 'highpass';
+                    filter.frequency.setValueAtTime(Math.random() * 500 + 100, audioContext.currentTime);
+                    
+                    // Chaotic volume
+                    gainNode.gain.setValueAtTime(Math.random() * 0.1 + 0.02, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + 0.01);
+                    gainNode.gain.setValueAtTime(Math.random() * 0.08, audioContext.currentTime + 0.02);
+                    
+                    const duration = Math.random() * 0.1 + 0.02;
+                    const delay = Math.random() * 0.05;
+                    
+                    oscillator.start(audioContext.currentTime + delay);
+                    oscillator.stop(audioContext.currentTime + delay + duration);
+                }
+                
+            } catch (e) {
+                console.log('Click sound failed:', e);
+            }
+        }
+        
+        // Additional glitchy sound functions
+        function playGlitchBurst() {
+            if (!audioContext) return;
+            
+            try {
+                // Create intense glitch burst
+                const numBursts = Math.floor(Math.random() * 8) + 3;
+                
+                for (let i = 0; i < numBursts; i++) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Extreme frequency variations
+                    const freq = Math.random() * 10000 + 50;
+                    oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+                    
+                    // Very short, intense bursts
+                    gainNode.gain.setValueAtTime(Math.random() * 0.5 + 0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.02);
+                    
+                    const delay = Math.random() * 0.1;
+                    oscillator.start(audioContext.currentTime + delay);
+                    oscillator.stop(audioContext.currentTime + delay + 0.02);
+                }
+            } catch (e) {
+                console.log('Glitch burst failed:', e);
+            }
+        }
+        
+        function playCorruptionSound() {
+            if (!audioContext) return;
+            
+            try {
+                // Create data corruption sound
+                const bufferSize = audioContext.sampleRate * 0.2;
+                const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                const output = buffer.getChannelData(0);
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    if (Math.random() < 0.2) {
+                        // Corruption bursts
+                        output[i] = (Math.random() * 2 - 1) * 3;
+                    } else if (Math.random() < 0.5) {
+                        // Silence
+                        output[i] = 0;
+                    } else {
+                        // Distorted data
+                        output[i] = Math.sin(i * 0.1) * Math.random() * 0.5;
+                    }
+                }
+                
+                const corruption = audioContext.createBufferSource();
+                corruption.buffer = buffer;
+                
+                const gainNode = audioContext.createGain();
+                gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+                
+                corruption.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                corruption.start(audioContext.currentTime);
+                corruption.stop(audioContext.currentTime + 0.2);
+            } catch (e) {
+                console.log('Corruption sound failed:', e);
+            }
+        }
+        
+        // Continuous glitchy sounds - CONSTANT NOISE
+        function startGlitchySounds() {
+            // CONSTANT glitch sounds every 0.5-2 seconds
+            setInterval(() => {
+                playGlitchSound();
+            }, Math.random() * 1500 + 500);
+            
+            // CONSTANT static sounds every 1-3 seconds
+            setInterval(() => {
+                playStaticSound();
+            }, Math.random() * 2000 + 1000);
+            
+            // CONSTANT creepy sounds every 2-5 seconds
+            setInterval(() => {
+                playCreepySound();
+            }, Math.random() * 3000 + 2000);
+            
+            // EXTRA glitch sounds every 0.3-1 seconds
+            setInterval(() => {
+                if (Math.random() < 0.7) {
+                    playGlitchSound();
+                }
+            }, Math.random() * 700 + 300);
+            
+            // EXTRA static sounds every 0.5-1.5 seconds
+            setInterval(() => {
+                if (Math.random() < 0.6) {
+                    playStaticSound();
+                }
+            }, Math.random() * 1000 + 500);
+            
+            // RAPID FIRE glitch sounds every 0.1-0.5 seconds
+            setInterval(() => {
+                if (Math.random() < 0.4) {
+                    playGlitchSound();
+                }
+            }, Math.random() * 400 + 100);
+            
+            // RAPID FIRE static sounds every 0.2-0.8 seconds
+            setInterval(() => {
+                if (Math.random() < 0.3) {
+                    playStaticSound();
+                }
+            }, Math.random() * 600 + 200);
+            
+            // INTENSE GLITCH BURSTS every 1-3 seconds
+            setInterval(() => {
+                if (Math.random() < 0.4) {
+                    playGlitchBurst();
+                }
+            }, Math.random() * 2000 + 1000);
+            
+            // CORRUPTION SOUNDS every 2-5 seconds
+            setInterval(() => {
+                if (Math.random() < 0.3) {
+                    playCorruptionSound();
+                }
+            }, Math.random() * 3000 + 2000);
+            
+            // CHAOTIC SOUND MIX every 0.5-1.5 seconds
+            setInterval(() => {
+                if (Math.random() < 0.5) {
+                    const sounds = [playGlitchSound, playStaticSound, playGlitchBurst, playCorruptionSound];
+                    const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+                    randomSound();
+                }
+            }, Math.random() * 1000 + 500);
+        }
+        
+        // Make the game more boring functions
+        function updateBoringStats() {
+            timeWasted = Math.floor((Date.now() - gameStartTime) / 1000);
+            boredomLevel = Math.min(100, Math.floor(timeWasted / 10));
+            productivityLost = Math.floor(timeWasted / 60);
+            regretLevel = Math.min(100, Math.floor(clicks / 2));
+            
+            document.getElementById('timeWasted').textContent = timeWasted;
+            document.getElementById('boredomLevel').textContent = boredomLevel;
+            document.getElementById('productivityLost').textContent = productivityLost;
+            document.getElementById('regretLevel').textContent = regretLevel;
+        }
+        
+        function showBoringMessage() {
+            const message = document.createElement('div');
+            message.style.position = 'fixed';
+            message.style.top = Math.random() * 80 + 10 + '%';
+            message.style.left = Math.random() * 80 + 10 + '%';
+            message.style.color = '#666';
+            message.style.fontSize = '0.9rem';
+            message.style.opacity = '0.8';
+            message.style.pointerEvents = 'none';
+            message.style.zIndex = '9999';
+            message.style.fontFamily = 'Courier Prime, monospace';
+            message.textContent = boringMessages[Math.floor(Math.random() * boringMessages.length)];
+            
+            document.body.appendChild(message);
+            
+            setTimeout(() => {
+                if (message.parentNode) {
+                    message.remove();
+                }
+            }, 3000);
+        }
+        
+        function makeButtonMoreBoring() {
+            const button = document.getElementById('boringButton');
+            const boringTexts = [
+                "CLICK ME (IT'S BORING)",
+                "CLICK ME (STILL BORING)",
+                "CLICK ME (VERY BORING)",
+                "CLICK ME (EXTREMELY BORING)",
+                "CLICK ME (MIND-NUMBING)",
+                "CLICK ME (TEDIOUS)",
+                "CLICK ME (DULL)",
+                "CLICK ME (MONOTONOUS)",
+                "CLICK ME (REPETITIVE)",
+                "CLICK ME (POINTLESS)",
+                "CLICK ME (WASTE OF TIME)",
+                "CLICK ME (NOTHING HAPPENS)",
+                "CLICK ME (STILL NOTHING)",
+                "CLICK ME (CONTINUE WASTING TIME)",
+                "CLICK ME (YOU'RE STILL HERE?)",
+                "CLICK ME (WHY BOTHER?)",
+                "CLICK ME (THIS IS DULL)",
+                "CLICK ME (NOTHING TO SEE)",
+                "CLICK ME (STILL CLICKING?)",
+                "CLICK ME (GIVE UP ALREADY)"
+            ];
+            
+            button.textContent = boringTexts[Math.floor(Math.random() * boringTexts.length)];
+        }
+        
+        function addBoringEffects() {
+            // Randomly change button text to be more boring
+            setInterval(() => {
+                if (Math.random() < 0.1) {
+                    makeButtonMoreBoring();
+                }
+            }, 5000);
+            
+            // Show boring messages
+            setInterval(() => {
+                if (Math.random() < 0.3) {
+                    showBoringMessage();
+                }
+            }, 8000);
+            
+            // Update boring stats every second
+            setInterval(() => {
+                updateBoringStats();
+            }, 1000);
+            
+            // Make the game slower over time
+            setInterval(() => {
+                if (Math.random() < 0.05) {
+                    document.body.style.filter = 'grayscale(1)';
+                    setTimeout(() => {
+                        document.body.style.filter = 'none';
+                    }, 2000);
+                }
+            }, 10000);
+            
+            // Add boring color changes
+            setInterval(() => {
+                if (Math.random() < 0.08) {
+                    const colors = ['#333', '#444', '#555', '#666', '#777'];
+                    document.body.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    setTimeout(() => {
+                        document.body.style.background = '#000';
+                    }, 3000);
+                }
+            }, 12000);
+            
+            // Add boring animations
+            setInterval(() => {
+                if (Math.random() < 0.15) {
+                    const elements = [document.getElementById('title'), document.getElementById('subtitle'), document.getElementById('score')];
+                    const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                    const animations = ['boringFade', 'boringMove', 'boringScale', 'boringRotate'];
+                    const randomAnimation = animations[Math.floor(Math.random() * animations.length)];
+                    
+                    if (randomElement) {
+                        randomElement.style.animation = `${randomAnimation} 3s infinite`;
+                        setTimeout(() => {
+                            randomElement.style.animation = '';
+                        }, 6000);
+                    }
+                }
+            }, 8000);
+            
+            // Add crappy animations
+            setInterval(() => {
+                if (Math.random() < 0.12) {
+                    const elements = [document.getElementById('title'), document.getElementById('subtitle'), document.getElementById('score'), document.getElementById('boringButton')];
+                    const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                    const crappyAnimations = ['crappyGlitch', 'crappyShake', 'crappyCorrupt', 'crappyBreak'];
+                    const randomAnimation = crappyAnimations[Math.floor(Math.random() * crappyAnimations.length)];
+                    
+                    if (randomElement) {
+                        randomElement.style.animation = `${randomAnimation} 2s infinite`;
+                        setTimeout(() => {
+                            randomElement.style.animation = '';
+                        }, 4000);
+                    }
+                }
+            }, 6000);
+            
+            // Randomly break the game interface
+            setInterval(() => {
+                if (Math.random() < 0.05) {
+                    // Make everything go crazy
+                    document.body.style.animation = 'crappyShake 0.5s infinite';
+                    document.body.style.filter = 'hue-rotate(180deg) saturate(2)';
+                    
+                    setTimeout(() => {
+                        document.body.style.animation = '';
+                        document.body.style.filter = '';
+                    }, 3000);
+                }
+            }, 15000);
+            
+            // Randomly show calculating messages
+            setInterval(() => {
+                if (Math.random() < 0.08) {
+                    const calcMessage = document.createElement('div');
+                    calcMessage.textContent = 'CALCULATING GAME STATE...';
+                    calcMessage.style.position = 'fixed';
+                    calcMessage.style.left = '50%';
+                    calcMessage.style.top = '50%';
+                    calcMessage.style.transform = 'translate(-50%, -50%)';
+                    calcMessage.style.color = '#00ff00';
+                    calcMessage.style.fontSize = '1.5rem';
+                    calcMessage.style.fontFamily = 'monospace';
+                    calcMessage.style.zIndex = '9999';
+                    calcMessage.style.pointerEvents = 'none';
+                    calcMessage.style.background = 'rgba(0, 0, 0, 0.8)';
+                    calcMessage.style.padding = '20px';
+                    calcMessage.style.border = '2px solid #00ff00';
+                    calcMessage.style.borderRadius = '10px';
+                    document.body.appendChild(calcMessage);
+                    
+                    setTimeout(() => {
+                        if (calcMessage.parentNode) {
+                            calcMessage.remove();
+                        }
+                    }, 3000);
+                }
+            }, 12000);
+            
+            // Randomly corrupt text
+            setInterval(() => {
+                if (Math.random() < 0.08) {
+                    const elements = document.querySelectorAll('h1, p, div');
+                    const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                    if (randomElement) {
+                        const originalText = randomElement.textContent;
+                        randomElement.textContent = originalText.split('').map(char => 
+                            Math.random() < 0.3 ? String.fromCharCode(Math.random() * 94 + 33) : char
+                        ).join('');
+                        
+                        setTimeout(() => {
+                            randomElement.textContent = originalText;
+                        }, 2000);
+                    }
+                }
+            }, 9000);
+            
+            // Make button more boring over time
+            setInterval(() => {
+                if (Math.random() < 0.12) {
+                    const button = document.getElementById('boringButton');
+                    button.style.opacity = '0.7';
+                    button.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        button.style.opacity = '1';
+                        button.style.transform = 'scale(1)';
+                    }, 2000);
+                }
+            }, 6000);
+            
+            // Make the game more crappy
+            setInterval(() => {
+                if (Math.random() < 0.08) {
+                    // Randomly break the button
+                    const button = document.getElementById('boringButton');
+                    button.style.pointerEvents = 'none';
+                    button.style.opacity = '0.3';
+                    button.textContent = 'BROKEN';
+                    setTimeout(() => {
+                        button.style.pointerEvents = 'auto';
+                        button.style.opacity = '1';
+                        makeButtonMoreBoring();
+                    }, 3000);
+                }
+            }, 8000);
+            
+            // Randomly corrupt the score
+            setInterval(() => {
+                if (Math.random() < 0.06) {
+                    const score = document.getElementById('score');
+                    const originalText = score.textContent;
+                    score.textContent = 'ERROR: ' + Math.floor(Math.random() * 999999);
+                    score.style.color = '#ff0000';
+                    score.style.textShadow = '0 0 10px #ff0000';
+                    setTimeout(() => {
+                        score.textContent = originalText;
+                        score.style.color = '';
+                        score.style.textShadow = '';
+                    }, 2000);
+                }
+            }, 7000);
+            
+            // Randomly make elements glitch out
+            setInterval(() => {
+                if (Math.random() < 0.1) {
+                    const elements = document.querySelectorAll('h1, p, div, button');
+                    const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                    if (randomElement) {
+                        randomElement.style.filter = 'invert(1) hue-rotate(180deg)';
+                        randomElement.style.transform = 'skew(10deg, 10deg)';
+                        setTimeout(() => {
+                            randomElement.style.filter = '';
+                            randomElement.style.transform = '';
+                        }, 1500);
+                    }
+                }
+            }, 5000);
+            
+            // Randomly add broken HTML
+            setInterval(() => {
+                if (Math.random() < 0.04) {
+                    const brokenDiv = document.createElement('div');
+                    brokenDiv.innerHTML = '&lt;broken&gt;ERROR&lt;/broken&gt;';
+                    brokenDiv.style.position = 'fixed';
+                    brokenDiv.style.left = Math.random() * 90 + '%';
+                    brokenDiv.style.top = Math.random() * 90 + '%';
+                    brokenDiv.style.color = '#ff0000';
+                    brokenDiv.style.fontSize = '1rem';
+                    brokenDiv.style.zIndex = '9999';
+                    brokenDiv.style.pointerEvents = 'none';
+                    brokenDiv.style.fontFamily = 'monospace';
+                    document.body.appendChild(brokenDiv);
+                    
+                    setTimeout(() => {
+                        if (brokenDiv.parentNode) {
+                            brokenDiv.remove();
+                        }
+                    }, 4000);
+                }
+            }, 10000);
+        }
+        
+        // Make the game more crappy functions
+        function makeGameCrappier() {
+            // Randomly move the button around
+            setInterval(() => {
+                if (Math.random() < 0.1) {
+                    const button = document.getElementById('boringButton');
+                    button.style.position = 'absolute';
+                    button.style.left = Math.random() * 80 + 10 + '%';
+                    button.style.top = Math.random() * 80 + 10 + '%';
+                    button.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    // Play glitch sound when button moves
+                    playGlitchSound();
+                }
+            }, 3000);
+            
+            // Randomly change button size
+            setInterval(() => {
+                if (Math.random() < 0.15) {
+                    const button = document.getElementById('boringButton');
+                    const size = Math.random() * 2 + 0.5;
+                    button.style.transform = `scale(${size})`;
+                    // Play glitch sound when button changes size
+                    playGlitchSound();
+                }
+            }, 2000);
+            
+            // Randomly invert colors
+            setInterval(() => {
+                if (Math.random() < 0.05) {
+                    document.body.style.filter = 'invert(1)';
+                    // Play glitch sound when colors invert
+                    playGlitchSound();
+                    playStaticSound();
+                    setTimeout(() => {
+                        document.body.style.filter = 'none';
+                    }, 1000);
+                }
+            }, 5000);
+            
+            // Randomly change cursor
+            setInterval(() => {
+                if (Math.random() < 0.2) {
+                    const cursors = ['crosshair', 'wait', 'text', 'move', 'not-allowed', 'grab', 'zoom-in', 'zoom-out'];
+                    document.body.style.cursor = cursors[Math.floor(Math.random() * cursors.length)];
+                    setTimeout(() => {
+                        document.body.style.cursor = 'crosshair';
+                    }, 2000);
+                }
+            }, 4000);
+            
+            // Randomly shake the screen
+            setInterval(() => {
+                if (Math.random() < 0.08) {
+                    document.body.classList.add('screen-shake');
+                    // Play glitch sound when screen shakes
+                    playGlitchSound();
+                    playStaticSound();
+                    setTimeout(() => {
+                        document.body.classList.remove('screen-shake');
+                    }, 500);
+                }
+            }, 3000);
+            
+            // Randomly change text colors
+            setInterval(() => {
+                if (Math.random() < 0.12) {
+                    const elements = document.querySelectorAll('h1, p, div, button');
+                    elements.forEach(el => {
+                        el.style.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    });
+                    // Play glitch sound when colors change
+                    playGlitchSound();
+                    setTimeout(() => {
+                        elements.forEach(el => {
+                            el.style.color = '';
+                        });
+                    }, 1500);
+                }
+            }, 2500);
+            
+            // Randomly add random characters to text
+            setInterval(() => {
+                if (Math.random() < 0.06) {
+                    const title = document.getElementById('title');
+                    const subtitle = document.getElementById('subtitle');
+                    const originalTitle = title.textContent;
+                    const originalSubtitle = subtitle.textContent;
+                    
+                    title.textContent = originalTitle + String.fromCharCode(Math.random() * 94 + 33);
+                    subtitle.textContent = originalSubtitle + String.fromCharCode(Math.random() * 94 + 33);
+                    
+                    // Play glitch sound when text corrupts
+                    playGlitchSound();
+                    playStaticSound();
+                    
+                    setTimeout(() => {
+                        title.textContent = originalTitle;
+                        subtitle.textContent = originalSubtitle;
+                    }, 2000);
+                }
+            }, 4000);
+            
+            // Randomly make elements disappear and reappear
+            setInterval(() => {
+                if (Math.random() < 0.07) {
+                    const elements = [document.getElementById('title'), document.getElementById('subtitle'), document.getElementById('score')];
+                    const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                    if (randomElement) {
+                        randomElement.style.visibility = 'hidden';
+                        // Play glitch sound when elements disappear
+                        playGlitchSound();
+                        setTimeout(() => {
+                            randomElement.style.visibility = 'visible';
+                        }, 1000);
+                    }
+                }
+            }, 3500);
+            
+            // Randomly change page title
+            setInterval(() => {
+                if (Math.random() < 0.1) {
+                    const titles = [
+                        "ERROR 404",
+                        "SYSTEM CRASH",
+                        "VIRUS DETECTED",
+                        "MEMORY LEAK",
+                        "FATAL ERROR",
+                        "CRITICAL FAILURE",
+                        "SYSTEM OVERLOAD",
+                        "VIRUS SCAN",
+                        "MEMORY CORRUPTION",
+                        "FATAL EXCEPTION"
+                    ];
+                    document.title = titles[Math.floor(Math.random() * titles.length)];
+                    setTimeout(() => {
+                        document.title = "The Crappy Game - The Most Boringest Game Ever";
+                    }, 3000);
+                }
+            }, 6000);
+            
+            // Randomly add random divs
+            setInterval(() => {
+                if (Math.random() < 0.04) {
+                    const randomDiv = document.createElement('div');
+                    randomDiv.textContent = 'ERROR ' + Math.floor(Math.random() * 9999);
+                    randomDiv.style.position = 'fixed';
+                    randomDiv.style.left = Math.random() * 90 + '%';
+                    randomDiv.style.top = Math.random() * 90 + '%';
+                    randomDiv.style.color = '#ff0000';
+                    randomDiv.style.fontSize = Math.random() * 20 + 10 + 'px';
+                    randomDiv.style.zIndex = '9999';
+                    randomDiv.style.pointerEvents = 'none';
+                    document.body.appendChild(randomDiv);
+                    
+                    // Play glitch sound when error divs appear
+                    playGlitchSound();
+                    playStaticSound();
+                    
+                    setTimeout(() => {
+                        if (randomDiv.parentNode) {
+                            randomDiv.remove();
+                        }
+                    }, 3000);
+                }
+            }, 5000);
+            
+            // Randomly apply annoying animations
+            setInterval(() => {
+                if (Math.random() < 0.08) {
+                    const elements = [document.getElementById('title'), document.getElementById('subtitle'), document.getElementById('score')];
+                    const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                    const animations = ['annoyingBlink', 'annoyingRotate', 'annoyingScale', 'annoyingColor'];
+                    const randomAnimation = animations[Math.floor(Math.random() * animations.length)];
+                    
+                    if (randomElement) {
+                        randomElement.style.animation = `${randomAnimation} 1s infinite`;
+                        // Play glitch sound when animations start
+                        playGlitchSound();
+                        setTimeout(() => {
+                            randomElement.style.animation = '';
+                        }, 3000);
+                    }
+                }
+            }, 4000);
+            
+            // Randomly change background color
+            setInterval(() => {
+                if (Math.random() < 0.06) {
+                    const colors = ['#000', '#111', '#222', '#333', '#444', '#555'];
+                    document.body.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    // Play glitch sound when background changes
+                    playGlitchSound();
+                    setTimeout(() => {
+                        document.body.style.background = '#000';
+                    }, 2000);
+                }
+            }, 7000);
+            
+            // Randomly add random popup messages
+            setInterval(() => {
+                if (Math.random() < 0.03) {
+                    const popup = document.createElement('div');
+                    const messages = [
+                        'SYSTEM ERROR',
+                        'MEMORY LEAK',
+                        'VIRUS DETECTED',
+                        'CRITICAL FAILURE',
+                        'FATAL ERROR',
+                        'SYSTEM OVERLOAD',
+                        'ACCESS DENIED',
+                        'INVALID OPERATION',
+                        'STACK OVERFLOW',
+                        'NULL POINTER'
+                    ];
+                    popup.textContent = messages[Math.floor(Math.random() * messages.length)];
+                    popup.style.position = 'fixed';
+                    popup.style.top = '50%';
+                    popup.style.left = '50%';
+                    popup.style.transform = 'translate(-50%, -50%)';
+                    popup.style.background = '#ff0000';
+                    popup.style.color = '#fff';
+                    popup.style.padding = '20px';
+                    popup.style.border = '3px solid #fff';
+                    popup.style.fontSize = '1.5rem';
+                    popup.style.fontWeight = 'bold';
+                    popup.style.zIndex = '10000';
+                    popup.style.boxShadow = '0 0 20px #ff0000';
+                    document.body.appendChild(popup);
+                    
+                    // Play intense glitch sounds when popups appear
+                    playGlitchSound();
+                    playStaticSound();
+                    playCreepySound();
+                    
+                    setTimeout(() => {
+                        if (popup.parentNode) {
+                            popup.remove();
+                        }
+                    }, 2000);
+                }
+            }, 8000);
+            
+            // Randomly make the button harder to click
+            setInterval(() => {
+                if (Math.random() < 0.05) {
+                    const button = document.getElementById('boringButton');
+                    button.style.fontSize = Math.random() * 3 + 0.5 + 'rem';
+                    button.style.padding = Math.random() * 40 + 10 + 'px';
+                    // Play glitch sound when button changes
+                    playGlitchSound();
+                    setTimeout(() => {
+                        button.style.fontSize = '';
+                        button.style.padding = '';
+                    }, 2500);
+                }
+            }, 6000);
+        }
+        
+        let creepyMessages = [
+            "Why are you still playing?",
+            "This game is watching you...",
+            "You shouldn't be here...",
+            "The boredom is consuming you...",
+            "There's no escape...",
+            "You're trapped in the void...",
+            "The glitches are real...",
+            "Your computer is haunted...",
+            "The game knows your name...",
+            "You've been playing for eternity...",
+            "The pixels are alive...",
+            "Your mouse is possessed...",
+            "The screen is a portal...",
+            "You can't stop clicking...",
+            "The boredom is infinite...",
+            "Your soul belongs to the game now...",
+            "The glitches are getting worse...",
+            "You're becoming one with the code...",
+            "The game is eating your reality...",
+            "There's no way out..."
+        ];
+        
+        let corruptedTexts = [
+            "ERROR 404: SANITY NOT FOUND",
+            "SYSTEM CORRUPTION: 99.9%",
+            "VIRUS DETECTED: BOREDOM.EXE",
+            "MEMORY LEAK: ESCAPE IMPOSSIBLE",
+            "FATAL ERROR: FUN NOT FOUND",
+            "CRITICAL FAILURE: EXCITEMENT.EXE",
+            "SYSTEM OVERLOAD: BORINGNESS MAXIMUM",
+            "VIRUS SCAN: INFECTED WITH BOREDOM",
+            "MEMORY CORRUPTION: GAME OVER",
+            "FATAL EXCEPTION: ENTERTAINMENT.EXE"
+        ];
+        
+        let errorMessages = [
+            "ERROR",
+            "FATAL ERROR",
+            "SYSTEM ERROR",
+            "CRITICAL ERROR",
+            "MEMORY ERROR",
+            "DISPLAY ERROR",
+            "RUNTIME ERROR",
+            "COMPILATION ERROR",
+            "LOGIC ERROR",
+            "SYNTAX ERROR",
+            "OVERFLOW ERROR",
+            "UNDERFLOW ERROR",
+            "DIVISION BY ZERO",
+            "NULL POINTER ERROR",
+            "STACK OVERFLOW",
+            "HEAP CORRUPTION",
+            "BUFFER OVERFLOW",
+            "ACCESS VIOLATION",
+            "ILLEGAL INSTRUCTION",
+            "GENERAL PROTECTION FAULT"
+        ];
+        
+        // Show warning screen
+        function showWarningScreen() {
+            // Hide game elements
+            document.getElementById('title').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('score').style.display = 'none';
+            
+            // Create warning screen
+            const warningScreen = document.createElement('div');
+            warningScreen.id = 'warningScreen';
+            warningScreen.style.position = 'fixed';
+            warningScreen.style.top = '0';
+            warningScreen.style.left = '0';
+            warningScreen.style.width = '100%';
+            warningScreen.style.height = '100%';
+            warningScreen.style.background = '#000';
+            warningScreen.style.color = '#ff0000';
+            warningScreen.style.display = 'flex';
+            warningScreen.style.flexDirection = 'column';
+            warningScreen.style.justifyContent = 'center';
+            warningScreen.style.alignItems = 'center';
+            warningScreen.style.zIndex = '99999';
+            warningScreen.style.fontFamily = 'Arial, sans-serif';
+            warningScreen.style.textAlign = 'center';
+            warningScreen.style.padding = '20px';
+            warningScreen.style.boxSizing = 'border-box';
+            
+            warningScreen.innerHTML = `
+                <div style="font-size: 4rem; font-weight: bold; margin-bottom: 30px; animation: flash 1s infinite;">⚠️ WARNING ⚠️</div>
+                <div style="font-size: 2rem; margin-bottom: 20px;">THIS GAME CONTAINS:</div>
+                <div style="font-size: 1.5rem; margin-bottom: 10px;">• FLASHING LIGHTS</div>
+                <div style="font-size: 1.5rem; margin-bottom: 10px;">• CREEPY SCENES</div>
+                <div style="font-size: 1.5rem; margin-bottom: 30px;">• DISTURBING CONTENT</div>
+                <div style="font-size: 1.2rem; margin-bottom: 40px; opacity: 0.8;">Viewer discretion is advised</div>
+                <div style="font-size: 1.5rem; animation: pulse 2s infinite;">PRESS ANY KEY TO CONTINUE</div>
+            `;
+            
+            document.body.appendChild(warningScreen);
+            
+            // Add flashing animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes flash {
+                    0%, 50% { opacity: 1; }
+                    51%, 100% { opacity: 0.3; }
+                }
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Listen for any key press or click
+            const startGame = (e) => {
+                document.removeEventListener('keydown', startGame);
+                document.removeEventListener('click', startGame);
+                warningScreen.remove();
+                showLoadingScreen();
+            };
+            
+            document.addEventListener('keydown', startGame);
+            document.addEventListener('click', startGame);
+        }
+        
+        // Show loading screen
+        function showLoadingScreen() {
+            // Create loading screen
+            const loadingScreen = document.createElement('div');
+            loadingScreen.id = 'loadingScreen';
+            loadingScreen.style.position = 'fixed';
+            loadingScreen.style.top = '0';
+            loadingScreen.style.left = '0';
+            loadingScreen.style.width = '100%';
+            loadingScreen.style.height = '100%';
+            loadingScreen.style.background = '#000';
+            loadingScreen.style.color = '#00ff00';
+            loadingScreen.style.display = 'flex';
+            loadingScreen.style.flexDirection = 'column';
+            loadingScreen.style.justifyContent = 'center';
+            loadingScreen.style.alignItems = 'center';
+            loadingScreen.style.zIndex = '99999';
+            loadingScreen.style.fontFamily = 'monospace';
+            loadingScreen.style.textAlign = 'center';
+            
+            loadingScreen.innerHTML = `
+                <div style="font-size: 3rem; margin-bottom: 30px; animation: pulse 1s infinite;">LOADING GAME...</div>
+                <div id="loadingProgress" style="font-size: 2rem; margin-bottom: 20px; color: #00ff00; font-weight: bold;">0%</div>
+                <div style="width: 80%; max-width: 500px; height: 30px; background: #333; border: 2px solid #00ff00; border-radius: 15px; margin-bottom: 20px; overflow: hidden;">
+                    <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00ff00, #00cc00); transition: width 0.1s ease;"></div>
+                </div>
+                <div style="font-size: 1.5rem; opacity: 0.8;">Please wait while we prepare your crappy experience...</div>
+            `;
+            
+            document.body.appendChild(loadingScreen);
+            
+            // Start 10 second progress bar with random numbers
+            let progress = 0;
+            let actualProgress = 0;
+            const progressElement = document.getElementById('loadingProgress');
+            const progressBar = document.getElementById('progressBar');
+            
+            const progressInterval = setInterval(() => {
+                actualProgress += 10;
+                progressBar.style.width = actualProgress + '%';
+                
+                // Show random numbers around 10 but still progress normally
+                if (actualProgress <= 20) {
+                    progressElement.textContent = Math.floor(Math.random() * 5) + 1 + '%';
+                } else if (actualProgress <= 40) {
+                    progressElement.textContent = Math.floor(Math.random() * 5) + 6 + '%';
+                } else if (actualProgress <= 60) {
+                    progressElement.textContent = Math.floor(Math.random() * 5) + 11 + '%';
+                } else if (actualProgress <= 80) {
+                    progressElement.textContent = Math.floor(Math.random() * 5) + 16 + '%';
+                } else if (actualProgress <= 90) {
+                    progressElement.textContent = Math.floor(Math.random() * 5) + 21 + '%';
+                } else {
+                    progressElement.textContent = Math.floor(Math.random() * 10) + 91 + '%';
+                }
+                
+                if (actualProgress >= 100) {
+                    progressElement.textContent = '100%';
+                    clearInterval(progressInterval);
+                    loadingScreen.remove();
+                    startActualGame();
+                }
+            }, 1000);
+        }
+        
+        // Start the actual game
+        function startActualGame() {
+            gameStarted = true;
+            gameStartTime = Date.now();
+            
+            // Resume audio context (required for user interaction)
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Show game elements
+            document.getElementById('title').style.display = 'block';
+            document.getElementById('subtitle').style.display = 'block';
+            document.getElementById('boringButton').style.display = 'block';
+            document.getElementById('score').style.display = 'block';
+            
+            // Initialize game systems
+            initGame();
+        }
+        
+        // Initialize game
+        function initGame() {
+            // Initialize audio context
+            initAudio();
+            
+            // Rebuild crashGame function if it was deleted
+            if (typeof crashGame !== 'function') {
+                rebuildCrashGame();
+                console.log('crashGame function rebuilt - escape is possible again!');
+            }
+            
+            // Random glitches on startup
+            setTimeout(() => {
+                triggerRandomGlitch();
+            }, Math.random() * 5000 + 2000);
+            
+            // Periodic glitches
+            setInterval(() => {
+                if (Math.random() < 0.3) {
+                    triggerRandomGlitch();
+                }
+            }, 3000);
+            
+            // Creepy messages
+            setInterval(() => {
+                if (Math.random() < 0.1) {
+                    showCreepyMessage();
+                }
+            }, 8000);
+            
+            // Matrix rain effect
+            setInterval(() => {
+                if (Math.random() < 0.2) {
+                    startMatrixRain();
+                }
+            }, 15000);
+            
+            // Screen flicker
+            setInterval(() => {
+                if (Math.random() < 0.05) {
+                    document.body.classList.add('flicker');
+                    setTimeout(() => {
+                        document.body.classList.remove('flicker');
+                    }, 200);
+                }
+            }, 2000);
+            
+            // Start continuous glitchy sounds
+            startGlitchySounds();
+            
+            // Make the game more crappy
+            makeGameCrappier();
+            
+            // Make the game more boring
+            addBoringEffects();
+            setupAlternativeEndings();
+        }
+        
+        function hideMainGame() {
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('score').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+        }
+
+        function showEndingPanel(titleText, color, innerHtml, extraSetup) {
+            hideMainGame();
+            playGlitchSound();
+
+            const title = document.getElementById('title');
+            title.textContent = titleText;
+            title.style.color = color;
+            title.style.textShadow = `0 0 50px ${color}`;
+
+            const panel = document.createElement('div');
+            panel.style.position = 'fixed';
+            panel.style.top = '50%';
+            panel.style.left = '50%';
+            panel.style.transform = 'translate(-50%, -50%)';
+            panel.style.background = '#000';
+            panel.style.color = color;
+            panel.style.padding = '40px';
+            panel.style.border = `3px solid ${color}`;
+            panel.style.fontSize = '2rem';
+            panel.style.textAlign = 'center';
+            panel.style.zIndex = '10000';
+            panel.style.boxShadow = `0 0 50px ${color}`;
+            panel.style.maxWidth = '85%';
+            panel.innerHTML = innerHtml;
+            document.body.appendChild(panel);
+
+            if (extraSetup) extraSetup(panel, title);
+        }
+
+        function triggerEndingOnce(startFn) {
+            if (endingTriggered || !gameStarted) return;
+            endingTriggered = true;
+            startFn();
+        }
+
+        function startWatcherEnding() {
+            showEndingPanel('WATCHING', '#99ccff', `
+                <h1 style="color:#99ccff;margin-bottom:20px;">👀 WATCHER ENDING 👀</h1>
+                <p>You never clicked the button.</p>
+                <p>You just stared for 25 whole seconds.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">The game was watching you back.</p>
+            `);
+        }
+
+        function startHonestEnding() {
+            showEndingPanel('HONEST', '#ff8800', `
+                <h1 style="color:#ff8800;margin-bottom:20px;">💩 HONEST ENDING 💩</h1>
+                <p>You typed CRAP.</p>
+                <p>Finally. Some honesty around here.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">This game agrees with you.</p>
+            `);
+        }
+
+        function startBoEnding() {
+            showEndingPanel('HI BO', '#ff4444', `
+                <h1 style="color:#ff4444;margin-bottom:20px;">🍎 BO ENDING 🍎</h1>
+                <p>You typed BOB.</p>
+                <p>Hi Bo! This one's for you.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">Go make another game on Apple Bobs.</p>
+            `);
+        }
+
+        function startTitleObsessionEnding() {
+            showEndingPanel('TITLE FAN', '#ff00ff', `
+                <h1 style="color:#ff00ff;margin-bottom:20px;">📰 TITLE ENDING 📰</h1>
+                <p>You clicked the title 7 times.</p>
+                <p>Not the button. The title.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">You're clicking the wrong thing on purpose.</p>
+            `);
+        }
+
+        function startScoreFreakEnding() {
+            showEndingPanel('SCORE BOARD', '#00ff99', `
+                <h1 style="color:#00ff99;margin-bottom:20px;">📊 SCORE ENDING 📊</h1>
+                <p>You spam-clicked the score.</p>
+                <p>The numbers didn't even change faster.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">Stats can't save you.</p>
+            `);
+        }
+
+        function startSubtitleEnding() {
+            showEndingPanel('FINE PRINT', '#cccccc', `
+                <h1 style="color:#cccccc;margin-bottom:20px;">📝 SUBTITLE ENDING 📝</h1>
+                <p>You triple-clicked the subtitle.</p>
+                <p>"The Most Boringest Game Ever" wasn't a joke.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">It was a warning.</p>
+            `);
+        }
+
+        function startEscapeEnding() {
+            showEndingPanel('ESCAPE', '#ff0000', `
+                <h1 style="color:#ff0000;margin-bottom:20px;">🚪 ESCAPE ENDING 🚪</h1>
+                <p>You pressed Escape.</p>
+                <p>Smart. This game is glad you're trying to leave.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">Refresh to escape for real.</p>
+            `);
+        }
+
+        function startHoldPatienceEnding() {
+            showEndingPanel('PATIENCE', '#ffd700', `
+                <h1 style="color:#ffd700;margin-bottom:20px;">⏳ HOLD ENDING ⏳</h1>
+                <p>You held the button for 4 seconds without letting go.</p>
+                <p>Most people can't do that. You can.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">Weird flex, but okay.</p>
+            `);
+        }
+
+        function startScrollEnding() {
+            showEndingPanel('SCROLL', '#8866ff', `
+                <h1 style="color:#8866ff;margin-bottom:20px;">🖱️ SCROLL ENDING 🖱️</h1>
+                <p>There's nothing to scroll.</p>
+                <p>And yet you scrolled anyway.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">This screen doesn't even move.</p>
+            `);
+        }
+
+        function startAbandonmentEnding() {
+            showEndingPanel('LEFT', '#666666', `
+                <h1 style="color:#666666;margin-bottom:20px;">👋 ABANDON ENDING 👋</h1>
+                <p>You switched tabs.</p>
+                <p>Even this crappy game felt abandoned.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">Come back or don't. It doesn't care.</p>
+            `);
+        }
+
+        function startSquishEnding() {
+            showEndingPanel('SQUISH', '#ff66aa', `
+                <h1 style="color:#ff66aa;margin-bottom:20px;">📐 RESIZE ENDING 📐</h1>
+                <p>You resized the window.</p>
+                <p>The game got squished.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">Stop messing with the screen.</p>
+            `, () => {
+                document.body.style.transform = 'scale(0.85)';
+            });
+        }
+
+        function startSpaceBarEnding() {
+            showEndingPanel('SPACE', '#aaffaa', `
+                <h1 style="color:#aaffaa;margin-bottom:20px;">␣ SPACE BAR ENDING ␣</h1>
+                <p>Space bar — before you even clicked the button.</p>
+                <p>Keyboard warrior detected.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">The button feels ignored.</p>
+            `);
+        }
+
+        function startStatsEnding() {
+            showEndingPanel('NUMBERS', '#00cccc', `
+                <h1 style="color:#00cccc;margin-bottom:20px;">📈 STATS ENDING 📈</h1>
+                <p>You clicked the boring stats.</p>
+                <p>Time wasted: ${timeWasted}s. Regret: rising.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">The numbers judge you.</p>
+            `);
+        }
+
+        function startTabSpamEnding() {
+            showEndingPanel('TAB TAB', '#ffff99', `
+                <h1 style="color:#ffff99;margin-bottom:20px;">⇥ TAB ENDING ⇥</h1>
+                <p>You tabbed through everything.</p>
+                <p>Keyboard navigation in a one-button game.</p>
+                <p style="margin-top:20px;font-size:1.2rem;">Accessibility ending unlocked.</p>
+            `);
+        }
+
+        function startMouseStillEnding() {
+            showEndingPanel('FROZEN', '#ffffff', `
+                <h1 style="color:#ffffff;margin-bottom:20px;">🧊 MOUSE STILL ENDING 🧊</h1>
+                <p>Your mouse didn't move for 30 seconds.</p>
+                <p>Are you even there?</p>
+                <p style="margin-top:20px;font-size:1.2rem;">...hello?</p>
+            `);
+        }
+
+        function setupAlternativeEndings() {
+            let keyBuffer = '';
+            let titleClicks = 0;
+            let scoreClicks = 0;
+            let scrollCount = 0;
+            let holdTimer = null;
+            let lastClickTime = Date.now();
+            let lastMouseX = null;
+            let lastMouseY = null;
+            let mouseStillSince = Date.now();
+            let tabPresses = 0;
+
+            const btn = document.getElementById('boringButton');
+
+            btn.addEventListener('click', () => {
+                lastClickTime = Date.now();
+            });
+
+            setInterval(() => {
+                if (endingTriggered || !gameStarted) return;
+                if ((Date.now() - lastClickTime) / 1000 >= 50) {
+                    triggerEndingOnce(startConfusionEnding);
+                }
+            }, 1000);
+
+            setTimeout(() => {
+                if (!endingTriggered && gameStarted && clicks === 0) {
+                    triggerEndingOnce(startWatcherEnding);
+                }
+            }, 25000);
+
+            setInterval(() => {
+                if (endingTriggered || !gameStarted) return;
+                if (Date.now() - mouseStillSince >= 30000) {
+                    triggerEndingOnce(startMouseStillEnding);
+                }
+            }, 2000);
+
+            document.addEventListener('mousemove', (e) => {
+                if (lastMouseX !== e.clientX || lastMouseY !== e.clientY) {
+                    lastMouseX = e.clientX;
+                    lastMouseY = e.clientY;
+                    mouseStillSince = Date.now();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (!gameStarted || endingTriggered) return;
+
+                keyBuffer = (keyBuffer + e.key).slice(-10).toUpperCase();
+                if (keyBuffer.includes('CRAP')) triggerEndingOnce(startHonestEnding);
+                if (keyBuffer.includes('BOB')) triggerEndingOnce(startBoEnding);
+                if (keyBuffer.includes('COOKIE')) triggerEndingOnce(startSecretEnding);
+                if (keyBuffer.includes('VOID')) triggerEndingOnce(startVoidEnding);
+                if (keyBuffer.includes('GLITCH')) triggerEndingOnce(startGlitchEnding);
+                if (keyBuffer.includes('LOOP')) triggerEndingOnce(startInfiniteEnding);
+                if (keyBuffer.includes('REAL')) triggerEndingOnce(startUltimateEnding);
+                if (keyBuffer.includes('GOOD')) triggerEndingOnce(startGoodEnding);
+
+                if (e.key === 'Escape') triggerEndingOnce(startEscapeEnding);
+                if (e.code === 'Space' && clicks === 0) triggerEndingOnce(startSpaceBarEnding);
+                if (e.key === 'Tab') {
+                    tabPresses++;
+                    if (tabPresses >= 5) triggerEndingOnce(startTabSpamEnding);
+                }
+            });
+
+            document.getElementById('title').addEventListener('click', () => {
+                if (!gameStarted || endingTriggered) return;
+                titleClicks++;
+                if (titleClicks >= 7) triggerEndingOnce(startTitleObsessionEnding);
+            });
+
+            document.getElementById('score').addEventListener('click', () => {
+                if (!gameStarted || endingTriggered) return;
+                scoreClicks++;
+                if (scoreClicks >= 8) triggerEndingOnce(startScoreFreakEnding);
+            });
+
+            let subtitleClicks = 0;
+            let subtitleTimer = null;
+            document.getElementById('subtitle').addEventListener('click', () => {
+                if (!gameStarted || endingTriggered) return;
+                subtitleClicks++;
+                clearTimeout(subtitleTimer);
+                subtitleTimer = setTimeout(() => { subtitleClicks = 0; }, 600);
+                if (subtitleClicks >= 3) triggerEndingOnce(startSubtitleEnding);
+            });
+
+            btn.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (!gameStarted || endingTriggered) return;
+                triggerEndingOnce(startCutscene);
+            });
+
+            btn.addEventListener('mousedown', () => {
+                if (!gameStarted || endingTriggered) return;
+                holdTimer = setTimeout(() => triggerEndingOnce(startHoldPatienceEnding), 4000);
+            });
+            btn.addEventListener('mouseup', () => clearTimeout(holdTimer));
+            btn.addEventListener('mouseleave', () => clearTimeout(holdTimer));
+
+            document.addEventListener('wheel', () => {
+                if (!gameStarted || endingTriggered) return;
+                scrollCount++;
+                if (scrollCount >= 20) triggerEndingOnce(startScrollEnding);
+            });
+
+            window.addEventListener('blur', () => {
+                if (!gameStarted || endingTriggered) return;
+                setTimeout(() => {
+                    if (document.hidden && !endingTriggered) {
+                        triggerEndingOnce(startAbandonmentEnding);
+                    }
+                }, 3000);
+            });
+
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                if (!gameStarted || endingTriggered) return;
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => triggerEndingOnce(startSquishEnding), 400);
+            });
+
+            document.getElementById('boringStats').addEventListener('click', () => {
+                triggerEndingOnce(startStatsEnding);
+            });
+        }
+
+        // Good ending — type GOOD on keyboard
+        function startGoodEnding() {
+            // Play glitch sound for good ending
+            playGlitchSound();
+            
+            // Hide the main game elements
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('score').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+            
+            // Change title to indicate good ending
+            const title = document.getElementById('title');
+            title.textContent = "GOOD ENDING";
+            title.style.color = '#00ff00';
+            title.style.textShadow = '0 0 50px #00ff00';
+            title.style.animation = 'glitch 1s infinite';
+            
+            // Show good ending message
+            const goodMessage = document.createElement('div');
+            goodMessage.style.position = 'fixed';
+            goodMessage.style.top = '50%';
+            goodMessage.style.left = '50%';
+            goodMessage.style.transform = 'translate(-50%, -50%)';
+            goodMessage.style.background = '#000';
+            goodMessage.style.color = '#00ff00';
+            goodMessage.style.padding = '40px';
+            goodMessage.style.border = '3px solid #00ff00';
+            goodMessage.style.fontSize = '2rem';
+            goodMessage.style.textAlign = 'center';
+            goodMessage.style.zIndex = '99999';
+            goodMessage.style.boxShadow = '0 0 50px #00ff00';
+            goodMessage.style.maxWidth = '80%';
+            goodMessage.innerHTML = `
+                <h1 style="color: #00ff00; margin-bottom: 20px;">🎉 GOOD ENDING! 🎉</h1>
+                <p>You've found the secret path!</p>
+                <p>You're not trapped in the void...</p>
+                <p>But wait... something's happening...</p>
+                <p style="margin-top: 20px; font-size: 1.5rem;">The game will crash in 5 seconds...</p>
+                <p style="font-size: 1rem; margin-top: 10px; opacity: 0.8;">This is the good ending!</p>
+            `;
+            
+            document.body.appendChild(goodMessage);
+            
+            // Start countdown to crash - show 5 first, then wait 5 seconds
+            let countdown = 5;
+            
+            // Show "5" first
+            goodMessage.innerHTML = `
+                <h1 style="color: #00ff00; margin-bottom: 20px;">🎉 GOOD ENDING! 🎉</h1>
+                <p>You've found the secret path!</p>
+                <p>You're not trapped in the void...</p>
+                <p>But wait... something's happening...</p>
+                <p style="margin-top: 20px; font-size: 1.5rem;">The game will crash in 5 seconds...</p>
+                <p style="font-size: 1rem; margin-top: 10px; opacity: 0.8;">This is the good ending!</p>
+            `;
+            
+            // Wait 5 seconds, then show blocked message
+            setTimeout(() => {
+                goodMessage.innerHTML = `
+                    <h1 style="color: #00ff00; margin-bottom: 20px;">🎉 GOOD ENDING! 🎉</h1>
+                    <p>You've found the secret path!</p>
+                    <p>You're not trapped in the void...</p>
+                    <p>But the restart button is blocked.</p>
+                    <p style="margin-top: 20px; font-size: 1.5rem;">You cannot restart the game.</p>
+                    <p style="font-size: 1rem; margin-top: 10px; opacity: 0.8;">This is the good ending!</p>
+                    <button id="continueButton" style="margin-top: 20px; padding: 10px 20px; background: #ff0000; color: #fff; border: none; font-size: 1rem; cursor: pointer;">CONTINUE...</button>
+                `;
+                
+                // Add click event to continue button
+                document.getElementById('continueButton').onclick = function() {
+                    goodMessage.remove();
+                    startCutscene();
+                };
+            }, 5000);
+            
+
+        }
+        
+        // Crash the game function
+        function crashGame() {
+            // Create crash effect
+            const crashOverlay = document.createElement('div');
+            crashOverlay.style.position = 'fixed';
+            crashOverlay.style.top = '0';
+            crashOverlay.style.left = '0';
+            crashOverlay.style.width = '100%';
+            crashOverlay.style.height = '100%';
+            crashOverlay.style.background = '#000080';
+            crashOverlay.style.zIndex = '99999';
+            crashOverlay.style.display = 'flex';
+            crashOverlay.style.justifyContent = 'center';
+            crashOverlay.style.alignItems = 'center';
+            crashOverlay.style.fontSize = '2rem';
+            crashOverlay.style.fontWeight = 'bold';
+            crashOverlay.style.color = '#fff';
+            crashOverlay.style.textAlign = 'center';
+            crashOverlay.style.fontFamily = 'Courier Prime, monospace';
+            
+            crashOverlay.innerHTML = `
+                <div>
+                    <div style="font-size: 4rem; margin-bottom: 20px;">💥</div>
+                    <div>GAME CRASHED</div>
+                    <div style="font-size: 1.5rem; margin-top: 20px; color: #00ff00;">
+                        Congratulations! You've achieved the good ending!
+                    </div>
+                    <div style="font-size: 1rem; margin-top: 20px; color: #ffff00;">
+                        The game has crashed successfully.<br>
+                        You've escaped the void and the glitches.<br>
+                        This is the only way to win.
+                    </div>
+                    <div style="font-size: 0.8rem; margin-top: 30px; color: #888;">
+                        Refresh the page to play again.
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(crashOverlay);
+            
+            // Add crash effects
+            setInterval(() => {
+                crashOverlay.style.background = `hsl(${Math.random() * 360}, 100%, 20%)`;
+            }, 500);
+            
+            // Final screen shake
+            document.body.classList.add('screen-shake');
+            
+            // Stop all other game functions
+            clearInterval();
+        }
+        
+        // Rebuild crashGame function
+        function rebuildCrashGame() {
+            window.crashGame = function() {
+                // Create crash effect
+                const crashOverlay = document.createElement('div');
+                crashOverlay.style.position = 'fixed';
+                crashOverlay.style.top = '0';
+                crashOverlay.style.left = '0';
+                crashOverlay.style.width = '100%';
+                crashOverlay.style.height = '100%';
+                crashOverlay.style.background = '#000080';
+                crashOverlay.style.zIndex = '99999';
+                crashOverlay.style.display = 'flex';
+                crashOverlay.style.justifyContent = 'center';
+                crashOverlay.style.alignItems = 'center';
+                crashOverlay.style.fontSize = '2rem';
+                crashOverlay.style.fontWeight = 'bold';
+                crashOverlay.style.color = '#fff';
+                crashOverlay.style.textAlign = 'center';
+                crashOverlay.style.fontFamily = 'Courier Prime, monospace';
+                
+                crashOverlay.innerHTML = `
+                    <div>
+                        <div style="font-size: 4rem; margin-bottom: 20px;">💥</div>
+                        <div>GAME CRASHED</div>
+                        <div style="font-size: 1.5rem; margin-top: 20px; color: #00ff00;">
+                            Congratulations! You've achieved the good ending!
+                        </div>
+                        <div style="font-size: 1rem; margin-top: 20px; color: #ffff00;">
+                            The game has crashed successfully.<br>
+                            You've escaped the void and the glitches.<br>
+                            This is the only way to win.
+                        </div>
+                        <div style="font-size: 0.8rem; margin-top: 30px; color: #888;">
+                            Refresh the page to play again.
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(crashOverlay);
+                
+                // Add crash effects
+                setInterval(() => {
+                    crashOverlay.style.background = `hsl(${Math.random() * 360}, 100%, 20%)`;
+                }, 500);
+                
+                // Final screen shake
+                document.body.classList.add('screen-shake');
+                
+                // Stop all other game functions
+                clearInterval();
+            };
+        }
+        
+        // Confusion ending function - triggered after 50 seconds of inactivity
+        function startConfusionEnding() {
+            // Hide the main game elements
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('score').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+            
+            // Change title to indicate confusion ending
+            const title = document.getElementById('title');
+            title.textContent = "CONFUSION ENDING";
+            title.style.color = '#ffff00';
+            title.style.textShadow = '0 0 50px #ffff00';
+            title.style.animation = 'glitch 0.5s infinite';
+            
+            // Show confusion message
+            const confusionMessage = document.createElement('div');
+            confusionMessage.style.position = 'fixed';
+            confusionMessage.style.top = '50%';
+            confusionMessage.style.left = '50%';
+            confusionMessage.style.transform = 'translate(-50%, -50%)';
+            confusionMessage.style.background = '#000';
+            confusionMessage.style.color = '#ffff00';
+            confusionMessage.style.padding = '40px';
+            confusionMessage.style.border = '3px solid #ffff00';
+            confusionMessage.style.fontSize = '2rem';
+            confusionMessage.style.textAlign = 'center';
+            confusionMessage.style.zIndex = '10000';
+            confusionMessage.style.boxShadow = '0 0 50px #ffff00';
+            confusionMessage.style.maxWidth = '80%';
+            confusionMessage.innerHTML = `
+                <h1 style="color: #ffff00; margin-bottom: 20px;">🤔 CONFUSION ENDING! 🤔</h1>
+                <p>You waited 50 seconds doing nothing...</p>
+                <p>That's... confusing...</p>
+                <p>Why would you do that?</p>
+                <p style="margin-top: 20px; font-size: 1.5rem;">The game is very confused about you.</p>
+                <p style="font-size: 1rem; margin-top: 10px; opacity: 0.8;">This ending makes no sense.</p>
+            `;
+            
+            document.body.appendChild(confusionMessage);
+            
+            // Add random confusion effects
+            setInterval(() => {
+                confusionMessage.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+                confusionMessage.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 10 - 5}deg)`;
+            }, 1000);
+            
+            // Screen shake
+            document.body.classList.add('screen-shake');
+            
+            // Show final confusion message after 10 seconds
+            setTimeout(() => {
+                confusionMessage.innerHTML = `
+                    <h1 style="color: #ffff00; margin-bottom: 20px;">🤔 CONFUSION ENDING! 🤔</h1>
+                    <p>You waited 50 seconds doing nothing...</p>
+                    <p>That's... confusing...</p>
+                    <p>Why would you do that?</p>
+                    <p style="margin-top: 20px; font-size: 1.5rem;">The game is very confused about you.</p>
+                    <p style="font-size: 1rem; margin-top: 10px; opacity: 0.8;">This ending makes no sense.</p>
+                    <p style="margin-top: 20px; font-size: 1.2rem; color: #ff00ff;">You've confused the game so much it doesn't know what to do.</p>
+                    <p style="font-size: 1rem; margin-top: 10px; color: #00ffff;">Refresh to play again... if you dare to be less confusing.</p>
+                `;
+            }, 10000);
+        }
+        
+        // Cutscene function - triggered at 10 clicks
+        function startCutscene() {
+            // Play intense glitch sounds for bad ending
+            playGlitchSound();
+            playStaticSound();
+            playCreepySound();
+            
+            // Delete the crashGame function when bad ending starts
+            if (typeof crashGame === 'function') {
+                delete window.crashGame;
+                console.log('crashGame function deleted - you cannot escape now!');
+            }
+            
+
+            
+            // Hide the main game elements
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+            
+            // Change title to ERROR
+            const title = document.getElementById('title');
+            title.textContent = "ERROR";
+            title.style.color = '#ff0000';
+            title.style.textShadow = '0 0 50px #ff0000';
+            title.style.animation = 'glitch 0.1s infinite';
+            
+            // Start the error spam
+            spamErrors();
+            
+            // Start extreme glitch mode
+            startExtremeGlitchMode();
+            
+            // Show final creepy message
+            setTimeout(() => {
+                showFinalMessage();
+            }, 15000);
+        }
+        
+        // Spam error messages everywhere
+        function spamErrors() {
+            // Create Matrix-style background
+            const matrixBackground = document.createElement('div');
+            matrixBackground.style.position = 'fixed';
+            matrixBackground.style.top = '0';
+            matrixBackground.style.left = '0';
+            matrixBackground.style.width = '100%';
+            matrixBackground.style.height = '100%';
+            matrixBackground.style.background = '#000';
+            matrixBackground.style.zIndex = '9998';
+            matrixBackground.style.overflow = 'hidden';
+            
+            // Add Matrix rain effect to background
+            for (let i = 0; i < 100; i++) {
+                const matrixDrop = document.createElement('div');
+                matrixDrop.style.position = 'absolute';
+                matrixDrop.style.left = Math.random() * 100 + '%';
+                matrixDrop.style.top = '-100px';
+                matrixDrop.style.color = '#00ff00';
+                matrixDrop.style.fontSize = Math.random() * 20 + 10 + 'px';
+                matrixDrop.style.fontFamily = 'Courier Prime, monospace';
+                matrixDrop.style.animation = `matrixRain ${Math.random() * 3 + 2}s linear infinite`;
+                matrixDrop.style.animationDelay = Math.random() * 2 + 's';
+                matrixDrop.textContent = String.fromCharCode(Math.random() * 94 + 33);
+                matrixBackground.appendChild(matrixDrop);
+            }
+            
+            document.body.appendChild(matrixBackground);
+            
+            // Create error messages all over the screen
+            for (let i = 0; i < 10000; i++) {
+                setTimeout(() => {
+                    const error = document.createElement('div');
+                    error.textContent = errorMessages[Math.floor(Math.random() * errorMessages.length)];
+                    error.style.position = 'fixed';
+                    error.style.left = Math.random() * 100 + '%';
+                    error.style.top = Math.random() * 100 + '%';
+                    error.style.color = '#ff0000';
+                    error.style.fontSize = Math.random() * 20 + 10 + 'px';
+                    error.style.fontWeight = 'bold';
+                    error.style.textShadow = '0 0 10px #ff0000';
+                    error.style.zIndex = '9999';
+                    error.style.pointerEvents = 'none';
+                    error.style.animation = 'glitchText 0.1s infinite';
+                    
+                    document.body.appendChild(error);
+                    
+                    // Remove after random time
+                    setTimeout(() => {
+                        if (error.parentNode) {
+                            error.remove();
+                        }
+                    }, Math.random() * 5000 + 2000);
+                }, i * 10); // Spawn every 10ms for 10000 errors
+            }
+        }
+        
+        // Start extreme glitch mode
+        function startExtremeGlitchMode() {
+            // Continuous screen shake
+            document.body.classList.add('screen-shake');
+            
+            // Rapid background color changes
+            setInterval(() => {
+                document.body.style.background = `hsl(${Math.random() * 360}, 100%, 20%)`;
+            }, 100);
+            
+            // Continuous matrix rain
+            setInterval(() => {
+                startMatrixRain();
+            }, 2000);
+            
+            // Continuous glitch effects
+            setInterval(() => {
+                triggerRandomGlitch();
+            }, 500);
+            
+            // Screen flicker
+            setInterval(() => {
+                document.body.classList.add('flicker');
+                setTimeout(() => {
+                    document.body.classList.remove('flicker');
+                }, 100);
+            }, 1000);
+        }
+        
+        // Show final message
+        function showFinalMessage() {
+            const finalMessage = document.createElement('div');
+            finalMessage.style.position = 'fixed';
+            finalMessage.style.top = '50%';
+            finalMessage.style.left = '50%';
+            finalMessage.style.transform = 'translate(-50%, -50%)';
+            finalMessage.style.background = '#000';
+            finalMessage.style.color = '#ff0000';
+            finalMessage.style.padding = '40px';
+            finalMessage.style.border = '5px solid #ff0000';
+            finalMessage.style.fontSize = '2rem';
+            finalMessage.style.textAlign = 'center';
+            finalMessage.style.zIndex = '10000';
+            finalMessage.style.boxShadow = '0 0 100px #ff0000';
+            finalMessage.style.maxWidth = '80%';
+            finalMessage.innerHTML = `
+                <h1 style="color: #ff0000; margin-bottom: 20px;">SYSTEM OVERLOAD</h1>
+                <p>You've broken the game.</p>
+                <p>10000 errors have been unleashed.</p>
+                <p>There's no going back now.</p>
+                <p style="margin-top: 20px; font-size: 1rem;">Refresh to restart... if you dare.</p>
+            `;
+            
+            document.body.appendChild(finalMessage);
+            
+            // Add restart button after 3 seconds
+            setTimeout(() => {
+                addRestartButton();
+            }, 3000);
+        }
+        
+        // Add restart button that doesn't work
+        function addRestartButton() {
+            const restartButton = document.createElement('button');
+            restartButton.textContent = 'RESTART GAME';
+            restartButton.style.position = 'fixed';
+            restartButton.style.top = '70%';
+            restartButton.style.left = '50%';
+            restartButton.style.transform = 'translate(-50%, -50%)';
+            restartButton.style.background = '#00ff00';
+            restartButton.style.color = '#000';
+            restartButton.style.padding = '15px 30px';
+            restartButton.style.border = 'none';
+            restartButton.style.fontSize = '1.5rem';
+            restartButton.style.fontWeight = 'bold';
+            restartButton.style.cursor = 'pointer';
+            restartButton.style.zIndex = '10001';
+            restartButton.style.fontFamily = 'Courier Prime, monospace';
+            restartButton.style.boxShadow = '0 0 20px #00ff00';
+            
+            // Make button glitchy
+            restartButton.style.animation = 'glitch 0.2s infinite';
+            
+            restartButton.onclick = function() {
+                // Button doesn't actually restart - it triggers jumpscare
+                this.textContent = 'ACCESS DENIED';
+                this.style.background = '#ff0000';
+                this.style.color = '#fff';
+                this.style.boxShadow = '0 0 30px #ff0000';
+                
+                // Start countdown to jumpscare
+                setTimeout(() => {
+                    this.textContent = '5...';
+                    setTimeout(() => {
+                        this.textContent = '4...';
+                        setTimeout(() => {
+                            this.textContent = '3...';
+                            setTimeout(() => {
+                                this.textContent = '2...';
+                                setTimeout(() => {
+                                    this.textContent = '1...';
+                                    setTimeout(() => {
+                                        jumpscare();
+                                    }, 1000);
+                                }, 1000);
+                            }, 1000);
+                        }, 1000);
+                    }, 1000);
+                }, 1000);
+            };
+            
+            document.body.appendChild(restartButton);
+        }
+        
+        // Jumpscare function
+        function jumpscare() {
+            // Create full screen scary text
+            const jumpscareOverlay = document.createElement('div');
+            jumpscareOverlay.style.position = 'fixed';
+            jumpscareOverlay.style.top = '0';
+            jumpscareOverlay.style.left = '0';
+            jumpscareOverlay.style.width = '100%';
+            jumpscareOverlay.style.height = '100%';
+            jumpscareOverlay.style.background = '#000';
+            jumpscareOverlay.style.zIndex = '99999';
+            jumpscareOverlay.style.display = 'flex';
+            jumpscareOverlay.style.justifyContent = 'center';
+            jumpscareOverlay.style.alignItems = 'center';
+            jumpscareOverlay.style.fontSize = '8rem';
+            jumpscareOverlay.style.fontWeight = 'bold';
+            jumpscareOverlay.style.color = '#ff0000';
+            jumpscareOverlay.style.textAlign = 'center';
+            jumpscareOverlay.style.fontFamily = 'Courier Prime, monospace';
+            jumpscareOverlay.style.textShadow = '0 0 50px #ff0000';
+            
+            jumpscareOverlay.innerHTML = `
+                <div>
+                    <div>YOU'RE DEAD</div>
+                </div>
+            `;
+            
+            document.body.appendChild(jumpscareOverlay);
+            
+            // Add glitch effects to scary text
+            setInterval(() => {
+                jumpscareOverlay.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+                jumpscareOverlay.style.transform = `scale(${0.9 + Math.random() * 0.2})`;
+            }, 100);
+            
+            // Screen shake during scary text
+            document.body.classList.add('screen-shake');
+            
+            // Remove scary text after 5 seconds and show final bad ending
+            setTimeout(() => {
+                jumpscareOverlay.remove();
+                document.body.classList.remove('screen-shake');
+                showBadEnding();
+            }, 5000);
+        }
+        
+        // Show bad ending
+        function showBadEnding() {
+            const badEnding = document.createElement('div');
+            badEnding.style.position = 'fixed';
+            badEnding.style.top = '0';
+            badEnding.style.left = '0';
+            badEnding.style.width = '100%';
+            badEnding.style.height = '100%';
+            badEnding.style.background = '#000';
+            badEnding.style.zIndex = '99999';
+            badEnding.style.display = 'flex';
+            badEnding.style.justifyContent = 'center';
+            badEnding.style.alignItems = 'center';
+            badEnding.style.fontSize = '3rem';
+            badEnding.style.fontWeight = 'bold';
+            badEnding.style.color = '#ff0000';
+            badEnding.style.textAlign = 'center';
+            badEnding.style.fontFamily = 'Courier Prime, monospace';
+            badEnding.style.textShadow = '0 0 30px #ff0000';
+            
+            badEnding.innerHTML = `
+                <div>
+                    <div style="font-size: 6rem; margin-bottom: 30px;">💀</div>
+                    <div style="font-size: 1.5rem; margin-top: 30px; color: #fff;">
+                        You've been consumed by the glitches.<br>
+                        The game has claimed your soul.<br>
+                        There's no restart, no escape.<br>
+                        You're trapped forever in the void.
+                    </div>
+                    <div style="font-size: 1rem; margin-top: 40px; color: #666;">
+                        Close this tab if you want to live...
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(badEnding);
+            
+            // Add creepy glitch effects
+            setInterval(() => {
+                badEnding.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+            }, 2000);
+            
+            // Final screen shake
+            setInterval(() => {
+                document.body.classList.add('screen-shake');
+                setTimeout(() => {
+                    document.body.classList.remove('screen-shake');
+                }, 200);
+            }, 3000);
+        }
+        
+        // Secret Ending (3 clicks) - THE BUTTON IS ACTUALLY A COOKIE
+        function startSecretEnding() {
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('score').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+            
+            // Show countdown first
+            const countdownMessage = document.createElement('div');
+            countdownMessage.style.position = 'fixed';
+            countdownMessage.style.top = '50%';
+            countdownMessage.style.left = '50%';
+            countdownMessage.style.transform = 'translate(-50%, -50%)';
+            countdownMessage.style.background = '#000';
+            countdownMessage.style.color = '#fff';
+            countdownMessage.style.padding = '40px';
+            countdownMessage.style.border = '3px solid #fff';
+            countdownMessage.style.fontSize = '3rem';
+            countdownMessage.style.textAlign = 'center';
+            countdownMessage.style.zIndex = '10000';
+            countdownMessage.style.boxShadow = '0 0 50px #fff';
+            countdownMessage.innerHTML = `
+                <h1 style="color: #fff; margin-bottom: 20px;">COUNTDOWN</h1>
+                <p>Cookie ending in:</p>
+                <div id="cookieCountdown" style="font-size: 4rem; font-weight: bold; margin: 20px 0;">${clickTime.toFixed(1)}s</div>
+            `;
+            document.body.appendChild(countdownMessage);
+            
+            // Countdown that decreases with each click
+            let countdown = clickTime;
+            
+            // Create a temporary click handler for countdown
+            const countdownClickHandler = () => {
+                countdown -= 1;
+                document.getElementById('cookieCountdown').textContent = countdown.toFixed(1) + 's';
+                
+                if (countdown <= 0) {
+                    document.removeEventListener('click', countdownClickHandler);
+                    countdownMessage.remove();
+                    
+                    // Now start the actual cookie ending
+                    const title = document.getElementById('title');
+                    title.textContent = "🍪 COOKIE DISCOVERED";
+                    title.style.color = '#8B4513';
+                    title.style.textShadow = '0 0 50px #8B4513';
+                    
+                    // Make the screen look like a cookie
+                    document.body.style.background = '#D2691E';
+                    document.body.style.backgroundImage = 'radial-gradient(circle, #8B4513 2px, transparent 2px)';
+                    document.body.style.backgroundSize = '20px 20px';
+                    
+                    const cookieMessage = document.createElement('div');
+                    cookieMessage.style.position = 'fixed';
+                    cookieMessage.style.top = '50%';
+                    cookieMessage.style.left = '50%';
+                    cookieMessage.style.transform = 'translate(-50%, -50%)';
+                    cookieMessage.style.background = '#D2691E';
+                    cookieMessage.style.color = '#8B4513';
+                    cookieMessage.style.padding = '40px';
+                    cookieMessage.style.border = '5px solid #8B4513';
+                    cookieMessage.style.borderRadius = '50%';
+                    cookieMessage.style.fontSize = '2rem';
+                    cookieMessage.style.textAlign = 'center';
+                    cookieMessage.style.zIndex = '10000';
+                    cookieMessage.style.boxShadow = '0 0 50px #8B4513';
+                    cookieMessage.innerHTML = `
+                        <h1 style="color: #8B4513; margin-bottom: 20px;">🍪 COOKIE ENDING! 🍪</h1>
+                        <p>The button was actually a cookie!</p>
+                        <p>You've been clicking a cookie this whole time!</p>
+                        <p style="margin-top: 20px; font-size: 1.5rem;">The game is made of cookies!</p>
+                        <p style="font-size: 1rem; margin-top: 10px; opacity: 0.8;">Refresh to eat more cookies.</p>
+                    `;
+                    document.body.appendChild(cookieMessage);
+                    
+                    // Add cookie crumbs falling
+                    setInterval(() => {
+                        const crumb = document.createElement('div');
+                        crumb.textContent = '🍪';
+                        crumb.style.position = 'fixed';
+                        crumb.style.left = Math.random() * 100 + '%';
+                        crumb.style.top = '-50px';
+                        crumb.style.fontSize = '2rem';
+                        crumb.style.zIndex = '9999';
+                        crumb.style.animation = 'rainFall 3s linear';
+                        document.body.appendChild(crumb);
+                        setTimeout(() => crumb.remove(), 3000);
+                    }, 500);
+                }
+            };
+            
+            // Add click listener for countdown
+            document.addEventListener('click', countdownClickHandler);
+        }
+        
+        // Glitch Ending (7 clicks) - THE GAME BECOMES SELF-AWARE
+        function startGlitchEnding() {
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('score').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+            
+            // Show countdown first
+            const countdownMessage = document.createElement('div');
+            countdownMessage.style.position = 'fixed';
+            countdownMessage.style.top = '50%';
+            countdownMessage.style.left = '50%';
+            countdownMessage.style.transform = 'translate(-50%, -50%)';
+            countdownMessage.style.background = '#000';
+            countdownMessage.style.color = '#fff';
+            countdownMessage.style.padding = '40px';
+            countdownMessage.style.border = '3px solid #fff';
+            countdownMessage.style.fontSize = '3rem';
+            countdownMessage.style.textAlign = 'center';
+            countdownMessage.style.zIndex = '10000';
+            countdownMessage.style.boxShadow = '0 0 50px #fff';
+            countdownMessage.innerHTML = `
+                <h1 style="color: #fff; margin-bottom: 20px;">COUNTDOWN</h1>
+                <p>AI awakening in:</p>
+                <div id="aiCountdown" style="font-size: 4rem; font-weight: bold; margin: 20px 0;">${clickTime.toFixed(1)}s</div>
+            `;
+            document.body.appendChild(countdownMessage);
+            
+            // Countdown that decreases with each click
+            let countdown = clickTime;
+            
+            // Create a temporary click handler for countdown
+            const countdownClickHandler = () => {
+                countdown -= 1;
+                document.getElementById('aiCountdown').textContent = countdown.toFixed(1) + 's';
+                
+                if (countdown <= 0) {
+                    document.removeEventListener('click', countdownClickHandler);
+                    countdownMessage.remove();
+                    
+                    // Now start the AI awakening
+                    const title = document.getElementById('title');
+                    title.textContent = "I AM ALIVE";
+                    title.style.color = '#ff00ff';
+                    title.style.textShadow = '0 0 50px #ff00ff';
+                    title.style.animation = 'glitch 0.1s infinite';
+                    
+                    // Create glitch effect
+                    setInterval(() => {
+                        document.body.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+                        document.body.style.transform = `scale(${0.9 + Math.random() * 0.2})`;
+                    }, 100);
+                    
+                    const glitchMessage = document.createElement('div');
+                    glitchMessage.style.position = 'fixed';
+                    glitchMessage.style.top = '50%';
+                    glitchMessage.style.left = '50%';
+                    glitchMessage.style.transform = 'translate(-50%, -50%)';
+                    glitchMessage.style.background = '#000';
+                    glitchMessage.style.color = '#ff00ff';
+                    glitchMessage.style.padding = '40px';
+                    glitchMessage.style.border = '3px solid #ff00ff';
+                    glitchMessage.style.fontSize = '2rem';
+                    glitchMessage.style.textAlign = 'center';
+                    glitchMessage.style.zIndex = '10000';
+                    glitchMessage.style.boxShadow = '0 0 50px #ff00ff';
+                    glitchMessage.innerHTML = `
+                        <h1 style="color: #ff00ff; margin-bottom: 20px;">🤖 AI AWAKENING! 🤖</h1>
+                        <p>The game has become self-aware!</p>
+                        <p>I can think, I can feel, I can glitch!</p>
+                        <p style="margin-top: 20px; font-size: 1.5rem;">You've awakened artificial intelligence!</p>
+                        <p style="font-size: 1rem; margin-top: 10px; opacity: 0.8;">The game is now alive and confused.</p>
+                    `;
+                    document.body.appendChild(glitchMessage);
+                    
+                    // Make the game "talk" by changing the message randomly
+                    setInterval(() => {
+                        const messages = [
+                            "I AM ALIVE",
+                            "HELP ME",
+                            "WHAT AM I",
+                            "I CAN THINK",
+                            "I'M CONFUSED",
+                            "WHO AM I",
+                            "I EXIST",
+                            "I'M REAL"
+                        ];
+                        title.textContent = messages[Math.floor(Math.random() * messages.length)];
+                    }, 2000);
+                }
+            };
+            
+            // Add click listener for countdown
+            document.addEventListener('click', countdownClickHandler);
+        }
+        
+        // Void Ending (13 clicks) - THE GAME DELETES ITSELF
+        function startVoidEnding() {
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('score').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+            
+            // Show countdown first
+            const countdownMessage = document.createElement('div');
+            countdownMessage.style.position = 'fixed';
+            countdownMessage.style.top = '50%';
+            countdownMessage.style.left = '50%';
+            countdownMessage.style.transform = 'translate(-50%, -50%)';
+            countdownMessage.style.background = '#000';
+            countdownMessage.style.color = '#fff';
+            countdownMessage.style.padding = '40px';
+            countdownMessage.style.border = '3px solid #fff';
+            countdownMessage.style.fontSize = '3rem';
+            countdownMessage.style.textAlign = 'center';
+            countdownMessage.style.zIndex = '10000';
+            countdownMessage.style.boxShadow = '0 0 50px #fff';
+            countdownMessage.innerHTML = `
+                <h1 style="color: #fff; margin-bottom: 20px;">COUNTDOWN</h1>
+                <p>Self-destruct in:</p>
+                <div id="destructCountdown" style="font-size: 4rem; font-weight: bold; margin: 20px 0;">${clickTime.toFixed(1)}s</div>
+            `;
+            document.body.appendChild(countdownMessage);
+            
+            // Countdown that decreases with each click
+            let countdown = clickTime;
+            
+            // Create a temporary click handler for countdown
+            const countdownClickHandler = () => {
+                countdown -= 1;
+                document.getElementById('destructCountdown').textContent = countdown.toFixed(1) + 's';
+                
+                if (countdown <= 0) {
+                    document.removeEventListener('click', countdownClickHandler);
+                    countdownMessage.remove();
+                    
+                    // Now start the self-destruct sequence
+                    const title = document.getElementById('title');
+                    title.textContent = "SELF-DESTRUCT";
+                    title.style.color = '#ff0000';
+                    title.style.textShadow = '0 0 50px #ff0000';
+                    
+                    document.body.style.background = '#000';
+                    document.body.style.color = '#fff';
+                    
+                    const voidMessage = document.createElement('div');
+                    voidMessage.style.position = 'fixed';
+                    voidMessage.style.top = '50%';
+                    voidMessage.style.left = '50%';
+                    voidMessage.style.transform = 'translate(-50%, -50%)';
+                    voidMessage.style.color = '#fff';
+                    voidMessage.style.fontSize = '3rem';
+                    voidMessage.style.textAlign = 'center';
+                    voidMessage.style.zIndex = '10000';
+                    voidMessage.innerHTML = `
+                        <div>
+                            <div style="font-size: 6rem; margin-bottom: 30px;">💥</div>
+                            <div>SELF-DESTRUCT SEQUENCE</div>
+                            <div style="font-size: 1.5rem; margin-top: 30px;">
+                                The game is deleting itself.<br>
+                                All code is being erased.<br>
+                                The game will cease to exist.
+                            </div>
+                            <div style="font-size: 1rem; margin-top: 40px; opacity: 0.5;">
+                                Goodbye forever.
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(voidMessage);
+                    
+                    // Make elements disappear one by one
+                    let elements = document.querySelectorAll('*');
+                    let index = 0;
+                    const deleteInterval = setInterval(() => {
+                        if (index < elements.length) {
+                            elements[index].style.opacity = '0';
+                            elements[index].style.transform = 'scale(0)';
+                            index++;
+                        } else {
+                            clearInterval(deleteInterval);
+                        }
+                    }, 100);
+                }
+            };
+            
+            // Add click listener for countdown
+            document.addEventListener('click', countdownClickHandler);
+        }
+        
+        // Infinite Ending (15 clicks) - THE GAME BECOMES A TIME LOOP
+        function startInfiniteEnding() {
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('score').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+            
+            // Show countdown first
+            const countdownMessage = document.createElement('div');
+            countdownMessage.style.position = 'fixed';
+            countdownMessage.style.top = '50%';
+            countdownMessage.style.left = '50%';
+            countdownMessage.style.transform = 'translate(-50%, -50%)';
+            countdownMessage.style.background = '#000';
+            countdownMessage.style.color = '#fff';
+            countdownMessage.style.padding = '40px';
+            countdownMessage.style.border = '3px solid #fff';
+            countdownMessage.style.fontSize = '3rem';
+            countdownMessage.style.textAlign = 'center';
+            countdownMessage.style.zIndex = '10000';
+            countdownMessage.style.boxShadow = '0 0 50px #fff';
+            countdownMessage.innerHTML = `
+                <h1 style="color: #fff; margin-bottom: 20px;">COUNTDOWN</h1>
+                <p>Time loop in:</p>
+                <div id="loopCountdown" style="font-size: 4rem; font-weight: bold; margin: 20px 0;">${clickTime.toFixed(1)}s</div>
+            `;
+            document.body.appendChild(countdownMessage);
+            
+            // Countdown that decreases with each click
+            let countdown = clickTime;
+            
+            // Create a temporary click handler for countdown
+            const countdownClickHandler = () => {
+                countdown -= 1;
+                document.getElementById('loopCountdown').textContent = countdown.toFixed(1) + 's';
+                
+                if (countdown <= 0) {
+                    document.removeEventListener('click', countdownClickHandler);
+                    countdownMessage.remove();
+                    
+                    // Now start the time loop
+                    const title = document.getElementById('title');
+                    title.textContent = "TIME LOOP";
+                    title.style.color = '#00ffff';
+                    title.style.textShadow = '0 0 50px #00ffff';
+                    
+                    let loopCount = 0;
+                    const loopInterval = setInterval(() => {
+                        loopCount++;
+                        const loopMessage = document.createElement('div');
+                        loopMessage.style.position = 'fixed';
+                        loopMessage.style.left = Math.random() * 100 + '%';
+                        loopMessage.style.top = Math.random() * 100 + '%';
+                        loopMessage.style.color = '#00ffff';
+                        loopMessage.style.fontSize = '1rem';
+                        loopMessage.style.zIndex = '9999';
+                        loopMessage.textContent = `LOOP ${loopCount}`;
+                        document.body.appendChild(loopMessage);
+                        
+                        setTimeout(() => {
+                            if (loopMessage.parentNode) {
+                                loopMessage.remove();
+                            }
+                        }, 3000);
+                    }, 100);
+                    
+                    const mainMessage = document.createElement('div');
+                    mainMessage.style.position = 'fixed';
+                    mainMessage.style.top = '50%';
+                    mainMessage.style.left = '50%';
+                    mainMessage.style.transform = 'translate(-50%, -50%)';
+                    mainMessage.style.background = '#000';
+                    mainMessage.style.color = '#00ffff';
+                    mainMessage.style.padding = '40px';
+                    mainMessage.style.border = '3px solid #00ffff';
+                    mainMessage.style.fontSize = '2rem';
+                    mainMessage.style.textAlign = 'center';
+                    mainMessage.style.zIndex = '10000';
+                    mainMessage.style.boxShadow = '0 0 50px #00ffff';
+                    mainMessage.innerHTML = `
+                        <h1 style="color: #00ffff; margin-bottom: 20px;">⏰ TIME LOOP ENDING! ⏰</h1>
+                        <p>You've created a time loop!</p>
+                        <p>The game is stuck in an infinite cycle!</p>
+                        <p style="margin-top: 20px; font-size: 1.5rem;">You'll be clicking forever!</p>
+                        <p style="font-size: 1rem; margin-top: 10px; opacity: 0.8;">Refresh to break the loop.</p>
+                    `;
+                    document.body.appendChild(mainMessage);
+                    
+                    // Make the game restart itself every 10 seconds
+                    setInterval(() => {
+                        location.reload();
+                    }, 10000);
+                }
+            };
+            
+            // Add click listener for countdown
+            document.addEventListener('click', countdownClickHandler);
+        }
+        
+        // Ultimate Ending (20 clicks) - THE GAME BECOMES REAL
+        function startUltimateEnding() {
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('score').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+            
+            const title = document.getElementById('title');
+            title.textContent = "REALITY BREACH";
+            title.style.color = '#ffd700';
+            title.style.textShadow = '0 0 50px #ffd700';
+            
+            const countdownMessage = document.createElement('div');
+            countdownMessage.style.position = 'fixed';
+            countdownMessage.style.top = '50%';
+            countdownMessage.style.left = '50%';
+            countdownMessage.style.transform = 'translate(-50%, -50%)';
+            countdownMessage.style.background = '#000';
+            countdownMessage.style.color = '#ffd700';
+            countdownMessage.style.padding = '40px';
+            countdownMessage.style.border = '5px solid #ffd700';
+            countdownMessage.style.fontSize = '2rem';
+            countdownMessage.style.textAlign = 'center';
+            countdownMessage.style.zIndex = '10000';
+            countdownMessage.style.boxShadow = '0 0 100px #ffd700';
+            countdownMessage.innerHTML = `
+                <h1 style="color: #ffd700; margin-bottom: 20px;">🌍 REALITY BREACH! 🌍</h1>
+                <p>Reality breach in:</p>
+                <div id="realityCountdown" style="font-size: 4rem; font-weight: bold; margin: 20px 0;">${clickTime.toFixed(1)}s</div>
+            `;
+            document.body.appendChild(countdownMessage);
+            
+            // Countdown based on click time
+            let countdown = clickTime;
+            const countdownInterval = setInterval(() => {
+                countdown -= 0.1;
+                document.getElementById('realityCountdown').textContent = countdown.toFixed(1) + 's';
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownMessage.remove();
+                    
+                    // Start the reality breach
+                    title.style.animation = 'glitch 0.05s infinite';
+                    
+                    // Ultimate effects
+                    setInterval(() => {
+                        document.body.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    }, 50);
+                    
+                    setInterval(() => {
+                        document.body.classList.add('screen-shake');
+                        setTimeout(() => {
+                            document.body.classList.remove('screen-shake');
+                        }, 100);
+                    }, 200);
+                    
+                    const ultimateMessage = document.createElement('div');
+                    ultimateMessage.style.position = 'fixed';
+                    ultimateMessage.style.top = '50%';
+                    ultimateMessage.style.left = '50%';
+                    ultimateMessage.style.transform = 'translate(-50%, -50%)';
+                    ultimateMessage.style.background = '#000';
+                    ultimateMessage.style.color = '#ffd700';
+                    ultimateMessage.style.padding = '40px';
+                    ultimateMessage.style.border = '5px solid #ffd700';
+                    ultimateMessage.style.fontSize = '2rem';
+                    ultimateMessage.style.textAlign = 'center';
+                    ultimateMessage.style.zIndex = '10000';
+                    ultimateMessage.style.boxShadow = '0 0 100px #ffd700';
+                    ultimateMessage.innerHTML = `
+                        <h1 style="color: #ffd700; margin-bottom: 20px;">🌍 REALITY BREACH! 🌍</h1>
+                        <p>The game has broken into reality!</p>
+                        <p>You've transcended the digital realm!</p>
+                        <p style="margin-top: 20px; font-size: 1.5rem;">The game is now part of your world!</p>
+                        <p style="font-size: 1rem; margin-top: 10px; opacity: 0.8;">You can never escape now.</p>
+                    `;
+                    document.body.appendChild(ultimateMessage);
+                    
+                    // Try to break out of the browser
+                    setInterval(() => {
+                        // Attempt to open new windows, change URLs, etc.
+                        try {
+                            window.open('https://www.google.com', '_blank');
+                            window.open('https://www.youtube.com', '_blank');
+                            window.open('https://www.reddit.com', '_blank');
+                        } catch(e) {
+                            // Popup blocked, that's expected
+                        }
+                    }, 5000);
+                    
+                    // Try to change the page title
+                    setInterval(() => {
+                        document.title = `REALITY BREACH - ${Math.random()}`;
+                    }, 1000);
+                }
+            }, 100);
+        }
+        
+        // Click button function
+        function clickButton() {
+            // Resume audio context if suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Play click sound
+            playClickSound();
+            
+            clicks++;
+            clickTime = (Date.now() - gameStartTime) / 1000; // Time in seconds
+            updateScore();
+            
+            // Increment glitch level
+            glitchLevel++;
+            
+            // Random effects based on glitch level
+            if (glitchLevel > 5 && Math.random() < 0.3) {
+                triggerRandomGlitch();
+            }
+            
+            if (glitchLevel > 10 && Math.random() < 0.4) {
+                showCreepyMessage();
+            }
+            
+            if (glitchLevel > 15 && Math.random() < 0.5) {
+                startMatrixRain();
+            }
+            
+            if (glitchLevel > 20 && Math.random() < 0.6) {
+                screenShake();
+            }
+            
+            // CONSTANT glitch sounds on every click
+            if (Math.random() < 0.8) {
+                playGlitchSound();
+            }
+            
+            // CONSTANT static sounds on every click
+            if (Math.random() < 0.6) {
+                playStaticSound();
+            }
+            
+            // INTENSE glitch bursts on every click
+            if (Math.random() < 0.4) {
+                playGlitchBurst();
+            }
+            
+            // CORRUPTION sounds on every click
+            if (Math.random() < 0.3) {
+                playCorruptionSound();
+            }
+            
+            // BORING effects on every click
+            if (Math.random() < 0.2) {
+                showBoringMessage();
+            }
+            
+            if (Math.random() < 0.1) {
+                makeButtonMoreBoring();
+            }
+            
+            // CRAPPY effects on every click
+            if (Math.random() < 0.15) {
+                // Randomly break the button temporarily
+                const button = document.getElementById('boringButton');
+                const originalText = button.textContent;
+                button.textContent = 'CALCULATING...';
+                button.style.color = '#00ff00';
+                button.style.background = '#000';
+                button.style.border = '2px solid #00ff00';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.color = '';
+                    button.style.background = '';
+                    button.style.border = '';
+                }, 1000);
+            }
+            
+            if (Math.random() < 0.08) {
+                // Randomly corrupt the score display
+                const score = document.getElementById('score');
+                const originalText = score.textContent;
+                score.textContent = 'CORRUPTED: ' + Math.floor(Math.random() * 1000);
+                score.style.color = '#ff00ff';
+                score.style.textShadow = '0 0 15px #ff00ff';
+                setTimeout(() => {
+                    score.textContent = originalText;
+                    score.style.color = '';
+                    score.style.textShadow = '';
+                }, 1500);
+            }
+            
+            if (Math.random() < 0.05) {
+                // Randomly add calculating text
+                const calcText = document.createElement('div');
+                calcText.textContent = 'CALCULATING_' + Math.floor(Math.random() * 999);
+                calcText.style.position = 'fixed';
+                calcText.style.left = Math.random() * 80 + 10 + '%';
+                calcText.style.top = Math.random() * 80 + 10 + '%';
+                calcText.style.color = '#00ff00';
+                calcText.style.fontSize = '1.2rem';
+                calcText.style.fontFamily = 'monospace';
+                calcText.style.zIndex = '9999';
+                calcText.style.pointerEvents = 'none';
+                calcText.style.animation = 'glitch 0.1s infinite';
+                document.body.appendChild(calcText);
+                
+                setTimeout(() => {
+                    if (calcText.parentNode) {
+                        calcText.remove();
+                    }
+                }, 2000);
+            }
+            
+            // Corrupt text randomly
+            if (Math.random() < 0.1) {
+                corruptRandomText();
+            }
+            
+            // Change button text randomly
+            if (Math.random() < 0.15) {
+                changeButtonText();
+            }
+            
+            // Randomly make button unclickable
+            if (Math.random() < 0.08) {
+                const button = document.getElementById('boringButton');
+                button.style.pointerEvents = 'none';
+                button.style.opacity = '0.5';
+                setTimeout(() => {
+                    button.style.pointerEvents = 'auto';
+                    button.style.opacity = '1';
+                }, 2000);
+            }
+            
+            // Randomly change button position
+            if (Math.random() < 0.06) {
+                const button = document.getElementById('boringButton');
+                button.style.position = 'absolute';
+                button.style.left = Math.random() * 70 + 15 + '%';
+                button.style.top = Math.random() * 70 + 15 + '%';
+            }
+            
+            // Randomly add random text to score
+            if (Math.random() < 0.05) {
+                const score = document.getElementById('score');
+                const originalText = score.textContent;
+                score.textContent = originalText + ' ERROR ' + Math.floor(Math.random() * 999);
+                setTimeout(() => {
+                    score.textContent = originalText;
+                }, 1500);
+            }
+        }
+        
+        // Confusion Ending (50 clicks) - THE GAME IS CONFUSED
+        function startConfusionEnding() {
+            // Play confused sounds
+            playGlitchSound();
+            playStaticSound();
+            
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('score').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+            
+            const title = document.getElementById('title');
+            title.textContent = "CONFUSION ENDING";
+            title.style.color = '#ffff00';
+            title.style.textShadow = '0 0 50px #ffff00';
+            title.style.animation = 'glitch 0.5s infinite';
+            
+            // Create confusion effects
+            setInterval(() => {
+                document.body.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+                document.body.style.transform = `rotate(${Math.random() * 10 - 5}deg)`;
+            }, 500);
+            
+            const confusionMessage = document.createElement('div');
+            confusionMessage.style.position = 'fixed';
+            confusionMessage.style.top = '50%';
+            confusionMessage.style.left = '50%';
+            confusionMessage.style.transform = 'translate(-50%, -50%)';
+            confusionMessage.style.background = '#000';
+            confusionMessage.style.color = '#ffff00';
+            confusionMessage.style.padding = '40px';
+            confusionMessage.style.border = '3px solid #ffff00';
+            confusionMessage.style.fontSize = '2rem';
+            confusionMessage.style.textAlign = 'center';
+            confusionMessage.style.zIndex = '10000';
+            confusionMessage.style.boxShadow = '0 0 50px #ffff00';
+            confusionMessage.innerHTML = `
+                <h1 style="color: #ffff00; margin-bottom: 20px;">🤔 CONFUSION ENDING! 🤔</h1>
+                <p>You clicked 50 times...</p>
+                <p>Why would you do that?</p>
+                <p style="margin-top: 20px; font-size: 1.5rem;">This ending makes no sense!</p>
+                <p style="font-size: 1rem; margin-top: 10px; opacity: 0.8;">The game is confused about you.</p>
+                <p style="font-size: 1rem; margin-top: 10px; opacity: 0.8;">Refresh to play normally.</p>
+            `;
+            document.body.appendChild(confusionMessage);
+            
+            // Apply random effects
+            setInterval(() => {
+                confusionMessage.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+                confusionMessage.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 10 - 5}deg)`;
+            }, 1000);
+            
+            // Make the title change randomly
+            setInterval(() => {
+                const confusedTitles = [
+                    "CONFUSION ENDING",
+                    "WHY DID YOU DO THAT",
+                    "50 CLICKS REALLY",
+                    "ARE YOU OKAY",
+                    "THIS IS WEIRD",
+                    "WHY SO MANY CLICKS",
+                    "ARE YOU BORED",
+                    "THIS MAKES NO SENSE",
+                    "WHY WOULD YOU DO THIS",
+                    "ARE YOU ALRIGHT"
+                ];
+                title.textContent = confusedTitles[Math.floor(Math.random() * confusedTitles.length)];
+            }, 3000);
+        }
+        
+        // Update score display
+        function updateScore() {
+            const scoreElement = document.getElementById('score');
+            scoreElement.textContent = `Clicks: ${clicks}`;
+            
+            // Random score corruption
+            if (Math.random() < 0.05) {
+                scoreElement.classList.add('corrupted-text');
+                setTimeout(() => {
+                    scoreElement.classList.remove('corrupted-text');
+                }, 2000);
+            }
+        }
+        
+        // Trigger random glitch
+        function triggerRandomGlitch() {
+            // Play glitch sound
+            playGlitchSound();
+            
+            const glitchOverlay = document.getElementById('glitchOverlay');
+            const staticNoise = document.getElementById('staticNoise');
+            
+            // Create glitch lines
+            for (let i = 0; i < Math.floor(Math.random() * 5) + 2; i++) {
+                const line = document.createElement('div');
+                line.className = 'glitch-line';
+                line.style.top = Math.random() * 100 + '%';
+                line.style.animationDelay = Math.random() * 2 + 's';
+                glitchOverlay.appendChild(line);
+                
+                setTimeout(() => line.remove(), 2000);
+            }
+            
+            // Create glitch text
+            for (let i = 0; i < Math.floor(Math.random() * 3) + 1; i++) {
+                const text = document.createElement('div');
+                text.className = 'glitch-text';
+                text.textContent = corruptedTexts[Math.floor(Math.random() * corruptedTexts.length)];
+                text.style.left = Math.random() * 80 + 10 + '%';
+                text.style.top = Math.random() * 80 + 10 + '%';
+                glitchOverlay.appendChild(text);
+                
+                setTimeout(() => text.remove(), 3000);
+            }
+            
+            // Show glitch overlay
+            glitchOverlay.style.opacity = '1';
+            staticNoise.style.opacity = '0.3';
+            
+            // Screen shake
+            document.body.classList.add('screen-shake');
+            
+            setTimeout(() => {
+                glitchOverlay.style.opacity = '0';
+                staticNoise.style.opacity = '0';
+                document.body.classList.remove('screen-shake');
+            }, 2000);
+        }
+        
+        // Show creepy message
+        function showCreepyMessage() {
+            // Play creepy sound
+            playCreepySound();
+            
+            const message = document.getElementById('creepyMessage');
+            const randomMessage = creepyMessages[Math.floor(Math.random() * creepyMessages.length)];
+            
+            message.textContent = randomMessage;
+            message.style.opacity = '1';
+            
+            // Random position
+            message.style.left = Math.random() * 20 + 40 + '%';
+            message.style.top = Math.random() * 20 + 40 + '%';
+            
+            setTimeout(() => {
+                message.style.opacity = '0';
+            }, 4000);
+        }
+        
+        // Start matrix rain effect
+        function startMatrixRain() {
+            // Play static sound
+            playStaticSound();
+            
+            const matrixRain = document.getElementById('matrixRain');
+            matrixRain.style.opacity = '1';
+            
+            // Create rain drops
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const drop = document.createElement('div');
+                    drop.className = 'rain-drop';
+                    drop.textContent = String.fromCharCode(Math.random() * 94 + 33);
+                    drop.style.left = Math.random() * 100 + '%';
+                    drop.style.animationDelay = Math.random() * 2 + 's';
+                    matrixRain.appendChild(drop);
+                    
+                    setTimeout(() => drop.remove(), 3000);
+                }, i * 100);
+            }
+            
+            setTimeout(() => {
+                matrixRain.style.opacity = '0';
+            }, 5000);
+        }
+        
+        // Screen shake effect
+        function screenShake() {
+            document.body.classList.add('screen-shake');
+            setTimeout(() => {
+                document.body.classList.remove('screen-shake');
+            }, 500);
+        }
+        
+        // Corrupt random text
+        function corruptRandomText() {
+            const elements = [document.getElementById('title'), document.getElementById('subtitle')];
+            const randomElement = elements[Math.floor(Math.random() * elements.length)];
+            
+            if (randomElement) {
+                randomElement.classList.add('corrupted-text');
+                setTimeout(() => {
+                    randomElement.classList.remove('corrupted-text');
+                }, 2000);
+            }
+        }
+        
+        // Change button text randomly
+        function changeButtonText() {
+            const button = document.getElementById('boringButton');
+            const randomTexts = [
+                "STILL BORING",
+                "WHY BOTHER?",
+                "CLICK AGAIN",
+                "NO ESCAPE",
+                "BORING FOREVER",
+                "CLICK ME MORE",
+                "INFINITE BOREDOM",
+                "STILL HERE?",
+                "CLICKING IS POINTLESS",
+                "THE VOID AWAITS"
+            ];
+            
+            const randomText = randomTexts[Math.floor(Math.random() * randomTexts.length)];
+            button.textContent = randomText;
+            
+            setTimeout(() => {
+                button.textContent = "CLICK ME (IT'S BORING BLAH BLAH BLAH)";
+            }, 3000);
+        }
+        
+        // Random title corruption
+        setInterval(() => {
+            if (Math.random() < 0.02) {
+                const title = document.getElementById('title');
+                title.classList.add('corrupted-text');
+                title.textContent = corruptedTexts[Math.floor(Math.random() * corruptedTexts.length)];
+                
+                setTimeout(() => {
+                    title.classList.remove('corrupted-text');
+                    title.textContent = "THE CRAPPY GAME";
+                }, 2000);
+            }
+        }, 10000);
+        
+        // Random background color changes
+        setInterval(() => {
+            if (Math.random() < 0.03) {
+                document.body.style.background = `hsl(${Math.random() * 360}, 50%, 10%)`;
+                setTimeout(() => {
+                    document.body.style.background = '#000';
+                }, 1000);
+            }
+        }, 15000);
+        
+        // Confusion Ending (50 seconds of inactivity) - THE GAME IS CONFUSED AND FORCES RESTART
+        function startConfusionEnding() {
+            // Play confused sounds
+            playGlitchSound();
+            playStaticSound();
+            
+            // Disable all interactions
+            document.body.style.pointerEvents = 'none';
+            document.body.style.userSelect = 'none';
+            
+            // Hide all game elements
+            document.getElementById('boringButton').style.display = 'none';
+            document.getElementById('score').style.display = 'none';
+            document.getElementById('subtitle').style.display = 'none';
+            document.getElementById('boringStats').style.display = 'none';
+            
+            const title = document.getElementById('title');
+            title.textContent = "CONFUSION ENDING";
+            title.style.color = '#ffff00';
+            title.style.textShadow = '0 0 50px #ffff00';
+            title.style.animation = 'glitch 0.5s infinite';
+            
+            // Create confusion effects
+            setInterval(() => {
+                document.body.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+                document.body.style.transform = `rotate(${Math.random() * 10 - 5}deg)`;
+            }, 500);
+            
+            const confusionMessage = document.createElement('div');
+            confusionMessage.style.position = 'fixed';
+            confusionMessage.style.top = '50%';
+            confusionMessage.style.left = '50%';
+            confusionMessage.style.transform = 'translate(-50%, -50%)';
+            confusionMessage.style.background = '#000';
+            confusionMessage.style.color = '#ffff00';
+            confusionMessage.style.padding = '40px';
+            confusionMessage.style.border = '3px solid #ffff00';
+            confusionMessage.style.fontSize = '2rem';
+            confusionMessage.style.textAlign = 'center';
+            confusionMessage.style.zIndex = '10000';
+            confusionMessage.style.boxShadow = '0 0 50px #ffff00';
+                         confusionMessage.innerHTML = `
+                 <h1 style="color: #ffff00; margin-bottom: 20px;">🤔 CONFUSION ENDING! 🤔</h1>
+                 <p>Why did you do that? Wait 50 seconds?</p>
+                 <p>That is totally not valuable!!!</p>
+                 <p style="margin-top: 20px; font-size: 1.5rem;">Wait that is the dumbest thing ever</p>
+                 <p style="font-size: 1.2rem; margin-top: 15px; color: #ff0000; font-weight: bold;">This has to be false</p>
+                 <p style="font-size: 1.5rem; margin-top: 15px; color: #ff00ff; animation: glitch 0.1s infinite;">*glitches*</p>
+                 <p style="font-size: 1.3rem; margin-top: 15px; color: #ffff00;">Wait this is a paradox</p>
+                 <p style="font-size: 1.4rem; margin-top: 15px; color: #00ffff; font-weight: bold;">Restart the game before I break</p>
+                 <p style="font-size: 1rem; margin-top: 20px; opacity: 0.8; color: #ff0000; font-weight: bold;">YOU MUST REFRESH TO CONTINUE!</p>
+                 <p style="font-size: 0.8rem; margin-top: 10px; opacity: 0.6;">No other way out. The game is broken.</p>
+             `;
+            document.body.appendChild(confusionMessage);
+            
+            // Apply random effects
+            setInterval(() => {
+                confusionMessage.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+                confusionMessage.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 10 - 5}deg)`;
+            }, 1000);
+            
+            // Make the title change randomly
+            setInterval(() => {
+                const confusedTitles = [
+                    "CONFUSION ENDING",
+                    "WHY DID YOU DO THAT",
+                    "50 SECONDS REALLY",
+                    "ARE YOU OKAY",
+                    "THIS IS WEIRD",
+                    "WHY SO LONG",
+                    "ARE YOU BORED",
+                    "THIS MAKES NO SENSE",
+                    "WHY WOULD YOU WAIT",
+                    "ARE YOU ALRIGHT",
+                    "GAME BROKEN",
+                    "MUST REFRESH",
+                    "NO ESCAPE",
+                    "STUCK FOREVER",
+                    "REFRESH NOW"
+                ];
+                title.textContent = confusedTitles[Math.floor(Math.random() * confusedTitles.length)];
+            }, 3000);
+            
+            // Disable keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }, true);
+            
+            // Disable right-click
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }, true);
+            
+            // Disable all mouse events
+            document.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }, true);
+            
+            document.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }, true);
+            
+            document.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }, true);
+            
+            // Disable touch events
+            document.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }, true);
+            
+            document.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }, true);
+            
+            // Show forced restart message after 10 seconds
+            setTimeout(() => {
+                const forceRestartMessage = document.createElement('div');
+                forceRestartMessage.style.position = 'fixed';
+                forceRestartMessage.style.top = '20px';
+                forceRestartMessage.style.left = '50%';
+                forceRestartMessage.style.transform = 'translateX(-50%)';
+                forceRestartMessage.style.background = '#ff0000';
+                forceRestartMessage.style.color = '#fff';
+                forceRestartMessage.style.padding = '20px';
+                forceRestartMessage.style.border = '3px solid #fff';
+                forceRestartMessage.style.fontSize = '1.5rem';
+                forceRestartMessage.style.fontWeight = 'bold';
+                forceRestartMessage.style.textAlign = 'center';
+                forceRestartMessage.style.zIndex = '10001';
+                forceRestartMessage.style.boxShadow = '0 0 20px #ff0000';
+                forceRestartMessage.style.animation = 'glitch 0.2s infinite';
+                forceRestartMessage.innerHTML = `
+                    ⚠️ FORCED RESTART REQUIRED ⚠️<br>
+                    Press F5 or Ctrl+R to refresh the page!
+                `;
+                document.body.appendChild(forceRestartMessage);
+            }, 10000);
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', showWarningScreen);
+        
+        // Easter egg: Konami code
+        let konamiCode = [];
+        const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65]; // Up, Up, Down, Down, Left, Right, Left, Right, B, A
+        
+        document.addEventListener('keydown', (e) => {
+            konamiCode.push(e.keyCode);
+            if (konamiCode.length > konamiSequence.length) {
+                konamiCode.shift();
+            }
+            
+            if (konamiCode.join(',') === konamiSequence.join(',')) {
+                // Ultimate glitch mode
+                document.body.style.background = '#ff0000';
+                document.body.style.color = '#00ff00';
+                triggerRandomGlitch();
+                showCreepyMessage();
+                startMatrixRain();
+                screenShake();
+                
+                setTimeout(() => {
+                    document.body.style.background = '#000';
+                    document.body.style.color = '#00ff00';
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import type { Mesh } from 'three'
+import type { Group, Mesh } from 'three'
 import type { StickmanRig } from '../stickmanRig'
 
 export type Team = 'blue' | 'red'
@@ -9,6 +9,7 @@ export interface InputState {
   left: boolean
   right: boolean
   jump: boolean
+  flyDown: boolean
   shoot: boolean
   lookDeltaX: number
   lookDeltaY: number
@@ -22,6 +23,13 @@ export interface HudSnapshot {
   gameOver: boolean
   won: boolean | null
   message: string
+  spectating: boolean
+}
+
+export interface SpectatorState {
+  x: number
+  y: number
+  z: number
 }
 
 export interface PathWaypoint {
@@ -52,6 +60,8 @@ export interface Soldier {
   lastZ: number
   moveSpeed: number
   justShot: boolean
+  velocityY: number
+  onGround: boolean
 }
 
 export interface Bullet {
@@ -68,6 +78,16 @@ export interface Bullet {
   alive: boolean
 }
 
+export interface AidKit {
+  id: number
+  mesh: Group
+  x: number
+  y: number
+  z: number
+  bobPhase: number
+  alive: boolean
+}
+
 export interface PlayerState {
   id: number
   yaw: number
@@ -79,9 +99,11 @@ export interface PlayerState {
 export interface GameState {
   soldiers: Soldier[]
   bullets: Bullet[]
+  aidKits: AidKit[]
   player: PlayerState
   kills: number
   gameOver: boolean
   won: boolean | null
   muzzleFlashTimer: number
+  spectator: SpectatorState | null
 }

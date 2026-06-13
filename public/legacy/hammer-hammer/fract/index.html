@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Fractal Triangle</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 20px;
+			background: #1a1a1a;
+			color: #fff;
+			font-family: Arial, sans-serif;
+		}
+		canvas {
+			border: 2px solid #444;
+			background: #000;
+			display: block;
+			margin: 20px auto;
+		}
+		.controls {
+			text-align: center;
+			margin: 20px;
+		}
+		input {
+			padding: 10px;
+			font-size: 16px;
+			width: 150px;
+		}
+		button {
+			padding: 10px 20px;
+			font-size: 16px;
+			background: #4CAF50;
+			color: white;
+			border: none;
+			cursor: pointer;
+			margin-left: 10px;
+		}
+		button:hover {
+			background: #45a049;
+		}
+	</style>
+</head>
+<body>
+	<div class="controls">
+		<label>Number of dots: <input type="number" id="numDots" value="100000" min="100" max="1000000"></label>
+		<button onclick="drawFractal()">Draw!</button>
+	</div>
+	<canvas id="canvas" width="600" height="600"></canvas>
+
+	<script>
+		// Triangle vertices
+		const A = { x: 0, y: 0 };
+		const B = { x: 1, y: 0 };
+		const C = { x: 0.5, y: 0.866 };
+
+		function drawFractal() {
+			const canvas = document.getElementById('canvas');
+			const ctx = canvas.getContext('2d');
+			const numDots = parseInt(document.getElementById('numDots').value) || 100000;
+			
+			// Clear canvas
+			ctx.fillStyle = '#000';
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			
+			// Start point (random)
+			let x = Math.random();
+			let y = Math.random();
+			
+			// Scale to canvas size
+			const scale = canvas.width;
+			const vertices = [A, B, C];
+			
+			ctx.fillStyle = '#00ff00';
+			
+			// Draw points
+			for (let i = 0; i < numDots; i++) {
+				// Pick random vertex
+				const vertex = vertices[Math.floor(Math.random() * 3)];
+				
+				// Move halfway toward vertex
+				x = (x + vertex.x) / 2;
+				y = (y + vertex.y) / 2;
+				
+				// Draw point
+				ctx.fillRect(x * scale, (1 - y) * scale, 1, 1);
+			}
+		}
+		
+		// Draw automatically when page loads
+		drawFractal();
+	</script>
+</body>
+</html>

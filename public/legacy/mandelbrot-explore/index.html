@@ -1,0 +1,510 @@
+<!--
+Mandelbrot Explorer Game
+- Infinite zoomable Mandelbrot set with beautiful coloring
+- WASD keys for panning (left/right/up/down)
+- Up/Down arrow keys for zoom in/out
+- Click to take snapshots that appear below the plot
+- Smooth controls and infinite zoom capability
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mandelbrot Explorer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            font-family: 'Arial', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .canvas-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #mandelbrotCanvas {
+            border: 3px solid #fff;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            cursor: crosshair;
+        }
+
+        .info {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .snapshots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .snapshot {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .snapshot img {
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        .snapshot-info {
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 Mandelbrot Explorer 🌟</h1>
+        
+        <div class="controls">
+            <strong>Controls:</strong> Click to zoom in • Scroll to zoom in/out • Drag to pan
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="mandelbrotCanvas" width="800" height="600"></canvas>
+        </div>
+
+        <div class="info">
+            <div>Zoom Level: <span id="zoomLevel">1x</span></div>
+            <div>Center: <span id="centerCoords">(-0.5, 0)</span></div>
+        </div>
+
+
+    </div>
+
+    <div class="loading" id="loading" style="display: none;">
+        Calculating fractal... ⏳
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mandelbrotCanvas');
+        const ctx = canvas.getContext('2d');
+        const zoomLevelSpan = document.getElementById('zoomLevel');
+        const centerCoordsSpan = document.getElementById('centerCoords');
+
+        const loading = document.getElementById('loading');
+
+        // Mandelbrot parameters
+        let centerX = -0.5;
+        let centerY = 0;
+        let zoom = 1;
+        let maxIterations = 500; // Much more iterations for fine detail
+
+
+        // Color palette for the fractal
+        const colors = [
+            '#000033', '#000066', '#000099', '#0000CC', '#0000FF',
+            '#0033FF', '#0066FF', '#0099FF', '#00CCFF', '#00FFFF',
+            '#33FFFF', '#66FFFF', '#99FFFF', '#CCFFFF', '#FFFFFF',
+            '#FFFFCC', '#FFFF99', '#FFFF66', '#FFFF33', '#FFFF00',
+            '#FFCC00', '#FF9900', '#FF6600', '#FF3300', '#FF0000',
+            '#CC0000', '#990000', '#660000', '#330000', '#000000'
+        ];
+
+        // Key states
+        const keys = {};
+        let animationId;
+        let lastMoveTime = Date.now();
+        let renderDetail = 'fast'; // 'fast', 'medium', 'high'
+        let idleTimeout1 = null;
+        let idleTimeout2 = null;
+        
+        // Smooth zoom variables
+        let isZooming = false;
+        let zoomStartX = 0;
+        let zoomStartY = 0;
+        let zoomStartZoom = 1;
+        let zoomTargetX = 0;
+        let zoomTargetY = 0;
+        let zoomTargetZoom = 1;
+        let zoomProgress = 0;
+        let zoomDuration = 20; // frames for zoom animation
+        let zoomFrame = 0;
+        let lastImageData = null; // Store the last rendered image for interpolation
+
+        // Set iteration levels for each detail
+        const ITER_FAST = 50;
+        const ITER_MEDIUM = 250;
+        const ITER_HIGH = 1000;
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let dragStartCenterX = 0;
+        let dragStartCenterY = 0;
+
+        canvas.addEventListener('click', (e) => {
+            // Single click to zoom in
+            jumpToLocation(e);
+        });
+
+        // Mouse drag events for panning
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            dragStartCenterX = centerX;
+            dragStartCenterY = centerY;
+            canvas.style.cursor = 'grabbing';
+            
+            // Store current image for interpolation
+            lastImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - dragStartX;
+                const deltaY = e.clientY - dragStartY;
+                
+                const scale = 4 / (zoom * Math.min(canvas.width, canvas.height));
+                const moveX = -deltaX * scale;
+                const moveY = -deltaY * scale;
+                
+                centerX = dragStartCenterX + moveX;
+                centerY = dragStartCenterY + moveY;
+                
+                // Render panned image during drag
+                renderPanned();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            canvas.style.cursor = 'crosshair';
+            
+            // Just render the current state without detail upgrades
+            render();
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            canvas.style.cursor = 'crosshair';
+            
+            // Just render the current state without detail upgrades
+            render();
+        });
+
+        // Scroll to zoom in/out with smooth animation
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            
+            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1; // Scroll down = zoom out, scroll up = zoom in
+            
+            // Store current state as start position
+            zoomStartX = centerX;
+            zoomStartY = centerY;
+            zoomStartZoom = zoom;
+            
+            // Set target zoom
+            zoomTargetX = centerX; // Stay at same center
+            zoomTargetY = centerY;
+            zoomTargetZoom = zoom * zoomFactor;
+            
+            // Store current image for interpolation
+            lastImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // Start zoom animation
+            isZooming = true;
+            zoomFrame = 0;
+            zoomProgress = 0;
+            
+            // Cancel any pending detail upgrades
+            if (idleTimeout1) clearTimeout(idleTimeout1);
+            if (idleTimeout2) clearTimeout(idleTimeout2);
+        });
+
+        // Start smooth zoom to location
+        function jumpToLocation(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Calculate the coordinates where user clicked
+            const scale = 4 / (zoom * Math.min(canvas.width, canvas.height));
+            const clickX = (x - canvas.width / 2) * scale + centerX;
+            const clickY = (y - canvas.height / 2) * scale + centerY;
+            
+            // Store current state as start position
+            zoomStartX = centerX;
+            zoomStartY = centerY;
+            zoomStartZoom = zoom;
+            
+            // Set target position and zoom
+            zoomTargetX = clickX;
+            zoomTargetY = clickY;
+            zoomTargetZoom = zoom * 2;
+            
+            // Store current image for interpolation
+            lastImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // Start zoom animation
+            isZooming = true;
+            zoomFrame = 0;
+            zoomProgress = 0;
+            
+            // Cancel any pending detail upgrades
+            if (idleTimeout1) clearTimeout(idleTimeout1);
+            if (idleTimeout2) clearTimeout(idleTimeout2);
+        }
+
+        // Handle smooth zoom animation
+        function handleZoomAnimation() {
+            if (!isZooming) return;
+            
+            zoomFrame++;
+            zoomProgress = zoomFrame / zoomDuration;
+            
+            // Use smooth easing function
+            const easeProgress = 1 - Math.pow(1 - zoomProgress, 3);
+            
+            // Interpolate position and zoom
+            centerX = zoomStartX + (zoomTargetX - zoomStartX) * easeProgress;
+            centerY = zoomStartY + (zoomTargetY - zoomStartY) * easeProgress;
+            zoom = zoomStartZoom + (zoomTargetZoom - zoomStartZoom) * easeProgress;
+            
+            // Render interpolated image
+            renderInterpolated();
+            
+            // Update display
+            zoomLevelSpan.textContent = `${Math.round(zoom)}x`;
+            centerCoordsSpan.textContent = `(${centerX.toFixed(6)}, ${centerY.toFixed(6)})`;
+            
+            // Check if zoom animation is complete
+            if (zoomFrame >= zoomDuration) {
+                isZooming = false;
+                lastImageData = null;
+                
+                // Skip fast render and go straight to medium detail
+                renderDetail = 'medium';
+                lastMoveTime = Date.now();
+                idleTimeout1 = setTimeout(() => {
+                    renderDetail = 'medium';
+                    render();
+                }, 100); // Short delay to keep interpolated image briefly
+                idleTimeout2 = setTimeout(() => {
+                    renderDetail = 'high';
+                    render();
+                }, 1000);
+            }
+        }
+
+        // Render interpolated image during zoom
+        function renderInterpolated() {
+            if (!lastImageData) return;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Calculate the scale factor for the zoom
+            const scaleFactor = zoom / zoomStartZoom;
+            
+            // Create a temporary canvas for scaling
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Put the last image data on temp canvas
+            tempCtx.putImageData(lastImageData, 0, 0);
+            
+            // Clear main canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Calculate the offset for the zoom center
+            const startScale = 4 / (zoomStartZoom * Math.min(width, height));
+            const targetScale = 4 / (zoom * Math.min(width, height));
+            
+            const startX = (centerX - zoomStartX) / startScale;
+            const startY = (centerY - zoomStartY) / startScale;
+            
+            // Draw scaled and offset image
+            ctx.save();
+            ctx.translate(width/2, height/2);
+            ctx.scale(scaleFactor, scaleFactor);
+            ctx.drawImage(tempCanvas, startX, startY, width, height, -width/2, -height/2, width, height);
+            ctx.restore();
+        }
+
+        // Render panned image during drag (no scaling, just translation)
+        function renderPanned() {
+            if (!lastImageData) return;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Calculate the pixel offset for the pan
+            const deltaX = centerX - dragStartCenterX;
+            const deltaY = centerY - dragStartCenterY;
+            
+            const scale = 4 / (zoom * Math.min(width, height));
+            const pixelOffsetX = deltaX / scale;
+            const pixelOffsetY = deltaY / scale;
+            
+            // Create a temporary canvas
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Put the last image data on temp canvas
+            tempCtx.putImageData(lastImageData, 0, 0);
+            
+            // Clear main canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw the image offset by the pan amount
+            ctx.drawImage(tempCanvas, pixelOffsetX, pixelOffsetY);
+        }
+
+        // Handle key controls (simplified - just for display updates)
+        function handleControls() {
+            // Update display
+            zoomLevelSpan.textContent = `${Math.round(zoom)}x`;
+            centerCoordsSpan.textContent = `(${centerX.toFixed(6)}, ${centerY.toFixed(6)})`;
+        }
+
+        // Calculate Mandelbrot set
+        function mandelbrot(x, y, iterations = maxIterations) {
+            let zx = 0;
+            let zy = 0;
+            let iteration = 0;
+
+            while (zx * zx + zy * zy < 4 && iteration < iterations) {
+                const temp = zx * zx - zy * zy + x;
+                zy = 2 * zx * zy + y;
+                zx = temp;
+                iteration++;
+            }
+
+            return iteration;
+        }
+
+        // Render the Mandelbrot set
+        function render() {
+            const width = canvas.width;
+            const height = canvas.height;
+            const imageData = ctx.createImageData(width, height);
+            const data = imageData.data;
+
+            // Dynamic scale that works for infinite zoom
+            const scale = 4 / (zoom * Math.min(width, height));
+            
+            // Pick iterations based on renderDetail
+            let currentIterations = ITER_FAST;
+            if (renderDetail === 'medium') currentIterations = ITER_MEDIUM;
+            if (renderDetail === 'high') currentIterations = ITER_HIGH;
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const realX = (x - width / 2) * scale + centerX;
+                    const realY = (y - height / 2) * scale + centerY;
+
+                    const iteration = mandelbrot(realX, realY, currentIterations);
+                    const colorIndex = iteration % colors.length;
+                    const color = colors[colorIndex];
+
+                    const pixelIndex = (y * width + x) * 4;
+                    const rgb = hexToRgb(color);
+
+                    data[pixelIndex] = rgb.r;     // Red
+                    data[pixelIndex + 1] = rgb.g; // Green
+                    data[pixelIndex + 2] = rgb.b; // Blue
+                    data[pixelIndex + 3] = 255;   // Alpha
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Convert hex color to RGB
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : {r: 0, g: 0, b: 0};
+        }
+
+
+
+        // Main animation loop
+        function animate() {
+            handleControls();
+            handleZoomAnimation();
+            
+            // Only render if not zooming
+            if (!isZooming) {
+                render();
+            }
+            
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // Start the animation
+        animate();
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>

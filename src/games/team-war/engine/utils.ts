@@ -11,6 +11,7 @@ export function emptyInput(): InputState {
     left: false,
     right: false,
     jump: false,
+    flyDown: false,
     shoot: false,
     lookDeltaX: 0,
     lookDeltaY: 0,

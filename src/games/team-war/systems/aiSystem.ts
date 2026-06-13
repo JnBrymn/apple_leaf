@@ -15,6 +15,7 @@ import {
   computeAiShotOrigin,
   fireWeapon,
 } from './combatSystem'
+import { shouldAiJump, updateSoldierVertical } from './verticalSystem'
 import type { Mesh, Scene, Vector3 } from 'three'
 
 export function updateAi(
@@ -48,6 +49,7 @@ export function updateAi(
   if (!target) {
     soldier.path = []
     soldier.pathIndex = 0
+    updateSoldierVertical(soldier, false, dt)
     return
   }
 
@@ -65,6 +67,7 @@ export function updateAi(
 
     if (dist > 10) {
       moveToward(soldier, target.x, target.z, SOLDIER_SPEED * 0.55 * dt)
+      updateSoldierVertical(soldier, shouldAiJump(soldier, target.x, target.z), dt)
     } else if (dist < 5) {
       const retreatAngle = Math.atan2(-dx, -dz)
       tryMove(
@@ -72,6 +75,7 @@ export function updateAi(
         Math.sin(retreatAngle) * SOLDIER_SPEED * 0.7 * dt,
         Math.cos(retreatAngle) * SOLDIER_SPEED * 0.7 * dt,
       )
+      updateSoldierVertical(soldier, false, dt)
     } else {
       const strafeAngle = soldier.yaw + (Math.PI / 2) * soldier.aiStrafeDir
       tryMove(
@@ -79,6 +83,7 @@ export function updateAi(
         Math.sin(strafeAngle) * SOLDIER_SPEED * 0.65 * dt,
         Math.cos(strafeAngle) * SOLDIER_SPEED * 0.65 * dt,
       )
+      updateSoldierVertical(soldier, false, dt)
     }
 
     if (soldier.shootCooldown <= 0) {
@@ -111,7 +116,10 @@ export function updateAi(
 }
 
 function followPath(soldier: Soldier, dt: number) {
-  if (soldier.path.length === 0) return
+  if (soldier.path.length === 0) {
+    updateSoldierVertical(soldier, false, dt)
+    return
+  }
 
   while (soldier.pathIndex < soldier.path.length) {
     const waypoint = soldier.path[soldier.pathIndex]
@@ -120,7 +128,11 @@ function followPath(soldier: Soldier, dt: number) {
       soldier.pathIndex++
       continue
     }
+
     moveToward(soldier, waypoint.x, waypoint.z, SOLDIER_SPEED * dt)
-    break
+    updateSoldierVertical(soldier, shouldAiJump(soldier, waypoint.x, waypoint.z), dt)
+    return
   }
+
+  updateSoldierVertical(soldier, false, dt)
 }

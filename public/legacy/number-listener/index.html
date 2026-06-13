@@ -1,0 +1,515 @@
+<!--
+NUMBER LISTENER GAME
+- Converts numbers to sounds based on prime factorization
+- Base frequency: 60 Hz, each factor = factor × 60 Hz
+- Repeated factors play as octaves (base + octave up)
+- Interface: number buttons, auto-play, sequence dropdown
+- Number sequences: primes, powers of 2/4/5, tech numbers, etc.
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Number Listener</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: Arial, sans-serif;
+            color: white;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .controls {
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .sequence-selector {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1.1em;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+        
+        .control-button {
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background 0.3s;
+        }
+        
+        .control-button:hover {
+            background: #FF5252;
+        }
+        
+        .control-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .number-button {
+            background: linear-gradient(145deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 20px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .number-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+        
+        .number-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .number-button.playing {
+            background: linear-gradient(145deg, #FFD700, #FFA500);
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .info-panel h3 {
+            margin-top: 0;
+            color: #FFD700;
+        }
+        
+        .factor-display {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .frequency-display {
+            color: #90EE90;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 NUMBER LISTENER 🎵</h1>
+        
+        <div class="info-panel">
+            <h3>How it works:</h3>
+            <p>• Each number is broken down into its prime factors</p>
+            <p>• Each factor creates a sound: factor × 55 Hz</p>
+            <p>• Repeated factors play as octaves (base + octave up)</p>
+            <p>• Example: 10 = 2×5 → 110 Hz + 275 Hz</p>
+            <p>• Example: 100 = 2×2×5×5 → 110 Hz + 220 Hz + 275 Hz + 550 Hz</p>
+        </div>
+        
+        <div class="controls">
+            <select id="sequenceSelect" class="sequence-selector" onchange="loadSequence()">
+                <option value="bo_training">BO Training</option>
+                <option value="first_100">First 100</option>
+                <option value="primes">Prime Numbers</option>
+                <option value="powers2">Powers of 2</option>
+                <option value="powers4">Powers of 4</option>
+                <option value="powers5">Powers of 5</option>
+                <option value="fibonacci">Fibonacci</option>
+                <option value="squares">Perfect Squares (1-25)</option>
+                <option value="cubes">Perfect Cubes (1-27)</option>
+                <option value="tech">Tech Numbers (1-100)</option>
+                <option value="custom">Custom Range (1-30)</option>
+            </select>
+            
+            <button class="control-button" onclick="playAll()" id="playAllBtn">🎵 Play All</button>
+            <button class="control-button" onclick="stopAll()" id="stopAllBtn">⏹️ Stop</button>
+        </div>
+        
+        <div id="factorInfo" class="factor-display" style="display: none;">
+            <strong>Last played:</strong> <span id="lastNumber"></span><br>
+            <strong>Factors:</strong> <span id="factorList"></span><br>
+            <strong>Frequencies:</strong> <span id="frequencyList" class="frequency-display"></span>
+        </div>
+        
+        <div id="numberGrid" class="number-grid">
+            <!-- Number buttons will be generated here -->
+        </div>
+        
+        <div class="info-panel">
+            <h3>🎵 Custom Number Player 🎵</h3>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; margin: 20px 0;">
+                <input type="text" id="customSequence" placeholder="Enter numbers: 1,2,3,4,5" 
+                       style="padding: 10px; border-radius: 8px; border: none; font-size: 1.1em; width: 250px;">
+                <button class="control-button" onclick="playCustomSequence()">🎵 Play Sequence</button>
+            </div>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; margin: 20px 0;">
+                <input type="text" id="factorsInput" placeholder="Enter prime factors: 2,3,5" 
+                       style="padding: 10px; border-radius: 8px; border: none; font-size: 1.1em; width: 250px;">
+                <button class="control-button" onclick="playFromFactors()">🔢 Play From Factors</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Audio context for sound generation
+        let audioContext;
+        let currentOscillators = [];
+        let isPlayingAll = false;
+        
+        // Number sequences
+        const sequences = {
+            bo_training: [2,4,8,16,32,64,3,9,27,81,243,5,25,125,625,7,49,343,2401,11,121,1331,14641,17,289],
+            first_100: [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100],
+            primes: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97],
+            powers2: [2, 4, 8, 16, 32, 64],
+            powers4: [4, 16, 64],
+            powers5: [5, 25, 125],
+            fibonacci: [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89],
+            squares: [1, 4, 9, 16, 25],
+            cubes: [1, 8, 27],
+            tech: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 16, 18, 20, 21, 24, 25, 27, 28, 30, 32, 35, 36, 40, 42, 45, 48, 49, 50, 54, 56, 60, 63, 64, 70, 72, 75, 80, 81, 84, 90, 96, 100],
+            custom: Array.from({length: 30}, (_, i) => i + 1)
+        };
+        
+        // Initialize audio context
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('Audio context initialized');
+            } catch (e) {
+                console.log('Audio not supported');
+                alert('Audio not supported in this browser');
+            }
+        }
+        
+        // Get prime factors of a number
+        function getPrimeFactors(n) {
+            const factors = [];
+            let d = 2;
+            
+            while (n > 1) {
+                while (n % d === 0) {
+                    factors.push(d);
+                    n /= d;
+                }
+                d++;
+                if (d * d > n) {
+                    if (n > 1) factors.push(n);
+                    break;
+                }
+            }
+            
+            return factors;
+        }
+        
+        // Count occurrences of each factor
+        function countFactors(factors) {
+            const counts = {};
+            factors.forEach(factor => {
+                counts[factor] = (counts[factor] || 0) + 1;
+            });
+            return counts;
+        }
+        
+        // Generate frequencies for a number
+        function generateFrequencies(number) {
+            const factors = getPrimeFactors(number);
+            const factorCounts = countFactors(factors);
+            const frequencies = [];
+            
+            for (const [factor, count] of Object.entries(factorCounts)) {
+                const baseFreq = factor * 55;
+                for (let i = 0; i < count; i++) {
+                    frequencies.push(baseFreq * Math.pow(2, i)); // Octave stacking
+                }
+            }
+            
+            return frequencies;
+        }
+        
+        // Play a single number
+        function playNumber(number, stopPrevious = true) {
+            if (!audioContext) return;
+            
+            // Stop any currently playing sounds (but don't break auto-play)
+            if (stopPrevious) {
+                currentOscillators.forEach(osc => {
+                    try {
+                        osc.stop();
+                    } catch (e) {
+                        // Oscillator might already be stopped
+                    }
+                });
+                currentOscillators = [];
+            }
+            
+            const frequencies = generateFrequencies(number);
+            const duration = 1.0; // 1 second
+            
+            frequencies.forEach(freq => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration - 0.01);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+                
+                currentOscillators.push(oscillator);
+            });
+            
+            // Show factor information
+            showFactorInfo(number, frequencies);
+            
+            // Visual feedback
+            const button = document.querySelector(`[data-number="${number}"]`);
+            if (button) {
+                button.classList.add('playing');
+                setTimeout(() => button.classList.remove('playing'), 1000);
+            }
+        }
+        
+        // Show factorization information
+        function showFactorInfo(number, frequencies) {
+            const factors = getPrimeFactors(number);
+            const factorCounts = countFactors(factors);
+            
+            document.getElementById('lastNumber').textContent = number;
+            document.getElementById('factorList').textContent = factors.join(' × ');
+            document.getElementById('frequencyList').textContent = frequencies.map(f => Math.round(f) + ' Hz').join(' + ');
+            document.getElementById('factorInfo').style.display = 'block';
+        }
+        
+        // Play all numbers in sequence
+        async function playAll() {
+            if (isPlayingAll) return;
+            
+            console.log('Starting auto-play...');
+            isPlayingAll = true;
+            document.getElementById('playAllBtn').disabled = true;
+            document.getElementById('stopAllBtn').disabled = false;
+            
+            const buttons = document.querySelectorAll('.number-button');
+            const numbers = Array.from(buttons).map(btn => parseInt(btn.dataset.number));
+            
+            console.log('Numbers to play:', numbers);
+            
+            for (let i = 0; i < numbers.length; i++) {
+                if (!isPlayingAll) break;
+                
+                const number = numbers[i];
+                const button = buttons[i];
+                
+                console.log('Playing number:', number);
+                button.classList.add('playing');
+                playNumber(number, false); // Don't stop previous sounds during auto-play
+                
+                // Wait for sound to finish
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                button.classList.remove('playing');
+            }
+            
+            console.log('Auto-play finished');
+            isPlayingAll = false;
+            document.getElementById('playAllBtn').disabled = false;
+            document.getElementById('stopAllBtn').disabled = true;
+        }
+        
+        // Stop all sounds
+        function stopAll() {
+            isPlayingAll = false;
+            currentOscillators.forEach(osc => {
+                try {
+                    osc.stop();
+                } catch (e) {
+                    // Oscillator might already be stopped
+                }
+            });
+            currentOscillators = [];
+            
+            document.getElementById('playAllBtn').disabled = false;
+            document.getElementById('stopAllBtn').disabled = true;
+        }
+        
+        // Create number buttons
+        function createNumberButtons(numbers) {
+            const grid = document.getElementById('numberGrid');
+            grid.innerHTML = '';
+            
+            numbers.forEach(number => {
+                const button = document.createElement('button');
+                button.className = 'number-button';
+                button.textContent = number;
+                button.dataset.number = number;
+                button.onclick = () => playNumber(number);
+                grid.appendChild(button);
+            });
+        }
+        
+        // Load a sequence
+        function loadSequence() {
+            const sequenceName = document.getElementById('sequenceSelect').value;
+            const numbers = sequences[sequenceName];
+            createNumberButtons(numbers);
+        }
+        
+        // Initialize the game
+        function initGame() {
+            initAudio();
+            loadSequence();
+            document.getElementById('stopAllBtn').disabled = true;
+        }
+        
+        // Start when page loads
+        window.addEventListener('load', initGame);
+        
+        // Check if a number is prime
+        function isPrime(n) {
+            if (n < 2) return false;
+            for (let i = 2; i <= Math.sqrt(n); i++) {
+                if (n % i === 0) return false;
+            }
+            return true;
+        }
+        
+        // Play from prime factors
+        function playFromFactors() {
+            const input = document.getElementById('factorsInput');
+            const factorsText = input.value;
+            
+            if (!factorsText.trim()) {
+                alert('Please enter some prime factors separated by commas');
+                return;
+            }
+            
+            const factors = factorsText.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n) && n > 0);
+            
+            if (factors.length === 0) {
+                alert('Please enter valid numbers');
+                return;
+            }
+            
+            // Check if all factors are prime
+            const nonPrimes = factors.filter(n => !isPrime(n));
+            if (nonPrimes.length > 0) {
+                alert(`Non-prime numbers detected: ${nonPrimes.join(', ')}. Please enter only prime numbers.`);
+                return;
+            }
+            
+            // Multiply all factors together
+            const number = factors.reduce((product, factor) => product * factor, 1);
+            playNumber(number);
+        }
+        
+        // Play custom sequence
+        async function playCustomSequence() {
+            const input = document.getElementById('customSequence');
+            const sequenceText = input.value;
+            
+            if (!sequenceText.trim()) {
+                alert('Please enter some numbers separated by commas');
+                return;
+            }
+            
+            const numbers = sequenceText.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n) && n > 0);
+            
+            if (numbers.length === 0) {
+                alert('Please enter valid numbers');
+                return;
+            }
+            
+            if (isPlayingAll) return;
+            
+            isPlayingAll = true;
+            document.getElementById('playAllBtn').disabled = true;
+            document.getElementById('stopAllBtn').disabled = false;
+            
+            for (let i = 0; i < numbers.length; i++) {
+                if (!isPlayingAll) break;
+                
+                const number = numbers[i];
+                playNumber(number, false); // Don't stop previous sounds during auto-play
+                
+                // Wait for sound to finish
+                await new Promise(resolve => setTimeout(resolve, 1200));
+            }
+            
+            isPlayingAll = false;
+            document.getElementById('playAllBtn').disabled = false;
+            document.getElementById('stopAllBtn').disabled = true;
+        }
+        
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (isPlayingAll) {
+                    stopAll();
+                } else {
+                    playAll();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,880 @@
+<div class="start-screen" id="startScreen">
+    <div class="start-screen-stage">
+      <div class="start-tomato-splat" aria-hidden="true">
+        <svg class="start-tomato-splat-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="startSplatGrad" cx="42%" cy="38%" r="58%">
+              <stop offset="0%" stop-color="#ff6f60"/>
+              <stop offset="55%" stop-color="#e53935"/>
+              <stop offset="100%" stop-color="#b71c1c"/>
+            </radialGradient>
+          </defs>
+          <g fill="url(#startSplatGrad)">
+            <path d="M250 292 C205 338 135 322 152 258 C88 242 102 168 168 182 C152 108 238 92 268 158 C322 88 402 132 378 208 C448 222 432 308 358 318 C392 388 298 408 250 358 C188 412 108 378 132 302 C62 278 88 198 148 212 C128 152 208 168 250 208 C222 248 250 292 250 292 Z"/>
+          </g>
+        </svg>
+      </div>
+      <h1 class="start-title">
+        <span class="start-title-restaurant">Restaurant</span>
+        <span class="start-title-rush">RUSH</span>
+      </h1>
+      <button type="button" class="start-btn" id="startBtn">start</button>
+    </div>
+  </div>
+  <div class="start-flash" id="startFlash" aria-hidden="true"></div>
+
+  <div class="name-screen is-hidden" id="nameScreen">
+    <div class="name-screen-panel">
+      <label class="name-screen-label" for="restaurantNameInput">NAME YOUR RESTAURANT!</label>
+      <input
+        type="text"
+        id="restaurantNameInput"
+        class="name-screen-input"
+        maxlength="10"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Restaurant name"
+      />
+      <button type="button" class="name-screen-continue" id="nameContinueBtn" disabled>
+        Continue
+      </button>
+    </div>
+  </div>
+
+  <div class="menu-screen is-hidden is-fading-in" id="menuScreen">
+    <div class="menu-screen-panel">
+      <div class="menu-screen-actions">
+        <button type="button" class="menu-screen-btn" id="startNewGameBtn">Start new game</button>
+        <button type="button" class="menu-screen-btn menu-screen-btn-secondary" id="tutorialBtn">Tutorial</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="night-banner" id="nightBanner" hidden aria-hidden="true">
+    <span class="night-banner-text">NIGHT</span>
+  </div>
+
+  <!-- Screen 1: Garden -->
+  <section class="screen screen-outside" id="screen-1" data-screen="1">
+    <div class="outside" aria-hidden="true">
+      <div class="outside-sky">
+        <div class="outside-sun"></div>
+        <div class="outside-cloud one"></div>
+        <div class="outside-cloud two"></div>
+      </div>
+      <div class="outside-fence">
+        <div class="fence-rail top"></div>
+        <div class="fence-rail bottom"></div>
+        <div class="fence-posts">
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+          <div class="fence-post"></div>
+        </div>
+      </div>
+      <div class="outside-ground"></div>
+      <div class="garden-row" id="gardenRow">
+        <div class="plant plant-grapes" data-crop="grapes">
+          <div class="plant-body">
+            <div class="post">
+              <div class="wire"></div>
+              <div class="leaf l1"></div>
+              <div class="leaf l2"></div>
+              <div class="bunch b1"></div>
+              <div class="bunch b2"></div>
+              <div class="bunch b3"></div>
+            </div>
+          </div>
+          <span class="plant-label">Grapes</span>
+        </div>
+        <div class="plant plant-apple" data-crop="apples">
+          <div class="plant-body">
+            <div class="canopy">
+              <span class="apple a1"></span>
+              <span class="apple a2"></span>
+            </div>
+            <div class="trunk"></div>
+          </div>
+          <span class="plant-label">Apples</span>
+        </div>
+        <div class="plant plant-pineapple" data-crop="pineapple">
+          <div class="plant-body">
+            <div class="leaves">
+              <div class="leaf-spike"></div>
+              <div class="leaf-spike"></div>
+              <div class="leaf-spike"></div>
+              <div class="leaf-spike"></div>
+              <div class="leaf-spike"></div>
+            </div>
+            <div class="fruit"></div>
+          </div>
+          <span class="plant-label">Pineapple</span>
+        </div>
+        <div class="plant plant-carrots" data-crop="carrots">
+          <div class="plant-body">
+            <div class="patch">
+            <div class="carrot-plant cp1">
+              <div class="carrot-top">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <div class="carrot-root"></div>
+            </div>
+            <div class="carrot-plant cp2">
+              <div class="carrot-top">
+                <span></span><span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <div class="carrot-root"></div>
+            </div>
+            <div class="carrot-plant cp3">
+              <div class="carrot-top">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <div class="carrot-root"></div>
+            </div>
+            <div class="soil"></div>
+          </div>
+          </div>
+          <span class="plant-label">Carrots</span>
+        </div>
+        <div class="plant plant-cucumber" data-crop="cucumbers">
+          <div class="plant-body">
+            <div class="stake">
+              <div class="vine">
+                <div class="vine-leaf v1"></div>
+                <div class="vine-leaf v2"></div>
+                <div class="cuke k1"></div>
+                <div class="cuke k2"></div>
+              </div>
+            </div>
+          </div>
+          <span class="plant-label">Cucumbers</span>
+        </div>
+        <div class="plant plant-tomato" data-crop="tomatoes">
+          <div class="plant-body">
+            <div class="stem">
+              <div class="tomato-leaf l1"></div>
+              <div class="tomato-leaf l2"></div>
+              <div class="tomato t1"></div>
+              <div class="tomato t2"></div>
+              <div class="tomato t3"></div>
+            </div>
+          </div>
+          <span class="plant-label">Tomatoes</span>
+        </div>
+        <div class="plant plant-potato" data-crop="potatoes">
+          <div class="plant-body">
+            <div class="patch">
+            <div class="bush">
+              <div class="stem st1">
+                <div class="leaflet a"></div>
+                <div class="leaflet b"></div>
+                <div class="leaflet c"></div>
+              </div>
+              <div class="stem st2">
+                <div class="leaflet a"></div>
+                <div class="leaflet b"></div>
+                <div class="leaflet c"></div>
+              </div>
+              <div class="stem st3">
+                <div class="leaflet a"></div>
+                <div class="leaflet b"></div>
+                <div class="leaflet c"></div>
+              </div>
+            </div>
+            <div class="mound">
+              <div class="tuber u1"></div>
+              <div class="tuber u2"></div>
+              <div class="tuber u3"></div>
+            </div>
+          </div>
+          </div>
+          <span class="plant-label">Potatoes</span>
+        </div>
+        <div class="plant plant-wheat" data-crop="wheat">
+          <div class="plant-body">
+            <div class="stalks">
+              <div class="stalk s1"><div class="head"></div></div>
+              <div class="stalk s2"><div class="head"></div></div>
+              <div class="stalk s3"><div class="head"></div></div>
+            </div>
+          </div>
+          <span class="plant-label">Wheat</span>
+        </div>
+        <div class="plant plant-beans" data-crop="beans">
+          <div class="plant-body">
+            <div class="pole">
+              <div class="bean-leaf l1"></div>
+              <div class="bean-leaf l2"></div>
+              <div class="pod p1"></div>
+              <div class="pod p2"></div>
+              <div class="pod p3"></div>
+            </div>
+          </div>
+          <span class="plant-label">Beans</span>
+        </div>
+      </div>
+    </div>
+    <span class="corner-num tl">1</span>
+    <span class="corner-num tr">1</span>
+    <span class="corner-num bl">1</span>
+    <span class="corner-num br">1</span>
+    <span class="screen-label">1</span>
+    <button type="button" class="nav-arrow right" data-go="2" aria-label="Go to screen 2">→<span class="dest">2</span></button>
+    <button type="button" class="nav-arrow down" data-go="4" aria-label="Go to screen 4">↓<span class="dest">4</span></button>
+  </section>
+
+  <!-- Screen 2: Kitchen 1 -->
+  <section class="screen screen-kitchen" id="screen-2" data-screen="2">
+    <div class="kitchen" aria-hidden="true">
+      <div class="kitchen-ceiling"></div>
+      <div class="kitchen-lights">
+        <div class="fluoro-fixture"><div class="fluoro-tube"></div></div>
+        <div class="fluoro-fixture"><div class="fluoro-tube"></div></div>
+        <div class="fluoro-fixture"><div class="fluoro-tube"></div></div>
+      </div>
+      <div class="kitchen-walls"></div>
+      <div class="kitchen-glow"></div>
+      <div class="kitchen-run">
+        <div class="kitchen-fridge" id="kitchenFridge" role="button" tabindex="0" aria-label="Open refrigerator">
+          <div class="fridge-interior">
+            <button type="button" class="fridge-slot" data-shelf="0" aria-label="Top shelf">
+              <span class="fridge-slot-item"></span>
+            </button>
+            <div class="fridge-shelf s1"></div>
+            <button type="button" class="fridge-slot" data-shelf="1" aria-label="Middle shelf">
+              <span class="fridge-slot-item"></span>
+            </button>
+            <div class="fridge-shelf s2"></div>
+            <button type="button" class="fridge-slot" data-shelf="2" aria-label="Shelf 3">
+              <span class="fridge-slot-item"></span>
+            </button>
+            <div class="fridge-shelf s3"></div>
+            <button type="button" class="fridge-slot" data-shelf="3" aria-label="Bottom shelf">
+              <span class="fridge-slot-item"></span>
+            </button>
+            <div class="fridge-shelf s4"></div>
+          </div>
+          <div class="fridge-door freezer">
+            <span class="fridge-handle"></span>
+          </div>
+          <div class="fridge-door fridge-bottom">
+            <span class="fridge-handle"></span>
+          </div>
+        </div>
+        <button type="button" class="meat-box" id="meatBox" aria-label="MEAT box">
+          <span class="meat-box-label" aria-hidden="true">MEAT</span>
+        </button>
+        <div class="counter-section">
+          <div class="counter-top"></div>
+          <div class="shaker-dock shaker-dock-salt" id="saltShakerDock">
+            <div class="shaker-home-ring" aria-hidden="true"></div>
+            <button type="button" class="shaker shaker-salt" id="saltShaker" aria-label="Pick up salt">
+              <div class="shaker-cap"></div>
+              <div class="shaker-body"></div>
+            </button>
+          </div>
+          <div class="shaker-dock shaker-dock-pepper" id="pepperShakerDock">
+            <div class="shaker-home-ring" aria-hidden="true"></div>
+            <button type="button" class="shaker shaker-pepper" id="pepperShaker" aria-label="Pick up pepper">
+              <div class="shaker-cap"></div>
+              <div class="shaker-body"></div>
+            </button>
+          </div>
+          <div class="counter-base"></div>
+          <div class="counter-rest-spots" aria-hidden="true">
+            <button type="button" class="counter-rest-spot" data-spot="s2-a" aria-label="Counter spot"></button>
+            <button type="button" class="counter-rest-spot" data-spot="s2-b" aria-label="Counter spot"></button>
+            <button type="button" class="counter-rest-spot" data-spot="s2-c" aria-label="Counter spot"></button>
+            <button type="button" class="counter-rest-spot" data-spot="s2-d" aria-label="Counter spot"></button>
+          </div>
+          <div class="counter-appliances">
+            <div class="kitchen-sink" id="kitchenSink">
+              <div class="sink-counter-cap"></div>
+              <div class="sink-faucet" aria-hidden="true">
+                <div class="faucet-assembly">
+                  <div class="faucet-base"></div>
+                  <div class="faucet-arm"></div>
+                </div>
+              </div>
+              <div class="sink-wash-timer" id="sinkWashTimer" hidden aria-live="polite"></div>
+              <div class="sink-basin" aria-hidden="true"></div>
+              <div class="sink-cabinet" aria-hidden="true"></div>
+              <span class="sink-item" id="sinkItem" aria-hidden="true"></span>
+              <span class="sink-sparkle" id="sinkSparkle" aria-hidden="true"></span>
+              <button type="button" class="sink-zone" id="sinkBasin" aria-label="Sink"></button>
+            </div>
+            <div
+              class="kitchen-dishwasher"
+              id="kitchenDishwasher"
+              role="button"
+              tabindex="0"
+              aria-label="Open dishwasher"
+            >
+              <div class="dishwasher-panel">
+                <div class="dishwasher-controls">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+              <div class="dishwasher-wash-timer" id="dishwasherWashTimer" hidden aria-live="polite"></div>
+              <div class="dishwasher-interior" aria-hidden="true">
+                <span class="dishwasher-item" id="dishwasherItem" aria-hidden="true"></span>
+              </div>
+              <button type="button" class="dishwasher-zone" id="dishwasherZone" aria-label="Dishwasher"></button>
+              <div class="dishwasher-door">
+                <div class="dishwasher-handle"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="kitchen-trash" id="kitchenTrash" aria-label="Trash can" disabled>
+          <div class="trash-can">
+            <div class="trash-lid"></div>
+            <div class="trash-body"></div>
+          </div>
+        </button>
+      </div>
+      <div class="kitchen-floor"></div>
+    </div>
+    <span class="corner-num tl">2</span>
+    <span class="corner-num tr">2</span>
+    <span class="corner-num bl">2</span>
+    <span class="corner-num br">2</span>
+    <span class="screen-label">2</span>
+    <button type="button" class="nav-arrow left" data-go="1" aria-label="Go to screen 1">←<span class="dest">1</span></button>
+    <button type="button" class="nav-arrow right" data-go="3" aria-label="Go to screen 3">→<span class="dest">3</span></button>
+    <button type="button" class="nav-arrow down" data-go="5" aria-label="Go to screen 5">↓<span class="dest">5</span></button>
+  </section>
+
+  <!-- Screen 3: Kitchen 2 -->
+  <section class="screen screen-kitchen" id="screen-3" data-screen="3">
+    <div class="kitchen" aria-hidden="true">
+      <div class="kitchen-ceiling"></div>
+      <div class="kitchen-lights">
+        <div class="fluoro-fixture"><div class="fluoro-tube"></div></div>
+        <div class="fluoro-fixture"><div class="fluoro-tube"></div></div>
+        <div class="fluoro-fixture"><div class="fluoro-tube"></div></div>
+      </div>
+      <div class="kitchen-walls"></div>
+      <div class="kitchen-glow"></div>
+      <div class="kitchen-run">
+        <div class="counter-section">
+          <div class="counter-top"></div>
+          <div class="counter-base"></div>
+          <div class="counter-rest-spots" aria-hidden="true">
+            <button type="button" class="counter-rest-spot" data-spot="s3-a" aria-label="Counter spot"></button>
+            <button type="button" class="counter-rest-spot" data-spot="s3-b" aria-label="Counter spot"></button>
+            <button type="button" class="counter-rest-spot" data-spot="s3-c" aria-label="Counter spot"></button>
+            <button type="button" class="counter-rest-spot" data-spot="s3-d" aria-label="Counter spot"></button>
+          </div>
+          <div
+            class="kitchen-microwave"
+            id="kitchenMicrowave"
+            role="button"
+            tabindex="0"
+            aria-label="Open microwave"
+          >
+            <div class="microwave-shell">
+              <div class="microwave-interior" aria-hidden="true"></div>
+              <button
+                type="button"
+                class="microwave-zone"
+                id="microwaveZone"
+                aria-label="Microwave"
+              ></button>
+              <div class="microwave-timer" id="microwaveTimer" hidden aria-live="polite"></div>
+              <span class="microwave-pot" id="microwavePot" aria-hidden="true"></span>
+              <div class="microwave-door">
+                <div class="microwave-window"></div>
+                <div class="microwave-handle"></div>
+              </div>
+              <div class="microwave-panel">
+                <div class="microwave-display"></div>
+                <div class="microwave-knobs">
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="kitchen-cutting-board" id="kitchenCuttingBoard">
+            <button type="button" class="cutting-board-zone" id="cuttingBoardZone" aria-label="Cutting board"></button>
+            <div class="cutting-board-timer" id="cuttingBoardTimer" hidden aria-live="polite"></div>
+            <div class="cutting-board-surface">
+              <span class="cutting-board-food" id="cuttingBoardFood" aria-hidden="true"></span>
+              <div class="cutting-board-knife"></div>
+            </div>
+          </div>
+          <div class="counter-appliances counter-appliances--solo">
+            <div
+              class="kitchen-cooler"
+              id="kitchenCooler"
+              role="button"
+              tabindex="0"
+              aria-label="Open cooler"
+            >
+              <div class="cooler-cap" aria-hidden="true"></div>
+              <div class="cooler-body">
+                <div class="cooler-interior" aria-hidden="true">
+                  <div class="cooler-drinks">
+                    <button type="button" class="cooler-drink drink-water" data-drink="water" aria-label="Water"><span class="mini-cup cup-water" aria-hidden="true"><span class="mini-cup-liquid"></span></span><span class="drink-name">Water</span></button>
+                    <button type="button" class="cooler-drink drink-milk" data-drink="milk" aria-label="Milk"><span class="mini-cup cup-milk" aria-hidden="true"><span class="mini-cup-liquid"></span></span><span class="drink-name">Milk</span></button>
+                    <button type="button" class="cooler-drink drink-sprite" data-drink="sprite" aria-label="Sprite"><span class="mini-cup cup-sprite" aria-hidden="true"><span class="mini-cup-liquid"></span></span><span class="drink-name">Sprite</span></button>
+                    <button type="button" class="cooler-drink drink-rootbeer" data-drink="rootbeer" aria-label="Root beer"><span class="mini-cup cup-rootbeer" aria-hidden="true"><span class="mini-cup-liquid"></span></span><span class="drink-name">Root</span></button>
+                    <button type="button" class="cooler-drink drink-coke" data-drink="coke" aria-label="Coke"><span class="mini-cup cup-coke" aria-hidden="true"><span class="mini-cup-liquid"></span></span><span class="drink-name">Coke</span></button>
+                    <button type="button" class="cooler-drink drink-lemonade" data-drink="lemonade" aria-label="Lemonade"><span class="mini-cup cup-lemonade" aria-hidden="true"><span class="mini-cup-liquid"></span></span><span class="drink-name">Lemon</span></button>
+                  </div>
+                </div>
+                <div class="cooler-door">
+                  <div class="cooler-door-glass" aria-hidden="true"></div>
+                  <div class="cooler-handle" aria-hidden="true"></div>
+                </div>
+                <div class="cooler-close-hit" aria-hidden="true"></div>
+              </div>
+            </div>
+            <div
+              class="kitchen-oven"
+              id="kitchenOven"
+              role="button"
+              tabindex="0"
+              aria-label="Open oven"
+            >
+              <div class="oven-cap">
+                <div class="oven-control-strip">
+                  <span class="oven-knob"></span>
+                  <span class="oven-knob"></span>
+                </div>
+              </div>
+              <div class="oven-body">
+                <div class="oven-interior" aria-hidden="true"></div>
+                <button
+                  type="button"
+                  class="oven-zone"
+                  id="ovenZone"
+                  aria-label="Oven"
+                ></button>
+                <div class="oven-timer" id="ovenTimer" hidden aria-live="polite"></div>
+                <span class="oven-food" id="ovenFood" aria-hidden="true"></span>
+                <div class="oven-door">
+                  <div class="oven-handle"></div>
+                  <div class="oven-window"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="kitchen-blender" id="kitchenBlender">
+            <button type="button" class="blender-zone" id="blenderZone" aria-label="Blender"></button>
+            <div class="blender-wash-timer" id="blenderWashTimer" hidden aria-live="polite"></div>
+            <div class="blender-body">
+              <div class="blender-lid"></div>
+              <div class="blender-jar" id="blenderJar">
+                <div class="blender-liquid" id="blenderLiquid" aria-hidden="true"></div>
+                <span class="blender-fruit" id="blenderFruit" aria-hidden="true"></span>
+                <div class="blender-blade"></div>
+              </div>
+              <div class="blender-base">
+                <div class="blender-dial"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="kitchen-trash" aria-label="Trash can" disabled>
+          <div class="trash-can">
+            <div class="trash-lid"></div>
+            <div class="trash-body"></div>
+          </div>
+        </button>
+      </div>
+      <div class="kitchen-floor"></div>
+    </div>
+    <span class="corner-num tl">3</span>
+    <span class="corner-num tr">3</span>
+    <span class="corner-num bl">3</span>
+    <span class="corner-num br">3</span>
+    <span class="screen-label">3</span>
+    <button type="button" class="nav-arrow left" data-go="2" aria-label="Go to screen 2">←<span class="dest">2</span></button>
+    <button type="button" class="nav-arrow down" data-go="6" aria-label="Go to screen 6">↓<span class="dest">6</span></button>
+  </section>
+
+  <!-- Screen 4: Storefront -->
+  <section class="screen screen-storefront" id="screen-4" data-screen="4">
+    <div class="storefront-scene" aria-hidden="true">
+      <div class="outside-sky">
+        <div class="outside-sun"></div>
+        <div class="outside-cloud one"></div>
+        <div class="outside-cloud two"></div>
+      </div>
+      <div class="storefront-building">
+        <div class="storefront-sign" id="storefrontSign" aria-hidden="true"></div>
+        <div class="storefront-glass-doors" aria-hidden="true">
+          <div class="cashier-glass-doors-outside" aria-hidden="true"></div>
+          <div class="cashier-glass-door door-left" aria-hidden="true"></div>
+          <div class="cashier-glass-door door-right" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="storefront-sidewalk"></div>
+      <div class="storefront-parking-lot"></div>
+      <div class="storefront-parking" aria-hidden="true">
+        <div class="storefront-parking-spot"></div>
+        <div class="storefront-parking-spot"></div>
+        <div class="storefront-parking-spot"></div>
+        <div class="storefront-parking-spot"></div>
+      </div>
+    </div>
+    <span class="corner-num tl">4</span>
+    <span class="corner-num tr">4</span>
+    <span class="corner-num bl">4</span>
+    <span class="corner-num br">4</span>
+    <span class="screen-label">4</span>
+    <button type="button" class="nav-arrow up" data-go="1" aria-label="Go to screen 1">↑<span class="dest">1</span></button>
+    <button type="button" class="nav-arrow right" data-go="5" aria-label="Go to screen 5">→<span class="dest">5</span></button>
+  </section>
+
+  <!-- Screen 5: Cashier -->
+  <section class="screen screen-cashier" id="screen-5" data-screen="5">
+    <div class="cashier-room" aria-hidden="true">
+      <div class="cashier-ceiling"></div>
+      <div class="cashier-walls"></div>
+    </div>
+    <div class="cashier-customer-area is-at-counter" id="cashierCustomerArea" aria-hidden="true">
+      <div class="customer customer-boy skin-peach" id="cashierCustomer">
+        <div class="customer-head">
+          <div class="customer-face">
+            <div class="customer-eyes" aria-hidden="true">
+              <span class="customer-eye-group">
+                <span class="customer-lashes" aria-hidden="true"></span>
+                <span class="customer-eye eye-l"></span>
+              </span>
+              <span class="customer-eye-group">
+                <span class="customer-lashes" aria-hidden="true"></span>
+                <span class="customer-eye eye-r"></span>
+              </span>
+            </div>
+          </div>
+          <div class="customer-lipstick" aria-hidden="true"></div>
+          <div class="customer-mustache" aria-hidden="true"></div>
+        </div>
+        <div class="customer-carry-tray" id="cashierCustomerTray" aria-hidden="true">
+          <div class="customer-carry-tray-board">
+            <div class="customer-carry-tray-grid" id="cashierCustomerTrayGrid"></div>
+          </div>
+        </div>
+        <div class="customer-body"></div>
+      </div>
+    </div>
+    <div class="cashier-glass-doors" id="cashierGlassDoors" aria-hidden="true">
+      <div class="cashier-glass-doors-outside" aria-hidden="true"></div>
+      <div class="cashier-glass-door door-left" aria-hidden="true"></div>
+      <div class="cashier-glass-door door-right" aria-hidden="true"></div>
+    </div>
+    <div class="cashier-customer-order" id="cashierCustomerOrder">
+      <p class="cashier-order-title">I'd like:</p>
+      <ul class="cashier-order-list" id="cashierOrderList"></ul>
+    </div>
+    <div class="cashier-toast" id="cashierToast" hidden></div>
+    <div class="cashier-counter" aria-hidden="true">
+      <div class="cashier-counter-top">
+        <button type="button" class="cashier-tray-spot" id="cashierTraySpot" aria-label="Place tray here">
+          <span class="cashier-tray-spot-ring" aria-hidden="true"></span>
+          <span class="cashier-tray-spot-hint">Tray</span>
+          <div class="cashier-tray-preview" id="cashierTrayPreview" aria-hidden="true"></div>
+        </button>
+      </div>
+      <div class="cashier-counter-front"></div>
+    </div>
+    <span class="corner-num tl">5</span>
+    <span class="corner-num tr">5</span>
+    <span class="corner-num bl">5</span>
+    <span class="corner-num br">5</span>
+    <span class="screen-label">5</span>
+    <button type="button" class="nav-arrow up" data-go="2" aria-label="Go to screen 2">↑<span class="dest">2</span></button>
+    <button type="button" class="nav-arrow left" data-go="4" aria-label="Go to screen 4">←<span class="dest">4</span></button>
+    <button type="button" class="nav-arrow right" data-go="6" aria-label="Go to screen 6">→<span class="dest">6</span></button>
+  </section>
+
+  <!-- Screen 6: Cafeteria -->
+  <section class="screen screen-cafeteria" id="screen-6" data-screen="6">
+    <div class="cafeteria" aria-hidden="true">
+      <div class="cafeteria-ceiling"></div>
+      <div class="kitchen-lights">
+        <div class="fluoro-fixture"><div class="fluoro-tube"></div></div>
+        <div class="fluoro-fixture"><div class="fluoro-tube"></div></div>
+        <div class="fluoro-fixture"><div class="fluoro-tube"></div></div>
+      </div>
+      <div class="kitchen-walls"></div>
+      <div class="cafeteria-glow"></div>
+      <div class="kitchen-floor"></div>
+      <svg class="cafeteria-seating-defs" aria-hidden="true">
+          <defs>
+            <linearGradient id="cafTableTop" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#fff8e1"/>
+              <stop offset="55%" stop-color="#ffe082"/>
+              <stop offset="100%" stop-color="#ffb74d"/>
+            </linearGradient>
+            <linearGradient id="cafChairBack" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#8d6e63"/>
+              <stop offset="50%" stop-color="#bcaaa4"/>
+              <stop offset="100%" stop-color="#8d6e63"/>
+            </linearGradient>
+            <symbol id="caf-dinette-base" viewBox="0 0 160 72">
+              <ellipse cx="80" cy="70.5" rx="62" ry="2" fill="rgba(0,0,0,0.07)"/>
+              <g transform="translate(-14, 0)">
+                <path d="M 14 70 L 14 56 C 13 36, 18 20, 26 18 C 34 16, 40 28, 40 40 L 40 48 L 48 48 L 48 52 L 14 52 Z" fill="url(#cafChairBack)" stroke="#5d4037" stroke-width="1.2" stroke-linejoin="round"/>
+                <line x1="14" y1="48" x2="40" y2="48" stroke="#4e342e" stroke-width="1.5" stroke-linecap="round"/>
+                <rect x="14" y="52" width="3" height="18" rx="1.2" fill="#5d4037"/>
+                <rect x="45" y="52" width="3" height="18" rx="1.2" fill="#5d4037"/>
+              </g>
+              <g transform="translate(174, 0) scale(-1, 1)">
+                <path d="M 14 70 L 14 56 C 13 36, 18 20, 26 18 C 34 16, 40 28, 40 40 L 40 48 L 48 48 L 48 52 L 14 52 Z" fill="url(#cafChairBack)" stroke="#5d4037" stroke-width="1.2" stroke-linejoin="round"/>
+                <line x1="14" y1="48" x2="40" y2="48" stroke="#4e342e" stroke-width="1.5" stroke-linecap="round"/>
+                <rect x="14" y="52" width="3" height="18" rx="1.2" fill="#5d4037"/>
+                <rect x="45" y="52" width="3" height="18" rx="1.2" fill="#5d4037"/>
+              </g>
+              <ellipse cx="80" cy="69" rx="26" ry="3.5" fill="#5d4037"/>
+              <rect x="77" y="24" width="6" height="45" rx="2.5" fill="#8d6e63"/>
+              <rect x="77.5" y="26" width="1.5" height="41" rx="0.75" fill="rgba(255,255,255,0.22)"/>
+            </symbol>
+            <symbol id="caf-dinette-top" viewBox="0 0 160 72">
+              <ellipse cx="80" cy="15" rx="52" ry="8" fill="url(#cafTableTop)" stroke="#ffa726" stroke-width="1.3"/>
+              <ellipse cx="80" cy="12.5" rx="31" ry="3.5" fill="rgba(255,255,255,0.45)"/>
+            </symbol>
+          </defs>
+      </svg>
+      <div class="cafeteria-seating" aria-hidden="true">
+        <div class="cafeteria-cart" id="cafeteriaCart" aria-hidden="true">
+          <div class="caf-cart-frame" aria-hidden="true">
+            <div class="caf-cart-leg caf-cart-leg--left"></div>
+            <div class="caf-cart-leg caf-cart-leg--right"></div>
+            <div class="caf-cart-shelf caf-cart-shelf--lower"></div>
+            <div class="caf-cart-shelf caf-cart-shelf--upper"></div>
+            <div class="caf-cart-wheel caf-cart-wheel--left"></div>
+            <div class="caf-cart-wheel caf-cart-wheel--right"></div>
+          </div>
+          <button type="button" class="caf-cart-pickup" id="cafeteriaCartPickup" hidden aria-label="Dirty tray cart">
+            <span class="caf-cart-tray-stack" id="cafeteriaCartTrayStack" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="cafeteria-mop" id="cafeteriaMop" aria-hidden="true">
+          <div class="mop-home" id="mopHome">
+            <div class="mop-home-ring" aria-hidden="true"></div>
+            <button type="button" class="mop" id="mop" aria-label="Pick up mop">
+              <div class="mop-handle" aria-hidden="true"></div>
+              <div class="mop-connector" aria-hidden="true"></div>
+              <div class="mop-head" aria-hidden="true"></div>
+            </button>
+          </div>
+        </div>
+        <div class="dinette-set" data-table="0">
+          <svg class="dinette-svg dinette-svg--base" viewBox="0 0 160 72" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><use href="#caf-dinette-base"/></svg>
+          <div class="dinette-diners">
+            <div class="caf-diner-slot caf-diner-slot--left"></div>
+            <div class="caf-diner-slot caf-diner-slot--right"></div>
+          </div>
+          <svg class="dinette-svg dinette-svg--top" viewBox="0 0 160 72" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><use href="#caf-dinette-top"/></svg>
+        </div>
+        <div class="dinette-set" data-table="1">
+          <svg class="dinette-svg dinette-svg--base" viewBox="0 0 160 72" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><use href="#caf-dinette-base"/></svg>
+          <div class="dinette-diners">
+            <div class="caf-diner-slot caf-diner-slot--left"></div>
+            <div class="caf-diner-slot caf-diner-slot--right"></div>
+          </div>
+          <svg class="dinette-svg dinette-svg--top" viewBox="0 0 160 72" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><use href="#caf-dinette-top"/></svg>
+        </div>
+        <div class="dinette-set" data-table="2">
+          <svg class="dinette-svg dinette-svg--base" viewBox="0 0 160 72" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><use href="#caf-dinette-base"/></svg>
+          <div class="dinette-diners">
+            <div class="caf-diner-slot caf-diner-slot--left"></div>
+            <div class="caf-diner-slot caf-diner-slot--right"></div>
+          </div>
+          <svg class="dinette-svg dinette-svg--top" viewBox="0 0 160 72" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><use href="#caf-dinette-top"/></svg>
+        </div>
+      </div>
+    </div>
+    <span class="corner-num tl">6</span>
+    <span class="corner-num tr">6</span>
+    <span class="corner-num bl">6</span>
+    <span class="corner-num br">6</span>
+    <span class="screen-label">6</span>
+    <button type="button" class="nav-arrow up" data-go="3" aria-label="Go to screen 3">↑<span class="dest">3</span></button>
+    <button type="button" class="nav-arrow left" data-go="5" aria-label="Go to screen 5">←<span class="dest">5</span></button>
+  </section>
+
+  <div class="basket-home" id="basketHome">
+    <div class="basket-home-ring" aria-hidden="true"></div>
+    <button type="button" class="basket" id="basket" aria-label="Pick up basket">
+      <div class="basket-handle"></div>
+      <div class="basket-body"></div>
+      <div class="basket-item" id="basketItem"></div>
+    </button>
+  </div>
+
+  <div class="plate-home" id="plateHome">
+    <span class="carrier-dirty-tag" aria-hidden="true">WASH ME!</span>
+    <div class="plate-home-ring" aria-hidden="true"></div>
+    <button type="button" class="plate" id="plate" aria-label="Pick up plate">
+      <div class="plate-body"></div>
+      <div class="plate-item" id="plateItem"></div>
+    </button>
+  </div>
+
+  <div class="cup-home" id="cupHome">
+    <span class="carrier-dirty-tag" aria-hidden="true">WASH ME!</span>
+    <div class="cup-home-ring" aria-hidden="true"></div>
+    <button type="button" class="cup" id="cup" aria-label="Pick up cup">
+      <div class="cup-body">
+        <div class="cup-liquid" aria-hidden="true"></div>
+      </div>
+      <div class="cup-item" id="cupItem"></div>
+    </button>
+  </div>
+
+  <div class="pot-home" id="potHome">
+    <span class="carrier-dirty-tag" aria-hidden="true">WASH ME!</span>
+    <div class="pot-home-ring" aria-hidden="true"></div>
+    <button type="button" class="pot" id="pot" aria-label="Pick up soup pot">
+      <div class="pot-body">
+        <div class="pot-rim" aria-hidden="true"></div>
+        <div class="pot-soup" aria-hidden="true"></div>
+        <div class="pot-handle" aria-hidden="true"></div>
+      </div>
+    </button>
+  </div>
+
+  <div class="bowl-home" id="bowlHome">
+    <span class="carrier-dirty-tag" aria-hidden="true">WASH ME!</span>
+    <div class="bowl-home-ring" aria-hidden="true"></div>
+    <button type="button" class="bowl" id="bowl" aria-label="Pick up bowl">
+      <div class="bowl-body">
+        <div class="bowl-flour" aria-hidden="true"></div>
+      </div>
+    </button>
+  </div>
+
+  <div class="tray-home" id="trayHome">
+    <span class="tray-stack-badge" id="trayStackBadge" aria-label="Trays stacked">4</span>
+    <span class="carrier-dirty-tag" aria-hidden="true">WASH ME!</span>
+    <div class="tray-stack-layers" id="trayStackLayers" aria-hidden="true"></div>
+    <div class="tray-home-ring" aria-hidden="true"></div>
+    <button type="button" class="tray" id="tray" aria-label="Pick up tray">
+      <div class="tray-rim" aria-hidden="true"></div>
+      <div class="tray-body" aria-hidden="true"></div>
+      <div class="tray-loads" aria-hidden="true">
+        <div class="tray-load soup" data-slot="soup"></div>
+        <div class="tray-load drink" data-slot="drink"></div>
+        <div class="tray-load food" data-slot="food"></div>
+        <div class="tray-load extra" data-slot="extra"></div>
+      </div>
+    </button>
+  </div>
+
+  <div class="tray-action-menu" id="trayActionMenu" hidden>
+    <button type="button" id="trayMenuPickUp">Pick up?</button>
+    <button type="button" id="trayMenuPlaceFood">Place food?</button>
+  </div>
+
+  <div class="tray-closeup" id="trayCloseup" hidden>
+    <div class="tray-closeup-inner">
+      <button type="button" class="tray-closeup-done" id="trayCloseupDone">Done</button>
+      <h2 class="tray-closeup-title">Load the tray</h2>
+      <div class="tray-slots" id="trayCloseupSlots">
+        <div class="tray-slot" data-slot="soup">
+          <span class="tray-slot-label">Soup</span>
+          <div class="tray-slot-drop"></div>
+        </div>
+        <div class="tray-slot" data-slot="drink">
+          <span class="tray-slot-label">Drinks</span>
+          <div class="tray-slot-drop"></div>
+        </div>
+        <div class="tray-slot" data-slot="food">
+          <span class="tray-slot-label">Food</span>
+          <div class="tray-slot-drop"></div>
+        </div>
+        <div class="tray-slot" data-slot="extra">
+          <span class="tray-slot-label">Extra</span>
+          <div class="tray-slot-drop"></div>
+        </div>
+      </div>
+      <div class="tray-closeup-sources" id="trayCloseupSources" aria-label="Drag food from here"></div>
+    </div>
+  </div>
+
+  <div class="tutorial-gary" id="tutorialGary" aria-live="polite">
+    <div class="tutorial-gary-box" aria-hidden="true">
+      <svg class="tutorial-gary-graphic" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gary, your tutorial guide">
+        <!-- Toque: flat band + three puffy lobes on top -->
+        <path
+          d="M 22 102
+             L 22 76
+             C 16 76, 12 64, 16 52
+             C 20 40, 26 34, 32 36
+             C 38 31, 44 28, 50 28
+             C 56 28, 62 31, 68 36
+             C 74 34, 80 40, 84 52
+             C 90 64, 84 76, 78 76
+             L 78 102
+             Q 78 106, 74 106
+             L 26 106
+             Q 22 106, 22 102 Z"
+          fill="#ffffff"
+          stroke="#1a1a1a"
+          stroke-width="2.5"
+          stroke-linejoin="round"
+          stroke-linecap="round"
+        />
+        <path
+          d="M 34 76 C 38 58, 42 44, 50 38 C 58 44, 62 58, 66 76"
+          fill="none"
+          stroke="#ececec"
+          stroke-width="1.1"
+          stroke-linecap="round"
+        />
+        <path
+          d="M 42 76 C 44 62, 47 50, 50 46 C 53 50, 56 62, 58 76"
+          fill="none"
+          stroke="#ececec"
+          stroke-width="1"
+          stroke-linecap="round"
+        />
+        <circle cx="38" cy="90" r="4.2" fill="#111"/>
+        <circle cx="62" cy="90" r="4.2" fill="#111"/>
+        <path
+          d="M 32 99
+             C 40 108, 50 109, 58 105
+             C 64 102, 69 98, 70 95
+             C 71 93, 66 95, 62 99
+             C 52 105, 38 104, 32 99 Z"
+          fill="#111"
+        />
+      </svg>
+    </div>
+    <div class="tutorial-gary-bubble" id="tutorialGaryBubble" hidden>
+      <p class="tutorial-gary-text" id="tutorialGaryText"></p>
+    </div>
+  </div>
+
+  <div class="recipe-book" id="recipeBook">
+    <button type="button" class="recipe-book-toggle" id="recipeBookToggle" aria-expanded="false">
+      Recipes
+    </button>
+    <div class="recipe-book-panel" id="recipeBookPanel">
+      <div class="recipe-list" id="recipeList"></div>
+      <div class="recipe-detail" id="recipeDetail">
+        <button type="button" class="recipe-back" id="recipeBack">← Back</button>
+        <h3 class="recipe-detail-title" id="recipeDetailTitle"></h3>
+        <p class="recipe-detail-steps" id="recipeDetailSteps"></p>
+      </div>
+    </div>
+  </div>

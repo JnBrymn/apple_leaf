@@ -1,0 +1,291 @@
+<!--
+Three Snakes - Bo's game
+3 snakes: you + 2 CPU. Every move adds a dot (trail). Be the biggest before you die. Die on wall, self, or any snake.
+No levels: every 30 seconds the board gradually shrinks (pushes in) and the game gets faster. Start in corners. Arrow keys.
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Three Snakes</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 16px;
+            color: #eee;
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; color: #4ecca3; }
+        .info { font-size: 0.95rem; margin-bottom: 10px; color: #aaa; }
+        .scores { display: flex; gap: 24px; margin-bottom: 8px; font-size: 1rem; }
+        .scores span.you { color: #4ecca3; }
+        .scores span.cpu { color: #e94560; }
+        canvas {
+            border: 3px solid #4ecca3;
+            border-radius: 8px;
+            background: #16213e;
+            display: block;
+        }
+        .start-screen, .game-over-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.88);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+        .game-over-screen {
+            display: none;
+            background: #0f0f1a;
+        }
+        .wrap { position: relative; }
+        .wrap h2 { margin-bottom: 12px; }
+        .wrap .win { color: #4ecca3; }
+        .wrap .lose { color: #e94560; }
+        button {
+            font-size: 1.1rem;
+            padding: 12px 24px;
+            background: #4ecca3;
+            color: #0f0f1a;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        button:hover { background: #6effc4; }
+    </style>
+</head>
+<body>
+    <h1>🐍 Three Snakes</h1>
+    <p class="info">You vs 2 CPU snakes. Every move adds a dot—you leave a trail! Don't hit wall, yourself, or any snake.</p>
+    <div class="scores">
+        <span class="you">You: <span id="len0">—</span></span>
+        <span class="cpu">CPU1: <span id="len1">—</span></span>
+        <span class="cpu">CPU2: <span id="len2">—</span></span>
+    </div>
+    <div class="wrap">
+        <canvas id="c" width="950" height="540"></canvas>
+        <div class="start-screen" id="startScreen">
+            <h2>Arrow keys to move</h2>
+            <p style="margin-bottom: 12px;">Be the biggest before you die!</p>
+            <button id="startBtn">Start</button>
+        </div>
+        <div class="game-over-screen" id="gameOverScreen">
+            <h2 id="goTitle">Game Over</h2>
+            <p id="goMsg"></p>
+            <button id="againBtn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const c = document.getElementById('c');
+        const ctx = c.getContext('2d');
+        const CANVAS_W = 950;
+        const CANVAS_H = 540;
+
+        const MIN_COLS = 8;
+        const MIN_ROWS = 6;
+        const SHRINK_INTERVAL = 10000;
+        const SHRINK_DURATION = 20000;
+        let COLS, ROWS, CELL;
+        let currentCols = 35, currentRows = 20;
+        let gameStartTime = 0;
+        let nextShrinkTime = SHRINK_INTERVAL;
+        let shrinkStartTime = 0;
+        let shrinkStartCols = 35, shrinkStartRows = 20, shrinkTargetCols = 33, shrinkTargetRows = 19;
+        let tickMs = 120;
+
+        const DIRS = { up: [0,-1], down: [0,1], left: [-1,0], right: [1,0] };
+        let snakes = [];
+        let nextDir = [1,0];
+        let gameLoopId;
+        let playing = false;
+        const COLORS = ['#4ecca3', '#e94560', '#ffc93c'];
+        let lastTick = 0;
+
+        function updateBoardSize(now) {
+            const elapsed = now - gameStartTime;
+            if (shrinkStartTime > 0) {
+                const shrinkElapsed = now - shrinkStartTime;
+                const t = Math.min(1, shrinkElapsed / SHRINK_DURATION);
+                currentCols = shrinkStartCols + t * (shrinkTargetCols - shrinkStartCols);
+                currentRows = shrinkStartRows + t * (shrinkTargetRows - shrinkStartRows);
+                if (t >= 1) shrinkStartTime = 0;
+            } else if (elapsed >= nextShrinkTime) {
+                shrinkStartTime = now;
+                shrinkStartCols = currentCols;
+                shrinkStartRows = currentRows;
+                shrinkTargetCols = Math.max(MIN_COLS, currentCols - 2);
+                shrinkTargetRows = Math.max(MIN_ROWS, currentRows - 1);
+                nextShrinkTime += SHRINK_INTERVAL;
+                tickMs = Math.max(50, tickMs - 8);
+            }
+            currentCols = Math.max(MIN_COLS, currentCols);
+            currentRows = Math.max(MIN_ROWS, currentRows);
+            COLS = Math.floor(currentCols);
+            ROWS = Math.floor(currentRows);
+            CELL = Math.min(CANVAS_W / currentCols, CANVAS_H / currentRows);
+        }
+
+        function killSnakesOutsideBounds() {
+            const wallRight = Math.max(MIN_COLS, Math.ceil(currentCols));
+            const wallBottom = Math.max(MIN_ROWS, Math.ceil(currentRows));
+            snakes.forEach(s => {
+                if (!s.alive) return;
+                const head = s.body[0];
+                if (head.x >= wallRight || head.y >= wallBottom || head.x < 0 || head.y < 0) {
+                    s.alive = false;
+                    return;
+                }
+                while (s.body.length > 1) {
+                    const tail = s.body[s.body.length - 1];
+                    if (tail.x >= wallRight || tail.y >= wallBottom || tail.x < 0 || tail.y < 0)
+                        s.body.pop();
+                    else
+                        break;
+                }
+            });
+        }
+
+        function initSnakes() {
+            currentCols = 35;
+            currentRows = 20;
+            nextShrinkTime = SHRINK_INTERVAL;
+            shrinkStartTime = 0;
+            tickMs = 120;
+            COLS = 35;
+            ROWS = 20;
+            CELL = Math.min(CANVAS_W / COLS, CANVAS_H / ROWS);
+            snakes = [
+                { body: [{x:2,y:ROWS-1},{x:1,y:ROWS-1},{x:0,y:ROWS-1}], dir: [1,0], alive: true, cpu: false },
+                { body: [{x:COLS-3,y:0},{x:COLS-2,y:0},{x:COLS-1,y:0}], dir: [-1,0], alive: true, cpu: true },
+                { body: [{x:COLS-3,y:ROWS-1},{x:COLS-2,y:ROWS-1},{x:COLS-1,y:ROWS-1}], dir: [-1,0], alive: true, cpu: true }
+            ];
+        }
+
+        function allBlocks() {
+            const set = new Set();
+            snakes.forEach(s => { if (s.alive) s.body.forEach(b => set.add(b.x + ',' + b.y)); });
+            return set;
+        }
+
+        function moveSnake(s) {
+            const head = s.body[0];
+            const nx = head.x + s.dir[0];
+            const ny = head.y + s.dir[1];
+            const blocks = allBlocks();
+            const headKey = head.x + ',' + head.y;
+            blocks.delete(headKey);
+            const maxX = Math.floor(currentCols - 0.001);
+            const maxY = Math.floor(currentRows - 0.001);
+            if (nx < 0 || nx > maxX || ny < 0 || ny > maxY || blocks.has(nx+','+ny)) {
+                s.alive = false;
+                return;
+            }
+            s.body.unshift({ x: nx, y: ny });
+        }
+
+        function cpuDir(s) {
+            const head = s.body[0];
+            const blocks = allBlocks();
+            const headKey = head.x + ',' + head.y;
+            blocks.delete(headKey);
+            const options = [];
+            const maxX = Math.floor(currentCols - 0.001);
+            const maxY = Math.floor(currentRows - 0.001);
+            for (const [name, d] of Object.entries(DIRS)) {
+                const nx = head.x + d[0];
+                const ny = head.y + d[1];
+                if (nx >= 0 && nx <= maxX && ny >= 0 && ny <= maxY && !blocks.has(nx+','+ny)) {
+                    const distFromWall = Math.min(nx, maxX - nx, ny, maxY - ny);
+                    options.push({ d, score: distFromWall + Math.random() });
+                }
+            }
+            if (options.length === 0) return;
+            options.sort((a, b) => b.score - a.score);
+            s.dir = options[0].d;
+        }
+
+        function tick(now) {
+            if (!playing) return;
+            updateBoardSize(now);
+            killSnakesOutsideBounds();
+            if (now - lastTick < tickMs) {
+                draw();
+                gameLoopId = requestAnimationFrame(tick);
+                return;
+            }
+            lastTick = now;
+            snakes.forEach((s, i) => {
+                if (!s.alive) return;
+                if (s.cpu) cpuDir(s);
+                moveSnake(s);
+            });
+            if (!snakes[0].alive) {
+                playing = false;
+                cancelAnimationFrame(gameLoopId);
+                document.getElementById('goTitle').textContent = 'Game Over';
+                document.getElementById('goTitle').className = 'lose';
+                document.getElementById('goMsg').textContent = 'Your length: ' + snakes[0].body.length + '.';
+                document.getElementById('gameOverScreen').style.display = 'flex';
+                return;
+            }
+            document.getElementById('len0').textContent = snakes[0].body.length;
+            document.getElementById('len1').textContent = snakes[1].alive ? snakes[1].body.length : '—';
+            document.getElementById('len2').textContent = snakes[2].alive ? snakes[2].body.length : '—';
+            draw();
+            gameLoopId = requestAnimationFrame(tick);
+        }
+
+        function draw() {
+            ctx.fillStyle = '#16213e';
+            ctx.fillRect(0, 0, c.width, c.height);
+            const pad = Math.max(1, Math.floor(CELL * 0.28));
+            snakes.forEach((s, i) => {
+                if (!s.alive) return;
+                ctx.fillStyle = COLORS[i];
+                s.body.forEach((b, j) => {
+                    const ins = pad;
+                    ctx.fillRect(b.x * CELL + ins, b.y * CELL + ins, CELL - ins * 2, CELL - ins * 2);
+                });
+            });
+        }
+
+        function startGame() {
+            initSnakes();
+            nextDir = [1,0];
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameOverScreen').style.display = 'none';
+            playing = true;
+            gameStartTime = performance.now();
+            lastTick = gameStartTime;
+            document.getElementById('len0').textContent = '3';
+            document.getElementById('len1').textContent = '3';
+            document.getElementById('len2').textContent = '3';
+            gameLoopId = requestAnimationFrame(tick);
+        }
+
+        document.getElementById('startBtn').onclick = startGame;
+        document.getElementById('againBtn').onclick = startGame;
+
+        document.addEventListener('keydown', (e) => {
+            if (!playing || !snakes[0].alive) return;
+            if (e.key === 'ArrowUp'    && snakes[0].dir[1] !== 1)  nextDir = [0,-1];
+            if (e.key === 'ArrowDown'  && snakes[0].dir[1] !== -1) nextDir = [0,1];
+            if (e.key === 'ArrowLeft'  && snakes[0].dir[0] !== 1)  nextDir = [-1,0];
+            if (e.key === 'ArrowRight' && snakes[0].dir[0] !== -1) nextDir = [1,0];
+            snakes[0].dir = nextDir;
+            e.preventDefault();
+        });
+
+        setLevel(1);
+        draw();
+    </script>
+</body>
+</html>

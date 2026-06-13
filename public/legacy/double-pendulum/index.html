@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Double Pendulum</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 20px;
+			background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+			font-family: Arial, sans-serif;
+			color: white;
+			min-height: 100vh;
+		}
+		h1 {
+			text-align: center;
+			margin: 10px 0 20px 0;
+			text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+		}
+		.main-container {
+			display: flex;
+			flex-direction: row;
+			gap: 20px;
+			align-items: flex-start;
+			justify-content: center;
+			max-width: 1400px;
+			margin: 0 auto;
+		}
+		.simulation-container {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+		canvas {
+			border: 3px solid white;
+			border-radius: 10px;
+			background: #0a1628;
+			box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+		}
+		.controls {
+			display: flex;
+			flex-direction: column;
+			gap: 20px;
+			min-width: 300px;
+		}
+		.control-group {
+			background: rgba(255,255,255,0.1);
+			padding: 15px;
+			border-radius: 8px;
+			width: 100%;
+		}
+		.control-group h3 {
+			margin-top: 0;
+			font-size: 16px;
+		}
+		label {
+			display: block;
+			margin: 10px 0 5px 0;
+			font-size: 14px;
+		}
+		input[type="range"] {
+			width: 100%;
+		}
+		input[type="number"] {
+			width: 80px;
+			padding: 5px;
+			border-radius: 4px;
+			border: none;
+			margin-left: 10px;
+		}
+		input[type="checkbox"] {
+			margin-right: 8px;
+			width: 18px;
+			height: 18px;
+			cursor: pointer;
+		}
+		button {
+			padding: 10px 20px;
+			margin: 5px 0;
+			font-size: 16px;
+			border: none;
+			border-radius: 5px;
+			background: #4CAF50;
+			color: white;
+			cursor: pointer;
+			box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+			width: 100%;
+		}
+		button:hover {
+			background: #45a049;
+		}
+		button:active {
+			transform: scale(0.95);
+		}
+	</style>
+</head>
+<body>
+	<h1>Triple Pendulum</h1>
+	<div class="main-container">
+		<div class="simulation-container">
+			<canvas id="canvas" width="800" height="600"></canvas>
+		</div>
+		<div class="controls">
+		<div class="control-group">
+			<h3>Pendulum 1 (Top)</h3>
+			<label>
+				Length: <span id="len1Display">100</span>
+				<input type="range" id="len1" min="50" max="300" value="100">
+			</label>
+			<label>
+				Mass: <span id="mass1Display">1</span>
+				<input type="range" id="mass1" min="0.5" max="5" step="0.1" value="1">
+			</label>
+			<label>
+				Start Angle: <input type="number" id="angle1" value="90" min="-180" max="180" step="1">°
+			</label>
+		</div>
+		<div class="control-group">
+			<h3>Pendulum 2 (Middle)</h3>
+			<label>
+				Length: <span id="len2Display">100</span>
+				<input type="range" id="len2" min="50" max="300" value="100">
+			</label>
+			<label>
+				Mass: <span id="mass2Display">1</span>
+				<input type="range" id="mass2" min="0.5" max="5" step="0.1" value="1">
+			</label>
+			<label>
+				Start Angle: <input type="number" id="angle2" value="0" min="-180" max="180" step="1">°
+			</label>
+		</div>
+		<div class="control-group">
+			<h3>Pendulum 3 (Bottom)</h3>
+			<label>
+				Length: <span id="len3Display">100</span>
+				<input type="range" id="len3" min="50" max="300" value="100">
+			</label>
+			<label>
+				Mass: <span id="mass3Display">1</span>
+				<input type="range" id="mass3" min="0.5" max="5" step="0.1" value="1">
+			</label>
+			<label>
+				Start Angle: <input type="number" id="angle3" value="0" min="-180" max="180" step="1">°
+			</label>
+		</div>
+		<div class="control-group">
+			<h3>Controls</h3>
+			<label>
+				Simulation Speed: <span id="speedDisplay">1.0</span>x
+				<input type="range" id="speed" min="0.1" max="5" step="0.1" value="1">
+			</label>
+			<label style="margin-top: 15px;">
+				<input type="checkbox" id="trail1Check" checked> Show Trail 1 (Yellow)
+			</label>
+			<label>
+				<input type="checkbox" id="trail2Check" checked> Show Trail 2 (White)
+			</label>
+			<label>
+				<input type="checkbox" id="trail3Check" checked> Show Trail 3 (Cyan)
+			</label>
+			<button id="startBtn">Start</button>
+			<button id="resetBtn">Reset</button>
+		</div>
+		</div>
+	</div>
+
+	<script>
+		const canvas = document.getElementById('canvas');
+		const ctx = canvas.getContext('2d');
+		
+		// Physics constants
+		const g = 0.5; // gravity
+		let trail1Enabled = true;
+		let trail2Enabled = true;
+		let trail3Enabled = true;
+		let trail = []; // trail for third pendulum
+		let trail1 = []; // trail for first pendulum
+		let trail2 = []; // trail for second pendulum
+		let simulationSpeed = 1.0;
+		
+		// Pendulum state
+		let pendulum = {
+			len1: 100,
+			len2: 100,
+			len3: 100,
+			mass1: 1,
+			mass2: 1,
+			mass3: 1,
+			angle1: Math.PI / 2, // 90 degrees
+			angle2: 0,
+			angle3: 0,
+			vel1: 0,
+			vel2: 0,
+			vel3: 0,
+			acc1: 0,
+			acc2: 0,
+			acc3: 0
+		};
+		
+		// Colors for the pendulums (single palette that both cycle through)
+		const colorPalette = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181', '#AA96DA', '#FCBAD3', '#A8E6CF'];
+		let color1Index = 0;
+		let color2Index = 0;
+		let color3Index = 0;
+		let color1 = colorPalette[0];
+		let color2 = colorPalette[1];
+		let color3 = colorPalette[2];
+		
+		// Track rotations for color changes
+		let prevAngle1 = 0;
+		let prevAngle2 = 0;
+		let prevAngle3 = 0;
+		let rotationCount1 = 0;
+		let rotationCount2 = 0;
+		let rotationCount3 = 0;
+		
+		// Origin point (top center of canvas)
+		const origin = { x: canvas.width / 2, y: 50 };
+		
+		// Setup controls
+		document.getElementById('len1').addEventListener('input', (e) => {
+			pendulum.len1 = parseFloat(e.target.value);
+			document.getElementById('len1Display').textContent = Math.round(pendulum.len1);
+		});
+		
+		document.getElementById('len2').addEventListener('input', (e) => {
+			pendulum.len2 = parseFloat(e.target.value);
+			document.getElementById('len2Display').textContent = Math.round(pendulum.len2);
+		});
+		
+		document.getElementById('mass1').addEventListener('input', (e) => {
+			pendulum.mass1 = parseFloat(e.target.value);
+			document.getElementById('mass1Display').textContent = pendulum.mass1.toFixed(1);
+		});
+		
+		document.getElementById('mass2').addEventListener('input', (e) => {
+			pendulum.mass2 = parseFloat(e.target.value);
+			document.getElementById('mass2Display').textContent = pendulum.mass2.toFixed(1);
+		});
+		
+		document.getElementById('len3').addEventListener('input', (e) => {
+			pendulum.len3 = parseFloat(e.target.value);
+			document.getElementById('len3Display').textContent = Math.round(pendulum.len3);
+		});
+		
+		document.getElementById('mass3').addEventListener('input', (e) => {
+			pendulum.mass3 = parseFloat(e.target.value);
+			document.getElementById('mass3Display').textContent = pendulum.mass3.toFixed(1);
+		});
+		
+		document.getElementById('startBtn').addEventListener('click', () => {
+			const angle1Deg = parseFloat(document.getElementById('angle1').value);
+			const angle2Deg = parseFloat(document.getElementById('angle2').value);
+			const angle3Deg = parseFloat(document.getElementById('angle3').value);
+			pendulum.angle1 = angle1Deg * Math.PI / 180;
+			pendulum.angle2 = angle2Deg * Math.PI / 180;
+			pendulum.angle3 = angle3Deg * Math.PI / 180;
+			pendulum.vel1 = 0;
+			pendulum.vel2 = 0;
+			pendulum.vel3 = 0;
+			trail = [];
+			trail1 = [];
+			trail2 = [];
+			prevAngle1 = pendulum.angle1;
+			prevAngle2 = pendulum.angle2;
+			prevAngle3 = pendulum.angle3;
+			rotationCount1 = Math.floor(pendulum.angle1 / (2 * Math.PI));
+			rotationCount2 = Math.floor(pendulum.angle2 / (2 * Math.PI));
+			rotationCount3 = Math.floor(pendulum.angle3 / (2 * Math.PI));
+			animate();
+		});
+		
+		document.getElementById('resetBtn').addEventListener('click', () => {
+			pendulum.vel1 = 0;
+			pendulum.vel2 = 0;
+			pendulum.vel3 = 0;
+			pendulum.acc1 = 0;
+			pendulum.acc2 = 0;
+			pendulum.acc3 = 0;
+			trail = [];
+			trail1 = [];
+			trail2 = [];
+			prevAngle1 = pendulum.angle1;
+			prevAngle2 = pendulum.angle2;
+			prevAngle3 = pendulum.angle3;
+			rotationCount1 = Math.floor(pendulum.angle1 / (2 * Math.PI));
+			rotationCount2 = Math.floor(pendulum.angle2 / (2 * Math.PI));
+			rotationCount3 = Math.floor(pendulum.angle3 / (2 * Math.PI));
+			draw();
+		});
+		
+		document.getElementById('trail1Check').addEventListener('change', (e) => {
+			trail1Enabled = e.target.checked;
+			if (!trail1Enabled) trail1 = [];
+		});
+		
+		document.getElementById('trail2Check').addEventListener('change', (e) => {
+			trail2Enabled = e.target.checked;
+			if (!trail2Enabled) trail2 = [];
+		});
+		
+		document.getElementById('trail3Check').addEventListener('change', (e) => {
+			trail3Enabled = e.target.checked;
+			if (!trail3Enabled) trail = [];
+		});
+		
+		document.getElementById('speed').addEventListener('input', (e) => {
+			simulationSpeed = parseFloat(e.target.value);
+			document.getElementById('speedDisplay').textContent = simulationSpeed.toFixed(1);
+		});
+		
+		// Calculate accelerations given current state
+		function calculateAccelerations(angles, velocities) {
+			const { len1, len2, len3, mass1, mass2, mass3 } = pendulum;
+			const [angle1, angle2, angle3] = angles;
+			const [vel1, vel2, vel3] = velocities;
+			const totalMass = mass1 + mass2 + mass3;
+			
+			const cos12 = Math.cos(angle1 - angle2);
+			const sin12 = Math.sin(angle1 - angle2);
+			const num1 = -g * (2 * mass1 + mass2 + mass3) * Math.sin(angle1);
+			const num2 = -(mass2 + mass3) * g * Math.sin(angle1 - 2 * angle2);
+			const num3 = -2 * sin12 * (mass2 + mass3);
+			const num4 = vel2 * vel2 * len2 + vel1 * vel1 * len1 * cos12;
+			const den1 = len1 * (2 * mass1 + mass2 + mass3 - (mass2 + mass3) * Math.cos(2 * angle1 - 2 * angle2));
+			
+			const acc1 = (num1 + num2 + num3 * num4) / den1;
+			
+			const num5 = 2 * sin12;
+			const num6 = vel1 * vel1 * len1 * (mass1 + mass2 + mass3);
+			const num7 = g * (mass1 + mass2 + mass3) * Math.cos(angle1);
+			const num8 = vel2 * vel2 * len2 * (mass2 + mass3) * cos12;
+			const den2 = len2 * (2 * mass1 + mass2 + mass3 - (mass2 + mass3) * Math.cos(2 * angle1 - 2 * angle2));
+			
+			const acc2 = (num5 * (num6 + num7 + num8)) / den2;
+			
+			const cos23 = Math.cos(angle2 - angle3);
+			const sin23 = Math.sin(angle2 - angle3);
+			const num9 = 2 * sin23;
+			const num10 = vel2 * vel2 * len2 * (mass2 + mass3);
+			const num11 = g * (mass2 + mass3) * Math.cos(angle2);
+			const num12 = vel3 * vel3 * len3 * mass3 * cos23;
+			const den3 = len3 * (2 * mass2 + mass3 - mass3 * Math.cos(2 * angle2 - 2 * angle3));
+			
+			const acc3 = (num9 * (num10 + num11 + num12)) / den3;
+			
+			return [acc1, acc2, acc3];
+		}
+		
+		// Calculate pendulum physics using RK4 (Runge-Kutta 4th order)
+		function updatePhysics() {
+			const dt = simulationSpeed;
+			const angles = [pendulum.angle1, pendulum.angle2, pendulum.angle3];
+			const velocities = [pendulum.vel1, pendulum.vel2, pendulum.vel3];
+			
+			// RK4: k1, k2, k3, k4 for angles and velocities
+			// k1 = f(t, y)
+			const k1_vel = calculateAccelerations(angles, velocities);
+			const k1_ang = velocities;
+			
+			// k2 = f(t + dt/2, y + dt*k1/2)
+			const k2_angles = angles.map((a, i) => a + dt * k1_ang[i] / 2);
+			const k2_velocities = velocities.map((v, i) => v + dt * k1_vel[i] / 2);
+			const k2_vel = calculateAccelerations(k2_angles, k2_velocities);
+			const k2_ang = k2_velocities;
+			
+			// k3 = f(t + dt/2, y + dt*k2/2)
+			const k3_angles = angles.map((a, i) => a + dt * k2_ang[i] / 2);
+			const k3_velocities = velocities.map((v, i) => v + dt * k2_vel[i] / 2);
+			const k3_vel = calculateAccelerations(k3_angles, k3_velocities);
+			const k3_ang = k3_velocities;
+			
+			// k4 = f(t + dt, y + dt*k3)
+			const k4_angles = angles.map((a, i) => a + dt * k3_ang[i]);
+			const k4_velocities = velocities.map((v, i) => v + dt * k3_vel[i]);
+			const k4_vel = calculateAccelerations(k4_angles, k4_velocities);
+			const k4_ang = k4_velocities;
+			
+			// Combine: y_new = y + (dt/6) * (k1 + 2*k2 + 2*k3 + k4)
+			const velUpdate = velocities.map((v, i) => 
+				(v + (dt / 6) * (k1_vel[i] + 2*k2_vel[i] + 2*k3_vel[i] + k4_vel[i])) * Math.pow(0.9999, dt)
+			);
+			const angUpdate = angles.map((a, i) => 
+				a + (dt / 6) * (k1_ang[i] + 2*k2_ang[i] + 2*k3_ang[i] + k4_ang[i])
+			);
+			
+			pendulum.vel1 = velUpdate[0];
+			pendulum.vel2 = velUpdate[1];
+			pendulum.vel3 = velUpdate[2];
+			pendulum.angle1 = angUpdate[0];
+			pendulum.angle2 = angUpdate[1];
+			pendulum.angle3 = angUpdate[2];
+			
+			// Check for full rotations and change colors
+			const newRotationCount1 = Math.floor(pendulum.angle1 / (2 * Math.PI));
+			const newRotationCount2 = Math.floor(pendulum.angle2 / (2 * Math.PI));
+			const newRotationCount3 = Math.floor(pendulum.angle3 / (2 * Math.PI));
+			
+			if (newRotationCount1 !== rotationCount1) {
+				rotationCount1 = newRotationCount1;
+				color1Index = (color1Index + 1) % colorPalette.length;
+				color1 = colorPalette[color1Index];
+			}
+			
+			if (newRotationCount2 !== rotationCount2) {
+				rotationCount2 = newRotationCount2;
+				color2Index = (color2Index + 1) % colorPalette.length;
+				color2 = colorPalette[color2Index];
+			}
+			
+			if (newRotationCount3 !== rotationCount3) {
+				rotationCount3 = newRotationCount3;
+				color3Index = (color3Index + 1) % colorPalette.length;
+				color3 = colorPalette[color3Index];
+			}
+		}
+		
+		// Calculate positions (relative to origin at 0,0)
+		function getPositions() {
+			const x1 = pendulum.len1 * Math.sin(pendulum.angle1);
+			const y1 = pendulum.len1 * Math.cos(pendulum.angle1);
+			const x2 = x1 + pendulum.len2 * Math.sin(pendulum.angle2);
+			const y2 = y1 + pendulum.len2 * Math.cos(pendulum.angle2);
+			const x3 = x2 + pendulum.len3 * Math.sin(pendulum.angle3);
+			const y3 = y2 + pendulum.len3 * Math.cos(pendulum.angle3);
+			
+			return { x1, y1, x2, y2, x3, y3 };
+		}
+		
+		// Calculate total system energy
+		function calculateEnergy() {
+			const { len1, len2, len3, mass1, mass2, mass3, angle1, angle2, angle3, vel1, vel2, vel3 } = pendulum;
+			
+			// Calculate velocities in cartesian coordinates
+			// Pendulum 1 velocity
+			const vx1 = len1 * vel1 * Math.cos(angle1);
+			const vy1 = -len1 * vel1 * Math.sin(angle1);
+			const v1_sq = vx1 * vx1 + vy1 * vy1;
+			
+			// Pendulum 2 velocity (relative to pendulum 1)
+			const vx2 = vx1 + len2 * vel2 * Math.cos(angle2);
+			const vy2 = vy1 - len2 * vel2 * Math.sin(angle2);
+			const v2_sq = vx2 * vx2 + vy2 * vy2;
+			
+			// Pendulum 3 velocity (relative to pendulum 2)
+			const vx3 = vx2 + len3 * vel3 * Math.cos(angle3);
+			const vy3 = vy2 - len3 * vel3 * Math.sin(angle3);
+			const v3_sq = vx3 * vx3 + vy3 * vy3;
+			
+			// Kinetic energy
+			const KE = 0.5 * (mass1 * v1_sq + mass2 * v2_sq + mass3 * v3_sq);
+			
+			// Potential energy (height from top, so maximum height = 0, going down is positive)
+			const h1 = len1 * (1 - Math.cos(angle1));
+			const h2 = h1 + len2 * (1 - Math.cos(angle2));
+			const h3 = h2 + len3 * (1 - Math.cos(angle3));
+			const PE = g * (mass1 * h1 + mass2 * h2 + mass3 * h3);
+			
+			return KE + PE;
+		}
+		
+		// Draw everything
+		function draw() {
+			// Clear canvas
+			ctx.fillStyle = '#0a1628';
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			
+			const { x1, y1, x2, y2, x3, y3 } = getPositions();
+			
+			// Calculate max extent to keep pendulum visible
+			const maxLen = Math.max(pendulum.len1 + pendulum.len2 + pendulum.len3, 300);
+			const centerX = canvas.width / 2;
+			const centerY = Math.min(canvas.height / 2, origin.y + maxLen / 2 + 50);
+			
+			// Calculate scale to fit pendulum
+			const maxExtent = maxLen + 50;
+			const scaleX = (canvas.width * 0.9) / (maxExtent * 2);
+			const scaleY = (canvas.height * 0.9) / (maxExtent * 2);
+			const scale = Math.min(scaleX, scaleY, 1.0); // Don't scale up, only down
+			
+			// Save context and apply transformation
+			ctx.save();
+			ctx.translate(centerX, origin.y + 50);
+			ctx.scale(scale, scale);
+			
+			// Draw trail for first pendulum (yellow)
+			if (trail1Enabled && trail1.length > 0) {
+				ctx.strokeStyle = 'rgba(255, 230, 0, 0.5)';
+				ctx.lineWidth = 2 / scale;
+				ctx.beginPath();
+				ctx.moveTo(trail1[0].x, trail1[0].y);
+				for (let i = 1; i < trail1.length; i++) {
+					ctx.lineTo(trail1[i].x, trail1[i].y);
+				}
+				ctx.stroke();
+			}
+			
+			// Draw trail for second pendulum (white)
+			if (trail2Enabled && trail2.length > 0) {
+				ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+				ctx.lineWidth = 2 / scale;
+				ctx.beginPath();
+				ctx.moveTo(trail2[0].x, trail2[0].y);
+				for (let i = 1; i < trail2.length; i++) {
+					ctx.lineTo(trail2[i].x, trail2[i].y);
+				}
+				ctx.stroke();
+			}
+			
+			// Draw trail for third pendulum (cyan)
+			if (trail3Enabled && trail.length > 0) {
+				ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+				ctx.lineWidth = 2 / scale;
+				ctx.beginPath();
+				ctx.moveTo(trail[0].x, trail[0].y);
+				for (let i = 1; i < trail.length; i++) {
+					ctx.lineTo(trail[i].x, trail[i].y);
+				}
+				ctx.stroke();
+			}
+			
+			// Draw first pendulum arm
+			ctx.strokeStyle = color1;
+			ctx.lineWidth = 4 / scale;
+			ctx.beginPath();
+			ctx.moveTo(0, 0);
+			ctx.lineTo(x1, y1);
+			ctx.stroke();
+			
+			// Draw first bob
+			const radius1 = (10 + pendulum.mass1 * 3) / scale;
+			ctx.fillStyle = color1;
+			ctx.beginPath();
+			ctx.arc(x1, y1, radius1, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = 'white';
+			ctx.lineWidth = 2 / scale;
+			ctx.stroke();
+			
+			// Draw second pendulum arm
+			ctx.strokeStyle = color2;
+			ctx.lineWidth = 4 / scale;
+			ctx.beginPath();
+			ctx.moveTo(x1, y1);
+			ctx.lineTo(x2, y2);
+			ctx.stroke();
+			
+			// Draw second bob
+			const radius2 = (10 + pendulum.mass2 * 3) / scale;
+			ctx.fillStyle = color2;
+			ctx.beginPath();
+			ctx.arc(x2, y2, radius2, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = 'white';
+			ctx.lineWidth = 2 / scale;
+			ctx.stroke();
+			
+			// Draw third pendulum arm
+			ctx.strokeStyle = color3;
+			ctx.lineWidth = 4 / scale;
+			ctx.beginPath();
+			ctx.moveTo(x2, y2);
+			ctx.lineTo(x3, y3);
+			ctx.stroke();
+			
+			// Draw third bob
+			const radius3 = (10 + pendulum.mass3 * 3) / scale;
+			ctx.fillStyle = color3;
+			ctx.beginPath();
+			ctx.arc(x3, y3, radius3, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = 'white';
+			ctx.lineWidth = 2 / scale;
+			ctx.stroke();
+			
+			// Draw origin point
+			ctx.fillStyle = 'white';
+			ctx.beginPath();
+			ctx.arc(0, 0, 5 / scale, 0, Math.PI * 2);
+			ctx.fill();
+			
+			// Add to trails (store relative positions)
+			if (trail1Enabled) {
+				trail1.push({ x: x1, y: y1 });
+			}
+			if (trail2Enabled) {
+				trail2.push({ x: x2, y: y2 });
+			}
+			if (trail3Enabled) {
+				trail.push({ x: x3, y: y3 });
+			}
+			
+			// Restore context
+			ctx.restore();
+			
+			// Draw energy in bottom right corner
+			const totalEnergy = calculateEnergy();
+			ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+			ctx.font = '16px Arial';
+			ctx.textAlign = 'right';
+			ctx.textBaseline = 'bottom';
+			ctx.fillText(`Energy: ${totalEnergy.toFixed(2)}`, canvas.width - 10, canvas.height - 10);
+		}
+		
+		let animationId;
+		function animate() {
+			updatePhysics();
+			draw();
+			animationId = requestAnimationFrame(animate);
+		}
+		
+		// Initial draw
+		draw();
+	</script>
+</body>
+</html>
+

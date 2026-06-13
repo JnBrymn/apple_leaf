@@ -7,6 +7,7 @@ import {
   SOLDIER_HEALTH,
   SPAWN_FORMATION,
 } from '../engine/constants'
+import type { CharacterAppearance } from '../characterAppearance'
 import type { Soldier, Team } from '../engine/types'
 import { StickmanRig } from '../stickmanRig'
 
@@ -17,8 +18,9 @@ export function createSoldier(
   x: number,
   z: number,
   isPlayer: boolean,
+  appearance?: CharacterAppearance,
 ): Soldier {
-  const rig = new StickmanRig(team)
+  const rig = new StickmanRig(team, isPlayer ? appearance : undefined)
   rig.root.visible = !isPlayer
   rig.root.position.set(x, 0, z)
   scene.add(rig.root)
@@ -46,16 +48,31 @@ export function createSoldier(
     lastZ: z,
     moveSpeed: 0,
     justShot: false,
+    velocityY: 0,
+    onGround: true,
   }
 }
 
-export function spawnTeams(scene: Scene, nextId: () => number, playerIdOut: { value: number }) {
+export function spawnTeams(
+  scene: Scene,
+  nextId: () => number,
+  playerIdOut: { value: number },
+  playerAppearance?: CharacterAppearance,
+) {
   const soldiers: Soldier[] = []
 
   for (let i = 0; i < SOLDIERS_PER_TEAM; i++) {
     const spawn = SPAWN_FORMATION[i]
     const isPlayer = i === PLAYER_SPAWN_INDEX
-    const soldier = createSoldier(scene, nextId(), 'blue', spawn.x, spawn.z, isPlayer)
+    const soldier = createSoldier(
+      scene,
+      nextId(),
+      'blue',
+      spawn.x,
+      spawn.z,
+      isPlayer,
+      isPlayer ? playerAppearance : undefined,
+    )
     if (isPlayer) playerIdOut.value = soldier.id
     soldiers.push(soldier)
   }

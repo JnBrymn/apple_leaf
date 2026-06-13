@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Fire Field - CoffeeScript</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 20px;
+			font-family: Arial, sans-serif;
+			background: #1a1a1a;
+			color: #fff;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+		h1 {
+			margin: 10px 0;
+			color: #ff6b35;
+		}
+		.controls {
+			display: flex;
+			gap: 20px;
+			margin: 20px 0;
+			flex-wrap: wrap;
+			justify-content: center;
+		}
+		.control-group {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 5px;
+		}
+		label {
+			font-size: 14px;
+			color: #ccc;
+		}
+		input[type="range"] {
+			width: 150px;
+		}
+		.value {
+			font-size: 18px;
+			font-weight: bold;
+			color: #ff6b35;
+			min-width: 50px;
+			text-align: center;
+		}
+		button {
+			padding: 10px 20px;
+			font-size: 16px;
+			background: #ff6b35;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			margin: 5px;
+		}
+		button:hover {
+			background: #ff8c5a;
+		}
+		button:active {
+			background: #e55a2a;
+		}
+		#canvas {
+			border: 2px solid #444;
+			background: #000;
+			cursor: crosshair;
+		}
+		.info {
+			margin-top: 10px;
+			font-size: 12px;
+			color: #888;
+			text-align: center;
+		}
+	</style>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/coffeescript/2.7.0/coffeescript.min.js"></script>
+</head>
+<body>
+	<h1>🔥 Fire Field 🔥 (CoffeeScript)</h1>
+	<div class="controls">
+		<div class="control-group">
+			<label>Tree Growth Chance</label>
+			<input type="range" id="treeChance" min="0" max="100" value="5">
+			<div class="value" id="treeChanceValue">0.05%</div>
+		</div>
+		<div class="control-group">
+			<label>Lightning Chance</label>
+			<input type="range" id="lightningChance" min="0" max="100" value="1">
+			<div class="value" id="lightningValue">0.00000001%</div>
+		</div>
+		<div class="control-group">
+			<label>Simulation Speed</label>
+			<input type="range" id="speed" min="1" max="100" value="5">
+			<div class="value" id="speedValue">5</div>
+		</div>
+	</div>
+	<div>
+		<button id="playPause">Pause</button>
+		<button id="reset">Reset</button>
+		<button id="clear">Clear</button>
+	</div>
+	<canvas id="canvas" width="800" height="600"></canvas>
+	<div class="info">
+		Click on the canvas to start a fire! | Green = Tree | Red/Orange = Fire | Black = Burned
+	</div>
+
+	<script type="text/coffeescript">
+		# Fire Field Simulation in CoffeeScript
+		# Controls: tree growth chance, lightning chance, simulation speed
+		# Click to start fires, watch them spread!
+
+		canvas = document.getElementById 'canvas'
+		ctx = canvas.getContext '2d'
+
+		CELL_SIZE = 4
+		COLS = Math.floor canvas.width / CELL_SIZE
+		ROWS = Math.floor canvas.height / CELL_SIZE
+
+		grid = []
+		nextGrid = []
+		running = true
+		frameCount = 0
+
+		# States: 0 = empty, 1 = tree, 2 = fire, 3 = burned
+		initGrid = ->
+			grid = []
+			nextGrid = []
+			for y in [0...ROWS]
+				grid[y] = []
+				nextGrid[y] = []
+				for x in [0...COLS]
+					grid[y][x] = 0
+					nextGrid[y][x] = 0
+
+		draw = ->
+			ctx.fillStyle = '#000'
+			ctx.fillRect 0, 0, canvas.width, canvas.height
+			
+			for y in [0...ROWS]
+				for x in [0...COLS]
+					state = grid[y][x]
+					px = x * CELL_SIZE
+					py = y * CELL_SIZE
+					
+					if state is 1  # Tree
+						ctx.fillStyle = '#228B22'
+					else if state is 2  # Fire
+						ctx.fillStyle = "hsl(#{Math.random() * 30 + 10}, 100%, #{50 + Math.random() * 20}%)"
+					else if state is 3  # Burned
+						ctx.fillStyle = '#1a1a1a'
+					else  # Empty
+						ctx.fillStyle = '#000'
+					
+					ctx.fillRect px, py, CELL_SIZE, CELL_SIZE
+
+		countNeighbors = (x, y, state) ->
+			count = 0
+			for dy in [-1..1]
+				for dx in [-1..1]
+					continue if dx is 0 and dy is 0
+					nx = x + dx
+					ny = y + dy
+					if nx >= 0 and nx < COLS and ny >= 0 and ny < ROWS
+						count++ if grid[ny][nx] is state
+			count
+
+		update = ->
+			treeChance = parseFloat(document.getElementById('treeChance').value) / 10000
+			lightningChance = parseFloat(document.getElementById('lightningChance').value) / 100000000
+			
+			# Copy current grid to next
+			for y in [0...ROWS]
+				for x in [0...COLS]
+					nextGrid[y][x] = grid[y][x]
+			
+			# Update each cell
+			for y in [0...ROWS]
+				for x in [0...COLS]
+					current = grid[y][x]
+					
+					if current is 0  # Empty
+						# Random tree growth
+						nextGrid[y][x] = 1 if Math.random() < treeChance
+					else if current is 1  # Tree
+						# Check if fire nearby
+						fireNeighbors = countNeighbors x, y, 2
+						if fireNeighbors > 0
+							nextGrid[y][x] = 2  # Tree catches fire
+						else
+							# Random lightning strike
+							nextGrid[y][x] = 2 if Math.random() < lightningChance
+					else if current is 2  # Fire
+						nextGrid[y][x] = 3  # Fire becomes burned
+					else if current is 3  # Burned
+						# Eventually becomes empty (very slowly)
+						nextGrid[y][x] = 0 if Math.random() < 0.01
+			
+			# Swap grids
+			temp = grid
+			grid = nextGrid
+			nextGrid = temp
+
+		gameLoop = ->
+			if running
+				speed = parseInt document.getElementById('speed').value
+				frameCount++
+				
+				update() if frameCount % (101 - speed) is 0
+				draw()
+			requestAnimationFrame gameLoop
+
+		# Controls
+		document.getElementById('treeChance').addEventListener 'input', (e) ->
+			value = (parseFloat(e.target.value) / 10000).toFixed 6
+			document.getElementById('treeChanceValue').textContent = value + '%'
+
+		document.getElementById('lightningChance').addEventListener 'input', (e) ->
+			value = (parseFloat(e.target.value) / 100000000).toFixed 8
+			document.getElementById('lightningValue').textContent = value + '%'
+
+		document.getElementById('speed').addEventListener 'input', (e) ->
+			document.getElementById('speedValue').textContent = e.target.value
+
+		document.getElementById('playPause').addEventListener 'click', ->
+			running = not running
+			document.getElementById('playPause').textContent = if running then 'Pause' else 'Play'
+
+		document.getElementById('reset').addEventListener 'click', ->
+			initGrid()
+			draw()
+
+		document.getElementById('clear').addEventListener 'click', ->
+			initGrid()
+			draw()
+
+		# Click to start fire
+		canvas.addEventListener 'click', (e) ->
+			rect = canvas.getBoundingClientRect()
+			x = Math.floor (e.clientX - rect.left) / CELL_SIZE
+			y = Math.floor (e.clientY - rect.top) / CELL_SIZE
+			
+			if x >= 0 and x < COLS and y >= 0 and y < ROWS
+				grid[y][x] = 2 if grid[y][x] is 1  # Only light trees on fire
+
+		# Initialize
+		initGrid()
+		draw()
+		gameLoop()
+	</script>
+</body>
+</html>
+

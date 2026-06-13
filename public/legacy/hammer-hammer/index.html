@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Gatherer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        #game {
+            position: relative;
+            width: calc(100vw - 600px);
+            height: 100vh;
+            margin-left: 300px;
+            background: #333333;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 60px;
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 80px;
+            position: relative;
+        }
+
+        #resource {
+            width: 140px;
+            height: 140px;
+            background: #FFFFFF;
+            border: 4px solid #CCCCCC;
+            border-radius: 15px;
+            transition: transform 0.1s;
+            cursor: pointer;
+            z-index: 5;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        #hammer {
+            width: 80px;
+            height: 160px;
+            transform-origin: bottom center;
+            transition: transform 0.2s ease;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        #hammer::before {
+            content: '';
+            width: 40px;
+            height: 40px;
+            background: #1a1a1a;
+            border-radius: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        #hammer::after {
+            content: '';
+            width: 80px;
+            height: 25px;
+            background: linear-gradient(135deg, #E8E8E8, #B8B8B8);
+            border-radius: 0;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+            margin-top: 0;
+        }
+
+        .hammer-handle {
+            width: 25px;
+            height: 100px;
+            background: linear-gradient(90deg, #8B4513, #654321);
+            border-radius: 0;
+            box-shadow: inset 2px 0 4px rgba(0,0,0,0.3);
+        }
+
+        .hammer-bottom {
+            width: 40px;
+            height: 40px;
+            background: #1a1a1a;
+            border-radius: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .material-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            color: white;
+            font-size: 14px;
+            white-space: nowrap;
+            margin: 2px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .material-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .material-button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .material-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .material-button:disabled:hover {
+            transform: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        #rock { background: #808080; color: white; }
+        #iron { background: #A19D94; color: white; }
+        #steel { background: #71797E; color: white; }
+        #gold { background: #FFD700; color: black; }
+        #diamond { background: #B9F2FF; color: black; }
+        #moon { background: #E6E6FA; color: black; }
+        #rubber { background: #FF69B4; color: black; }
+        #concrete { background: #708090; color: white; }
+        #paper { background: #FFFFFF; color: black; }
+        #plastic { background: #ADD8E6; color: black; }
+        #glass { background: #87CEEB; color: black; }
+
+        #resources {
+            position: absolute;
+            top: 50px;
+            right: 50px;
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 10;
+            display: none;
+        }
+
+        #money {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 5px;
+            color: gold;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 10;
+        }
+
+        #hammerPower {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 5px;
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 10;
+        }
+
+        #materialInventory {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            border: 2px solid #4CAF50;
+        }
+
+        #materialInventory .current-material {
+            color: #FFD700;
+            font-size: 20px;
+        }
+
+        #shop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            z-index: 100;
+            display: block;
+            color: white;
+            overflow: hidden;
+        }
+
+        #gameOver {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        #gameOver h1 {
+            font-size: 72px;
+            color: #FF0000;
+            margin: 0 0 30px 0;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        #gameOver p {
+            font-size: 24px;
+            margin: 10px 0;
+            color: #FFD700;
+        }
+
+        .shop-sidebar {
+            position: fixed;
+            top: 0;
+            width: 300px;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            padding: 20px;
+            overflow-y: auto;
+            border: 2px solid #333;
+        }
+
+        .shop-sidebar.left {
+            left: 0;
+            border-right: 2px solid #333;
+            border-left: none;
+        }
+
+        .shop-sidebar.right {
+            right: 0;
+            border-left: 2px solid #333;
+            border-right: none;
+        }
+
+        .shop-main {
+            position: fixed;
+            left: 300px;
+            right: 300px;
+            top: 0;
+            bottom: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #666;
+            flex-direction: column;
+        }
+
+        .sidebar-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #4CAF50;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .shop-header {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 20px;
+            font-size: 24px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+
+        .shop-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .shop-tab {
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .shop-tab.active {
+            background: #4CAF50;
+        }
+
+        .shop-content {
+            display: none;
+        }
+
+        .shop-content.active {
+            display: block;
+        }
+
+        .material-shop-item {
+            padding: 8px 12px;
+            margin: 3px 0;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            text-align: left;
+            font-size: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .material-shop-item:hover {
+            background: #1976D2;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .material-shop-item:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .material-shop-item:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .material-shop-item:disabled:hover {
+            transform: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .material-cost {
+            color: gold;
+            font-weight: bold;
+        }
+
+        .shop-item {
+            padding: 10px 12px;
+            margin: 3px 0;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: block;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .shop-item:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .shop-item:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .shop-item:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .shop-item:disabled:hover {
+            transform: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .shop-item.premium {
+            background: #FFD700;
+            color: black;
+        }
+
+        .shop-item.premium:hover {
+            background: #FFC107;
+        }
+
+        .shop-item.legendary {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: black;
+        }
+
+        .shop-item.legendary:hover {
+            background: linear-gradient(45deg, #FFC107, #FF8C00);
+        }
+
+
+
+        #closeShop {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #4CAF50;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        #closeShop:hover {
+            color: #45a049;
+        }
+
+        #hitButton {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 20px 40px;
+            font-size: 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 1000;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            font-weight: bold;
+        }
+
+        #hitButton:hover {
+            background: #45a049;
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+
+        #hitButton:active {
+            transform: translateX(-50%) translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particle 1s forwards;
+        }
+
+        @keyframes particle {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        #progress {
+            width: 300px;
+            height: 25px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            z-index: 10;
+            border: 3px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        #progressBar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #81C784);
+            transition: width 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.3);
+        }
+
+        #materialButtons {
+            display: none;
+        }
+
+        #materialSelection {
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .material-slot {
+            width: 60px;
+            height: 60px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            position: relative;
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+
+        .material-slot.empty {
+            display: none;
+        }
+
+        .material-count {
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 10px;
+            white-space: nowrap;
+            color: white;
+            z-index: 100;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .material-slot:hover {
+            transform: scale(1.1);
+        }
+
+        .material-slot.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+            opacity: 1;
+        }
+
+        .material-slot.available {
+            opacity: 1;
+        }
+
+        .material-slot.paper { background: #FFFFFF; color: black; }
+        .material-slot.plastic { background: #ADD8E6; color: black; }
+        .material-slot.glass { background: #87CEEB; color: black; }
+        .material-slot.cardboard { background: #DEB887; color: black; }
+        .material-slot.foam { background: #F0F8FF; color: black; }
+        .material-slot.rock { background: #808080; }
+        .material-slot.clay { background: #CD7F32; }
+        .material-slot.sand { background: #F4A460; }
+        .material-slot.copper { background: #B87333; }
+        .material-slot.bronze { background: #CD7F32; }
+        .material-slot.brass { background: #B5A642; }
+        .material-slot.iron { background: #A19D94; }
+        .material-slot.steel { background: #71797E; }
+        .material-slot.gold { background: #FFD700; color: black; }
+        .material-slot.electrum { background: #E6BE8A; color: black; }
+        .material-slot.silver { background: #C0C0C0; color: black; }
+        .material-slot.platinum { background: #E5E4E2; color: black; }
+        .material-slot.ruby { background: #E0115F; color: white; }
+        .material-slot.garnet { background: #9A2A2A; color: white; }
+        .material-slot.spinel { background: #FF69B4; color: white; }
+        .material-slot.amethyst { background: #9966CC; color: white; }
+        .material-slot.tanzanite { background: #9370DB; color: white; }
+        .material-slot.aquamarine { background: #7FFFD4; color: black; }
+        .material-slot.peridot { background: #98FB98; color: black; }
+        .material-slot.emerald { background: #50C878; color: black; }
+        .material-slot.sapphire { background: #0F52BA; color: white; }
+        .material-slot.topaz { background: #FFC87C; color: black; }
+        .material-slot.diamond { background: #B9F2FF; color: black; }
+        .material-slot.moon { background: #E6E6FA; color: black; }
+        .material-slot.rubber { background: #FF69B4; }
+        .material-slot.concrete { background: #708090; }
+        .material-slot.obsidian { background: #4B0082; }
+        .material-slot.titanium { background: #C0C0C0; }
+        .material-slot.uranium { background: #00FF00; }
+        .material-slot.netherite { background: #4A4A4A; }
+        .material-slot.vibranium { background: #4169E1; }
+        .material-slot.adamantium { background: #C0C0C0; }
+        .material-slot.unobtainium { background: #FF1493; }
+        .material-slot.quantum { background: #00FFFF; }
+        .material-slot.darkmatter { background: #000000; }
+        .material-slot.antimatter { background: #FF4500; }
+        .material-slot.cosmic { background: #9400D3; }
+        .material-slot.void { background: #4B0082; }
+        .material-slot.crystal { background: #E6E6FA; }
+        .material-slot.mythril { background: #B0E0E6; }
+        .material-slot.orichalcum { background: #CD853F; }
+        .material-slot.etherium { background: #9370DB; }
+        .material-slot.chronium { background: #20B2AA; }
+        .material-slot.astral { background: #FF69B4; }
+        .material-slot.nexus { background: #00CED1; }
+        .material-slot.paradox { background: #FF4500; }
+        .material-slot.eternity { background: #8A2BE2; }
+        .material-slot.aluminum { background: #C0C0C0; }
+        .material-slot.nickel { background: #B8B8B8; }
+        .material-slot.zinc { background: #D2B48C; }
+        .material-slot.lead { background: #696969; }
+        .material-slot.tin { background: #C0C0C0; }
+        .material-slot.mercury { background: #E6E6FA; }
+        .material-slot.bismuth { background: #CD7F32; }
+        .material-slot.cobalt { background: #4169E1; }
+        .material-slot.manganese { background: #8B4513; }
+        .material-slot.chromium { background: #32CD32; }
+        .material-slot.molybdenum { background: #708090; }
+        .material-slot.tungsten { background: #696969; }
+        .material-slot.vanadium { background: #32CD32; }
+        .material-slot.niobium { background: #C0C0C0; }
+        .material-slot.tantalum { background: #708090; }
+        .material-slot.rhenium { background: #C0C0C0; }
+        .material-slot.osmium { background: #696969; }
+        .material-slot.iridium { background: #C0C0C0; }
+        .material-slot.palladium { background: #FFD700; }
+        .material-slot.rhodium { background: #C0C0C0; }
+        .material-slot.ruthenium { background: #708090; }
+        .material-slot.technetium { background: #00FF00; }
+        .material-slot.promethium { background: #FF69B4; }
+        .material-slot.neodymium { background: #FFD700; }
+        .material-slot.praseodymium { background: #32CD32; }
+        .material-slot.europium { background: #FFD700; }
+        .material-slot.gadolinium { background: #C0C0C0; }
+        .material-slot.terbium { background: #32CD32; }
+        .material-slot.dysprosium { background: #FFD700; }
+        .material-slot.holmium { background: #FF69B4; }
+        .material-slot.erbium { background: #FF69B4; }
+        .material-slot.thulium { background: #FF69B4; }
+        .material-slot.ytterbium { background: #FFD700; }
+        .material-slot.lutetium { background: #FF69B4; }
+        .material-slot.scandium { background: #C0C0C0; }
+        .material-slot.yttrium { background: #FFD700; }
+        .material-slot.lanthanum { background: #32CD32; }
+        .material-slot.cerium { background: #FFD700; }
+        .material-slot.samarium { background: #FFD700; }
+        .material-slot.actinium { background: #FF69B4; }
+        .material-slot.thorium { background: #32CD32; }
+        .material-slot.protactinium { background: #FF69B4; }
+        .material-slot.neptunium { background: #FF4500; }
+        .material-slot.plutonium { background: #FF4500; }
+        .material-slot.americium { background: #FF69B4; }
+        .material-slot.curium { background: #FF69B4; }
+        .material-slot.berkelium { background: #FF4500; }
+        .material-slot.californium { background: #FF4500; }
+        .material-slot.einsteinium { background: #FF4500; }
+        .material-slot.fermium { background: #FF4500; }
+        .material-slot.mendelevium { background: #FF4500; }
+        .material-slot.nobelium { background: #FF4500; }
+        .material-slot.lawrencium { background: #FF4500; }
+        .material-slot.rutherfordium { background: #FF4500; }
+        .material-slot.dubnium { background: #FF4500; }
+        .material-slot.seaborgium { background: #FF4500; }
+        .material-slot.bohrium { background: #FF4500; }
+        .material-slot.hassium { background: #FF4500; }
+        .material-slot.meitnerium { background: #FF4500; }
+        .material-slot.darmstadtium { background: #FF4500; }
+        .material-slot.roentgenium { background: #FF4500; }
+        .material-slot.copernicium { background: #FF4500; }
+        .material-slot.nihonium { background: #FF4500; }
+        .material-slot.flerovium { background: #FF4500; }
+        .material-slot.moscovium { background: #FF4500; }
+        .material-slot.livermorium { background: #FF4500; }
+        .material-slot.tennessine { background: #FF4500; }
+        .material-slot.oganesson { background: #FF4500; }
+        .material-slot.helium { background: #87CEEB; }
+        .material-slot.neon { background: #FF69B4; }
+        .material-slot.argon { background: #C0C0C0; }
+        .material-slot.krypton { background: #87CEEB; }
+        .material-slot.xenon { background: #C0C0C0; }
+        .material-slot.radon { background: #FF4500; }
+        .material-slot.hydrogen { background: #FFFFFF; }
+        .material-slot.lithium { background: #FFD700; }
+        .material-slot.beryllium { background: #32CD32; }
+        .material-slot.boron { background: #8B4513; }
+        .material-slot.carbon { background: #000000; }
+        .material-slot.nitrogen { background: #87CEEB; }
+        .material-slot.oxygen { background: #FF4500; }
+        .material-slot.fluorine { background: #32CD32; }
+        .material-slot.sodium { background: #FFD700; }
+        .material-slot.magnesium { background: #C0C0C0; }
+        .material-slot.phosphorus { background: #FFD700; }
+        .material-slot.sulfur { background: #FFD700; }
+        .material-slot.chlorine { background: #32CD32; }
+        .material-slot.potassium { background: #FFD700; }
+        .material-slot.calcium { background: #C0C0C0; }
+        .material-slot.gallium { background: #C0C0C0; }
+        .material-slot.germanium { background: #708090; }
+        .material-slot.arsenic { background: #8B4513; }
+        .material-slot.selenium { background: #FFD700; }
+        .material-slot.bromine { background: #8B4513; }
+        .material-slot.rubidium { background: #FF4500; }
+        .material-slot.strontium { background: #FFD700; }
+        .material-slot.zirconium { background: #C0C0C0; }
+        .material-slot.cadmium { background: #FFD700; }
+        .material-slot.indium { background: #C0C0C0; }
+        .material-slot.antimony { background: #708090; }
+        .material-slot.tellurium { background: #FFD700; }
+        .material-slot.iodine { background: #8B4513; }
+        .material-slot.cesium { background: #FFD700; }
+        .material-slot.barium { background: #32CD32; }
+        .material-slot.hafnium { background: #C0C0C0; }
+        .material-slot.thallium { background: #8B4513; }
+        .material-slot.polonium { background: #FF4500; }
+        .material-slot.astatine { background: #FF4500; }
+        .material-slot.francium { background: #FF4500; }
+        .material-slot.radium { background: #FF4500; }
+
+ 
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div class="game-area">
+            <div id="hammer">
+                <div class="hammer-bottom"></div>
+                <div class="hammer-handle"></div>
+            </div>
+            <div id="resource"></div>
+        </div>
+        
+        <div id="progress"><div id="progressBar"></div></div>
+        <button id="hitButton">HIT!</button>
+        <div id="money">Money: $<span id="moneyCount">0</span></div>
+        <div id="hammerPower">Hammer Power: <span id="powerCount">0.5</span>x</div>
+        <div id="materialInventory">
+            <div class="current-material">Current: <span id="currentMaterialName">Paper</span></div>
+            <div>You have: <span id="currentMaterialCount">1</span></div>
+        </div>
+        <div id="materialSelection"></div>
+        <div id="resources"></div>
+        <div id="gameOver">
+            <h1>Game Over</h1>
+            <p>Press any key to restart</p>
+        </div>
+        <div id="shop">
+            <div class="shop-sidebar left">
+                <div class="sidebar-title">Upgrades</div>
+                <div id="upgradesTab">
+                <button class="shop-item" id="upgrade1">Basic Hammer - $20 (1.5x Power)</button>
+                <button class="shop-item" id="upgrade2">Wrecking Ball - $75 (3x Power)</button>
+                <button class="shop-item" id="upgrade3">Fire Hammer - $300 (6x Power)</button>
+                <button class="shop-item" id="upgrade4">Thunder Hammer - $1000 (12x Power)</button>
+                <button class="shop-item premium" id="upgrade5">Diamond Crusher - $3000 (25x Power)</button>
+                <button class="shop-item premium" id="upgrade6">Quantum Breaker - $10000 (50x Power)</button>
+                <button class="shop-item legendary" id="upgrade7">Cosmic Smasher - $40000 (100x Power)</button>
+                <button class="shop-item legendary" id="upgrade8">Infinity Destroyer - $150000 (250x Power)</button>
+                <button class="shop-item legendary" id="upgrade9" style="background: linear-gradient(45deg, #FFD700, #FF0000);">Eternal Annihilator - $500000 (500x Power)</button>
+                <button class="shop-item legendary" id="upgrade10" style="background: linear-gradient(45deg, #000000, #FF0000);">Apocalypse Bringer - $2000000 (5000x Power)</button>
+                <button class="shop-item legendary" id="upgrade11" style="background: linear-gradient(45deg, #FF0000, #00FF00);">Reality Shaper - $5000000 (10000x Power)</button>
+                <button class="shop-item legendary" id="upgrade12" style="background: linear-gradient(45deg, #00FF00, #0000FF);">Dimension Breaker - $10000000 (20000x Power)</button>
+                <button class="shop-item legendary" id="upgrade13" style="background: linear-gradient(45deg, #0000FF, #FF00FF);">Time Shatterer - $25000000 (50000x Power)</button>
+                <button class="shop-item legendary" id="upgrade14" style="background: linear-gradient(45deg, #FF00FF, #FFFF00);">Space Crusher - $50000000 (100000x Power)</button>
+                <button class="shop-item legendary" id="upgrade15" style="background: linear-gradient(45deg, #FFFF00, #00FFFF);">Void Destroyer - $100000000 (200000x Power)</button>
+                <button class="shop-item legendary" id="upgrade16" style="background: linear-gradient(45deg, #00FFFF, #FF0000);">Chaos Bringer - $250000000 (500000x Power)</button>
+                <button class="shop-item legendary" id="upgrade17" style="background: linear-gradient(45deg, #FF0000, #FFFFFF);">Order Enforcer - $500000000 (1000000x Power)</button>
+                <button class="shop-item legendary" id="upgrade18" style="background: linear-gradient(45deg, #FFFFFF, #000000);">Creation Forger - $750000000 (2000000x Power)</button>
+                <button class="shop-item legendary" id="winButton" style="background: linear-gradient(45deg, #FF0000, #FFD700);">WIN GAME - $1,000,000,000</button>
+            </div>
+            </div>
+            
+
+            
+            <div class="shop-sidebar right">
+                <div class="sidebar-title">Materials</div>
+                <div id="materialsTab">
+                <h3 style="text-align: center; color: #FFD700; margin-bottom: 20px;">Materials Shop</h3>
+                
+                <h4 style="color: #4CAF50; margin: 15px 0 10px 0; border-bottom: 2px solid #4CAF50; padding-bottom: 5px;">TIER 1: Basic Materials (1-10 hits)</h4>
+                <button class="material-shop-item" id="buyPaper">Paper <span class="material-cost">$2</span></button>
+                <button class="material-shop-item" id="buyPlastic">Plastic <span class="material-cost">$3</span></button>
+                <button class="material-shop-item" id="buyGlass">Glass <span class="material-cost">$4</span></button>
+                <button class="material-shop-item" id="buyCardboard">Cardboard <span class="material-cost">$5</span></button>
+                <button class="material-shop-item" id="buyFoam">Foam <span class="material-cost">$5</span></button>
+                <button class="material-shop-item" id="buyRubber">Rubber <span class="material-cost">$2000</span></button>
+                
+                <h4 style="color: #2196F3; margin: 15px 0 10px 0; border-bottom: 2px solid #2196F3; padding-bottom: 5px;">TIER 2: Common Materials (15-50 hits)</h4>
+                <button class="material-shop-item" id="buyRock">Rock <span class="material-cost">$15</span></button>
+                <button class="material-shop-item" id="buyClay">Clay <span class="material-cost">$18</span></button>
+                <button class="material-shop-item" id="buySand">Sand <span class="material-cost">$21</span></button>
+                <button class="material-shop-item" id="buyCopper">Copper <span class="material-cost">$24</span></button>
+                <button class="material-shop-item" id="buyBronze">Bronze <span class="material-cost">$27</span></button>
+                <button class="material-shop-item" id="buyBrass">Brass <span class="material-cost">$30</span></button>
+                <button class="material-shop-item" id="buyIron">Iron <span class="material-cost">$30</span></button>
+                <button class="material-shop-item" id="buySteel">Steel <span class="material-cost">$60</span></button>
+                
+                <h4 style="color: #FF9800; margin: 15px 0 10px 0; border-bottom: 2px solid #FF9800; padding-bottom: 5px;">TIER 3: Precious Metals & Gems (80-120 hits)</h4>
+                <button class="material-shop-item" id="buyGold">Gold <span class="material-cost">$150</span></button>
+                <button class="material-shop-item" id="buyElectrum">Electrum <span class="material-cost">$175</span></button>
+                <button class="material-shop-item" id="buySilver">Silver <span class="material-cost">$200</span></button>
+                <button class="material-shop-item" id="buyPlatinum">Platinum <span class="material-cost">$225</span></button>
+                <button class="material-shop-item" id="buyRuby">Ruby <span class="material-cost">$250</span></button>
+                <button class="material-shop-item" id="buyGarnet">Garnet <span class="material-cost">$260</span></button>
+                <button class="material-shop-item" id="buySpinel">Spinel <span class="material-cost">$265</span></button>
+                <button class="material-shop-item" id="buyAmethyst">Amethyst <span class="material-cost">$270</span></button>
+                <button class="material-shop-item" id="buyTanzanite">Tanzanite <span class="material-cost">$275</span></button>
+                <button class="material-shop-item" id="buyAquamarine">Aquamarine <span class="material-cost">$280</span></button>
+                <button class="material-shop-item" id="buyPeridot">Peridot <span class="material-cost">$285</span></button>
+                <button class="material-shop-item" id="buyEmerald">Emerald <span class="material-cost">$290</span></button>
+                <button class="material-shop-item" id="buySapphire">Sapphire <span class="material-cost">$300</span></button>
+                <button class="material-shop-item" id="buyTopaz">Topaz <span class="material-cost">$325</span></button>
+                <button class="material-shop-item" id="buyDiamond">Diamond <span class="material-cost">$400</span></button>
+                
+                <h4 style="color: #9C27B0; margin: 15px 0 10px 0; border-bottom: 2px solid #9C27B0; padding-bottom: 5px;">TIER 4: Advanced Materials (200-500 hits)</h4>
+                <button class="material-shop-item" id="buyMoon">Moon <span class="material-cost">$1500</span></button>
+                <button class="material-shop-item" id="buyConcrete">Concrete <span class="material-cost">$2500</span></button>
+                <button class="material-shop-item" id="buyObsidian">Obsidian <span class="material-cost">$6000</span></button>
+                <button class="material-shop-item" id="buyTitanium">Titanium <span class="material-cost">$8500</span></button>
+                
+                <h4 style="color: #F44336; margin: 15px 0 10px 0; border-bottom: 2px solid #F44336; padding-bottom: 5px;">TIER 5: Exotic Materials (800-2000 hits)</h4>
+                <button class="material-shop-item" id="buyUranium">Uranium <span class="material-cost">$18000</span></button>
+                <button class="material-shop-item" id="buyNetherite">Netherite <span class="material-cost">$30000</span></button>
+                <button class="material-shop-item" id="buyVibranium">Vibranium <span class="material-cost">$75000</span></button>
+                <button class="material-shop-item" id="buyAdamantium">Adamantium <span class="material-cost">$150000</span></button>
+                
+                <h4 style="color: #E91E63; margin: 15px 0 10px 0; border-bottom: 2px solid #E91E63; padding-bottom: 5px;">TIER 6: Legendary Materials (2500-8000 hits)</h4>
+                <button class="material-shop-item" id="buyUnobtainium">Unobtainium <span class="material-cost">$375000</span></button>
+                <button class="material-shop-item" id="buyQuantum">Quantum <span class="material-cost">$750000</span></button>
+                <button class="material-shop-item" id="buyDarkmatter">Dark Matter <span class="material-cost">$1500000</span></button>
+                <button class="material-shop-item" id="buyAntimatter">Antimatter <span class="material-cost">$3750000</span></button>
+                <button class="material-shop-item" id="buyCosmic">Cosmic <span class="material-cost">$7500000</span></button>
+                <button class="material-shop-item" id="buyVoid">Void <span class="material-cost">$15000000</span></button>
+                
+                <h4 style="color: #FF5722; margin: 15px 0 10px 0; border-bottom: 2px solid #FF5722; padding-bottom: 5px;">TIER 7: Mythical Materials (10000-30000 hits)</h4>
+                <button class="material-shop-item" id="buyCrystal">Crystal <span class="material-cost">$30000000</span></button>
+                <button class="material-shop-item" id="buyMythril">Mythril <span class="material-cost">$60000000</span></button>
+                <button class="material-shop-item" id="buyOrichalcum">Orichalcum <span class="material-cost">$120000000</span></button>
+                <button class="material-shop-item" id="buyEtherium">Etherium <span class="material-cost">$240000000</span></button>
+                <button class="material-shop-item" id="buyChronium">Chronium <span class="material-cost">$480000000</span></button>
+                <button class="material-shop-item" id="buyAstral">Astral <span class="material-cost">$960000000</span></button>
+                <button class="material-shop-item" id="buyNexus">Nexus <span class="material-cost">$1200000000</span></button>
+                
+                <h4 style="color: #FFD700; margin: 15px 0 10px 0; border-bottom: 2px solid #FFD700; padding-bottom: 5px;">TIER 8: Ultimate Materials (35000+ hits)</h4>
+                <button class="material-shop-item" id="buyParadox">Paradox <span class="material-cost">$1350000000</span></button>
+                <button class="material-shop-item" id="buyEternity">Eternity <span class="material-cost">$1425000000</span></button>
+                
+                <h4 style="color: #00BCD4; margin: 15px 0 10px 0; border-bottom: 2px solid #00BCD4; padding-bottom: 5px;">TIER 9: Periodic Table Elements (35-580 hits)</h4>
+                <button class="material-shop-item" id="buyAluminum">Aluminum <span class="material-cost">$40</span></button>
+                <button class="material-shop-item" id="buyNickel">Nickel <span class="material-cost">$50</span></button>
+                <button class="material-shop-item" id="buyZinc">Zinc <span class="material-cost">$60</span></button>
+                <button class="material-shop-item" id="buyLead">Lead <span class="material-cost">$70</span></button>
+                <button class="material-shop-item" id="buyTin">Tin <span class="material-cost">$80</span></button>
+                <button class="material-shop-item" id="buyMercury">Mercury <span class="material-cost">$90</span></button>
+                <button class="material-shop-item" id="buyBismuth">Bismuth <span class="material-cost">$100</span></button>
+                <button class="material-shop-item" id="buyCobalt">Cobalt <span class="material-cost">$110</span></button>
+                <button class="material-shop-item" id="buyManganese">Manganese <span class="material-cost">$120</span></button>
+                <button class="material-shop-item" id="buyChromium">Chromium <span class="material-cost">$130</span></button>
+                <button class="material-shop-item" id="buyMolybdenum">Molybdenum <span class="material-cost">$140</span></button>
+                <button class="material-shop-item" id="buyTungsten">Tungsten <span class="material-cost">$150</span></button>
+                <button class="material-shop-item" id="buyVanadium">Vanadium <span class="material-cost">$160</span></button>
+                <button class="material-shop-item" id="buyNiobium">Niobium <span class="material-cost">$170</span></button>
+                <button class="material-shop-item" id="buyTantalum">Tantalum <span class="material-cost">$180</span></button>
+                <button class="material-shop-item" id="buyRhenium">Rhenium <span class="material-cost">$190</span></button>
+                <button class="material-shop-item" id="buyOsmium">Osmium <span class="material-cost">$200</span></button>
+                <button class="material-shop-item" id="buyIridium">Iridium <span class="material-cost">$210</span></button>
+                <button class="material-shop-item" id="buyPalladium">Palladium <span class="material-cost">$220</span></button>
+                <button class="material-shop-item" id="buyRhodium">Rhodium <span class="material-cost">$230</span></button>
+                <button class="material-shop-item" id="buyRuthenium">Ruthenium <span class="material-cost">$240</span></button>
+                <button class="material-shop-item" id="buyTechnetium">Technetium <span class="material-cost">$250</span></button>
+                <button class="material-shop-item" id="buyPromethium">Promethium <span class="material-cost">$260</span></button>
+                <button class="material-shop-item" id="buyNeodymium">Neodymium <span class="material-cost">$270</span></button>
+                <button class="material-shop-item" id="buyPraseodymium">Praseodymium <span class="material-cost">$280</span></button>
+                <button class="material-shop-item" id="buyEuropium">Europium <span class="material-cost">$290</span></button>
+                <button class="material-shop-item" id="buyGadolinium">Gadolinium <span class="material-cost">$300</span></button>
+                <button class="material-shop-item" id="buyTerbium">Terbium <span class="material-cost">$310</span></button>
+                <button class="material-shop-item" id="buyDysprosium">Dysprosium <span class="material-cost">$320</span></button>
+                <button class="material-shop-item" id="buyHolmium">Holmium <span class="material-cost">$330</span></button>
+                <button class="material-shop-item" id="buyErbium">Erbium <span class="material-cost">$340</span></button>
+                <button class="material-shop-item" id="buyThulium">Thulium <span class="material-cost">$350</span></button>
+                <button class="material-shop-item" id="buyYtterbium">Ytterbium <span class="material-cost">$360</span></button>
+                <button class="material-shop-item" id="buyLutetium">Lutetium <span class="material-cost">$370</span></button>
+                <button class="material-shop-item" id="buyScandium">Scandium <span class="material-cost">$380</span></button>
+                <button class="material-shop-item" id="buyYttrium">Yttrium <span class="material-cost">$390</span></button>
+                <button class="material-shop-item" id="buyLanthanum">Lanthanum <span class="material-cost">$400</span></button>
+                <button class="material-shop-item" id="buyCerium">Cerium <span class="material-cost">$410</span></button>
+                <button class="material-shop-item" id="buySamarium">Samarium <span class="material-cost">$420</span></button>
+                <button class="material-shop-item" id="buyActinium">Actinium <span class="material-cost">$430</span></button>
+                <button class="material-shop-item" id="buyThorium">Thorium <span class="material-cost">$440</span></button>
+                <button class="material-shop-item" id="buyProtactinium">Protactinium <span class="material-cost">$445</span></button>
+                <button class="material-shop-item" id="buyNeptunium">Neptunium <span class="material-cost">$455</span></button>
+                <button class="material-shop-item" id="buyPlutonium">Plutonium <span class="material-cost">$465</span></button>
+                <button class="material-shop-item" id="buyAmericium">Americium <span class="material-cost">$475</span></button>
+                <button class="material-shop-item" id="buyCurium">Curium <span class="material-cost">$485</span></button>
+                <button class="material-shop-item" id="buyBerkelium">Berkelium <span class="material-cost">$495</span></button>
+                <button class="material-shop-item" id="buyCalifornium">Californium <span class="material-cost">$505</span></button>
+                <button class="material-shop-item" id="buyEinsteinium">Einsteinium <span class="material-cost">$515</span></button>
+                <button class="material-shop-item" id="buyFermium">Fermium <span class="material-cost">$525</span></button>
+                <button class="material-shop-item" id="buyMendelevium">Mendelevium <span class="material-cost">$535</span></button>
+                <button class="material-shop-item" id="buyNobelium">Nobelium <span class="material-cost">$545</span></button>
+                <button class="material-shop-item" id="buyLawrencium">Lawrencium <span class="material-cost">$555</span></button>
+                <button class="material-shop-item" id="buyRutherfordium">Rutherfordium <span class="material-cost">$565</span></button>
+                <button class="material-shop-item" id="buyDubnium">Dubnium <span class="material-cost">$575</span></button>
+                <button class="material-shop-item" id="buySeaborgium">Seaborgium <span class="material-cost">$585</span></button>
+                <button class="material-shop-item" id="buyBohrium">Bohrium <span class="material-cost">$595</span></button>
+                <button class="material-shop-item" id="buyHassium">Hassium <span class="material-cost">$605</span></button>
+                <button class="material-shop-item" id="buyMeitnerium">Meitnerium <span class="material-cost">$615</span></button>
+                <button class="material-shop-item" id="buyDarmstadtium">Darmstadtium <span class="material-cost">$625</span></button>
+                <button class="material-shop-item" id="buyRoentgenium">Roentgenium <span class="material-cost">$635</span></button>
+                <button class="material-shop-item" id="buyCopernicium">Copernicium <span class="material-cost">$645</span></button>
+                <button class="material-shop-item" id="buyNihonium">Nihonium <span class="material-cost">$655</span></button>
+                <button class="material-shop-item" id="buyFlerovium">Flerovium <span class="material-cost">$665</span></button>
+                <button class="material-shop-item" id="buyMoscovium">Moscovium <span class="material-cost">$675</span></button>
+                <button class="material-shop-item" id="buyLivermorium">Livermorium <span class="material-cost">$685</span></button>
+                <button class="material-shop-item" id="buyTennessine">Tennessine <span class="material-cost">$695</span></button>
+                <button class="material-shop-item" id="buyOganesson">Oganesson <span class="material-cost">$705</span></button>
+                <button class="material-shop-item" id="buyHelium">Helium <span class="material-cost">$715</span></button>
+                <button class="material-shop-item" id="buyNeon">Neon <span class="material-cost">$725</span></button>
+                <button class="material-shop-item" id="buyArgon">Argon <span class="material-cost">$735</span></button>
+                <button class="material-shop-item" id="buyKrypton">Krypton <span class="material-cost">$745</span></button>
+                <button class="material-shop-item" id="buyXenon">Xenon <span class="material-cost">$755</span></button>
+                <button class="material-shop-item" id="buyRadon">Radon <span class="material-cost">$765</span></button>
+                <button class="material-shop-item" id="buyHydrogen">Hydrogen <span class="material-cost">$775</span></button>
+                <button class="material-shop-item" id="buyLithium">Lithium <span class="material-cost">$785</span></button>
+                <button class="material-shop-item" id="buyBeryllium">Beryllium <span class="material-cost">$795</span></button>
+                <button class="material-shop-item" id="buyBoron">Boron <span class="material-cost">$805</span></button>
+                <button class="material-shop-item" id="buyCarbon">Carbon <span class="material-cost">$815</span></button>
+                <button class="material-shop-item" id="buyNitrogen">Nitrogen <span class="material-cost">$825</span></button>
+                <button class="material-shop-item" id="buyOxygen">Oxygen <span class="material-cost">$835</span></button>
+                <button class="material-shop-item" id="buyFluorine">Fluorine <span class="material-cost">$845</span></button>
+                <button class="material-shop-item" id="buySodium">Sodium <span class="material-cost">$855</span></button>
+                <button class="material-shop-item" id="buyMagnesium">Magnesium <span class="material-cost">$865</span></button>
+                <button class="material-shop-item" id="buyPhosphorus">Phosphorus <span class="material-cost">$875</span></button>
+                <button class="material-shop-item" id="buySulfur">Sulfur <span class="material-cost">$885</span></button>
+                <button class="material-shop-item" id="buyChlorine">Chlorine <span class="material-cost">$895</span></button>
+                <button class="material-shop-item" id="buyPotassium">Potassium <span class="material-cost">$905</span></button>
+                <button class="material-shop-item" id="buyCalcium">Calcium <span class="material-cost">$915</span></button>
+                <button class="material-shop-item" id="buyGallium">Gallium <span class="material-cost">$925</span></button>
+                <button class="material-shop-item" id="buyGermanium">Germanium <span class="material-cost">$935</span></button>
+                <button class="material-shop-item" id="buyArsenic">Arsenic <span class="material-cost">$945</span></button>
+                <button class="material-shop-item" id="buySelenium">Selenium <span class="material-cost">$955</span></button>
+                <button class="material-shop-item" id="buyBromine">Bromine <span class="material-cost">$965</span></button>
+                <button class="material-shop-item" id="buyRubidium">Rubidium <span class="material-cost">$975</span></button>
+                <button class="material-shop-item" id="buyStrontium">Strontium <span class="material-cost">$985</span></button>
+                <button class="material-shop-item" id="buyZirconium">Zirconium <span class="material-cost">$995</span></button>
+                <button class="material-shop-item" id="buyCadmium">Cadmium <span class="material-cost">$1005</span></button>
+                <button class="material-shop-item" id="buyIndium">Indium <span class="material-cost">$1015</span></button>
+                <button class="material-shop-item" id="buyAntimony">Antimony <span class="material-cost">$1025</span></button>
+                <button class="material-shop-item" id="buyTellurium">Tellurium <span class="material-cost">$1035</span></button>
+                <button class="material-shop-item" id="buyIodine">Iodine <span class="material-cost">$1045</span></button>
+                <button class="material-shop-item" id="buyCesium">Cesium <span class="material-cost">$1055</span></button>
+                <button class="material-shop-item" id="buyBarium">Barium <span class="material-cost">$1065</span></button>
+                <button class="material-shop-item" id="buyHafnium">Hafnium <span class="material-cost">$1075</span></button>
+                <button class="material-shop-item" id="buyThallium">Thallium <span class="material-cost">$1085</span></button>
+                <button class="material-shop-item" id="buyPolonium">Polonium <span class="material-cost">$1095</span></button>
+                <button class="material-shop-item" id="buyAstatine">Astatine <span class="material-cost">$1105</span></button>
+                <button class="material-shop-item" id="buyFrancium">Francium <span class="material-cost">$1115</span></button>
+                <button class="material-shop-item" id="buyRadium">Radium <span class="material-cost">$1125</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sound effects for the game
+        const hitSounds = [
+            new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT'),
+            new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT'),
+            new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT')
+        ];
+
+        // Create audio context for better sound generation
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playHitSound() {
+            try {
+                // Generate a simple hit sound using Web Audio API
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (error) {
+                // Fallback to simple beep if Web Audio API fails
+                console.log('Playing hit sound!');
+            }
+        }
+
+        function playBuySound() {
+            try {
+                // Generate a happy buy sound using Web Audio API
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Play a happy ascending tone
+                oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.2);
+                
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (error) {
+                // Fallback to simple beep if Web Audio API fails
+                console.log('Playing buy sound!');
+            }
+        }
+
+        function playBreakSound() {
+            try {
+                // Generate a break/destroy sound
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Play a satisfying break sound
+                oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.3);
+                
+                gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (error) {
+                console.log('Playing break sound!');
+            }
+        }
+
+        function playWinSound() {
+            try {
+                // Generate a victory fanfare
+                const oscillator1 = audioContext.createOscillator();
+                const oscillator2 = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator1.connect(gainNode);
+                oscillator2.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Play victory chord progression
+                oscillator1.frequency.setValueAtTime(523, audioContext.currentTime); // C
+                oscillator1.frequency.setValueAtTime(659, audioContext.currentTime + 0.2); // E
+                oscillator1.frequency.setValueAtTime(784, audioContext.currentTime + 0.4); // G
+                
+                oscillator2.frequency.setValueAtTime(392, audioContext.currentTime); // G lower
+                oscillator2.frequency.setValueAtTime(523, audioContext.currentTime + 0.2); // C
+                oscillator2.frequency.setValueAtTime(659, audioContext.currentTime + 0.4); // E
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+                
+                oscillator1.start(audioContext.currentTime);
+                oscillator1.stop(audioContext.currentTime + 0.6);
+                oscillator2.start(audioContext.currentTime);
+                oscillator2.stop(audioContext.currentTime + 0.6);
+            } catch (error) {
+                console.log('Playing win sound!');
+            }
+        }
+
+        function playErrorSound() {
+            try {
+                // Create buzz buzz sound with two quick buzzes
+                
+                // First buzz
+                const oscillator1 = audioContext.createOscillator();
+                const gainNode1 = audioContext.createGain();
+                
+                oscillator1.connect(gainNode1);
+                gainNode1.connect(audioContext.destination);
+                
+                oscillator1.frequency.setValueAtTime(150, audioContext.currentTime);
+                gainNode1.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator1.start(audioContext.currentTime);
+                oscillator1.stop(audioContext.currentTime + 0.1);
+                
+                // Second buzz
+                const oscillator2 = audioContext.createOscillator();
+                const gainNode2 = audioContext.createGain();
+                
+                oscillator2.connect(gainNode2);
+                gainNode2.connect(audioContext.destination);
+                
+                oscillator2.frequency.setValueAtTime(150, audioContext.currentTime + 0.15);
+                gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime + 0.15);
+                gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
+                
+                oscillator2.start(audioContext.currentTime + 0.15);
+                oscillator2.stop(audioContext.currentTime + 0.25);
+            } catch (error) {
+                console.log('Playing buzz buzz sound!');
+            }
+        }
+
+        function playMenuSound() {
+            try {
+                // Generate a menu open/close sound
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Play a quick blip
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (error) {
+                console.log('Playing menu sound!');
+            }
+        }
+
+        // Background music system
+        let musicPlaying = false;
+
+        function startBackgroundMusic() {
+            if (musicPlaying) return;
+            musicPlaying = true;
+            
+            // Create two different catchy background tunes that alternate
+            const tune1 = [
+                { freq: 262, duration: 0.4 }, // C
+                { freq: 330, duration: 0.4 }, // E
+                { freq: 392, duration: 0.4 }, // G
+                { freq: 523, duration: 0.4 }, // C high
+                { freq: 392, duration: 0.4 }, // G
+                { freq: 330, duration: 0.4 }, // E
+                { freq: 262, duration: 0.8 }, // C
+                { freq: 0, duration: 0.4 }    // Rest
+            ];
+            
+            const tune2 = [
+                { freq: 349, duration: 0.4 }, // F
+                { freq: 440, duration: 0.4 }, // A
+                { freq: 523, duration: 0.4 }, // C
+                { freq: 659, duration: 0.4 }, // E high
+                { freq: 523, duration: 0.4 }, // C
+                { freq: 440, duration: 0.4 }, // A
+                { freq: 349, duration: 0.8 }, // F
+                { freq: 0, duration: 0.4 }    // Rest
+            ];
+            
+            let noteIndex = 0;
+            let tuneIndex = 0;
+            let currentTune = tune1;
+            
+            function playNextNote() {
+                if (!musicPlaying) return;
+                
+                const note = currentTune[noteIndex];
+                if (note.freq > 0) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + note.duration);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + note.duration);
+                }
+                
+                noteIndex = (noteIndex + 1) % currentTune.length;
+                
+                // Switch tunes every 8 notes
+                if (noteIndex === 0) {
+                    tuneIndex = (tuneIndex + 1) % 2;
+                    currentTune = tuneIndex === 0 ? tune1 : tune2;
+                }
+                
+                // Schedule next note
+                setTimeout(playNextNote, note.duration * 1000);
+            }
+            
+            playNextNote();
+        }
+
+
+
+        function stopBackgroundMusic() {
+            musicPlaying = false;
+        }
+
+        
+        const resource = document.getElementById('resource');
+        const hammer = document.getElementById('hammer');
+        const hitButton = document.getElementById('hitButton');
+        const progressBar = document.getElementById('progressBar');
+        const materialButtons = document.querySelectorAll('.material-button');
+        const moneyDisplay = document.getElementById('moneyCount');
+        const powerDisplay = document.getElementById('powerCount');
+        const shop = document.getElementById('shop');
+        const upgradeButtons = document.querySelectorAll('.shop-item');
+        const gameOver = document.getElementById('gameOver');
+
+        
+        let currentMaterial = 'paper';
+        let money = 0;
+        let hammerPower = 0.5;
+        let progress = 0;
+        let isHitting = false;
+        let purchasedUpgrades = new Set();
+        let unlockedMaterials = new Set(['paper']);
+        let ownedMaterials = {
+            paper: 1, plastic: 0, glass: 0, cardboard: 0, foam: 0, rock: 0, clay: 0, sand: 0, copper: 0,
+            bronze: 0, brass: 0, iron: 0, steel: 0, gold: 0, electrum: 0, silver: 0, platinum: 0, ruby: 0, garnet: 0,
+            spinel: 0, amethyst: 0, tanzanite: 0, aquamarine: 0, peridot: 0, emerald: 0, sapphire: 0, topaz: 0, diamond: 0, moon: 0,
+            rubber: 0, concrete: 0, obsidian: 0, titanium: 0, uranium: 0, netherite: 0, vibranium: 0, adamantium: 0, unobtainium: 0, quantum: 0,
+            darkmatter: 0, antimatter: 0, cosmic: 0, void: 0, crystal: 0, mythril: 0, orichalcum: 0, etherium: 0, chronium: 0, astral: 0,
+            nexus: 0, paradox: 0, eternity: 0, aluminum: 0, nickel: 0, zinc: 0, lead: 0, tin: 0, mercury: 0, bismuth: 0,
+            cobalt: 0, manganese: 0, chromium: 0, molybdenum: 0, tungsten: 0, vanadium: 0, niobium: 0, tantalum: 0, rhenium: 0, osmium: 0,
+            iridium: 0, palladium: 0, rhodium: 0, ruthenium: 0, technetium: 0, promethium: 0, neodymium: 0, praseodymium: 0, europium: 0, gadolinium: 0,
+            terbium: 0, dysprosium: 0, holmium: 0, erbium: 0, thulium: 0, ytterbium: 0, lutetium: 0, scandium: 0, yttrium: 0, lanthanum: 0,
+            cerium: 0, samarium: 0, actinium: 0, thorium: 0, protactinium: 0, neptunium: 0, plutonium: 0, americium: 0, curium: 0, berkelium: 0,
+            californium: 0, einsteinium: 0, fermium: 0, mendelevium: 0, nobelium: 0, lawrencium: 0, rutherfordium: 0, dubnium: 0, seaborgium: 0, bohrium: 0,
+            hassium: 0, meitnerium: 0, darmstadtium: 0, roentgenium: 0, copernicium: 0, nihonium: 0, flerovium: 0, moscovium: 0, livermorium: 0, tennessine: 0,
+            oganesson: 0, helium: 0, neon: 0, argon: 0, krypton: 0, xenon: 0, radon: 0, oganesson: 0, hydrogen: 0, lithium: 0,
+            beryllium: 0, boron: 0, carbon: 0, nitrogen: 0, oxygen: 0, fluorine: 0, sodium: 0, magnesium: 0, phosphorus: 0, sulfur: 0,
+            chlorine: 0, potassium: 0, calcium: 0, gallium: 0, germanium: 0, arsenic: 0, selenium: 0, bromine: 0, krypton: 0, rubidium: 0,
+            strontium: 0, zirconium: 0, cadmium: 0, indium: 0, antimony: 0, tellurium: 0, iodine: 0, xenon: 0, cesium: 0, barium: 0,
+            hafnium: 0, tantalum: 0, tungsten: 0, rhenium: 0, osmium: 0, iridium: 0, platinum: 0, gold: 0, mercury: 0, thallium: 0,
+            lead: 0, bismuth: 0, polonium: 0, astatine: 0, radon: 0, francium: 0, radium: 0, actinium: 0, thorium: 0, protactinium: 0
+        };
+        
+        const materialCosts = {
+            paper: 1, plastic: 2, glass: 3, cardboard: 4, foam: 4, rock: 10, clay: 12, sand: 14, copper: 16,
+            bronze: 18, brass: 20, iron: 25, steel: 40, gold: 100, electrum: 125, silver: 150, platinum: 175, ruby: 200, garnet: 210,
+            spinel: 215, amethyst: 220, tanzanite: 225, aquamarine: 230, peridot: 235, emerald: 240, sapphire: 250, topaz: 275, diamond: 300, moon: 1000,
+            rubber: 1500, concrete: 2000, obsidian: 5000, titanium: 7500, uranium: 15000, netherite: 25000, vibranium: 50000, adamantium: 100000, unobtainium: 250000, quantum: 500000,
+            darkmatter: 1000000, antimatter: 2500000, cosmic: 5000000, void: 10000000, crystal: 20000000, mythril: 40000000, orichalcum: 80000000, etherium: 160000000, chronium: 320000000, astral: 640000000,
+            nexus: 800000000, paradox: 900000000, eternity: 950000000, aluminum: 35, nickel: 45, zinc: 55, lead: 65, tin: 75, mercury: 85, bismuth: 95, cobalt: 105, manganese: 115, chromium: 125,
+            molybdenum: 135, tungsten: 145, vanadium: 155, niobium: 165, tantalum: 175, rhenium: 185, osmium: 195, iridium: 205, palladium: 215, rhodium: 225,
+            ruthenium: 235, technetium: 245, promethium: 255, neodymium: 265, praseodymium: 275, europium: 285, gadolinium: 295, terbium: 305, dysprosium: 315, holmium: 325,
+            erbium: 335, thulium: 345, ytterbium: 355, lutetium: 365, scandium: 375, yttrium: 385, lanthanum: 395, cerium: 405, samarium: 415, actinium: 425,
+            thorium: 435, protactinium: 445, neptunium: 455, plutonium: 465, americium: 475, curium: 485, berkelium: 495, californium: 505, einsteinium: 515, fermium: 525,
+            mendelevium: 535, nobelium: 545, lawrencium: 555, rutherfordium: 565, dubnium: 575, seaborgium: 585, bohrium: 595, hassium: 605, meitnerium: 615, darmstadtium: 625,
+            roentgenium: 635, copernicium: 645, nihonium: 655, flerovium: 665, moscovium: 675, livermorium: 685, tennessine: 695, oganesson: 705, helium: 715, neon: 725,
+            argon: 735, krypton: 745, xenon: 755, radon: 765, hydrogen: 775, lithium: 785, beryllium: 795, boron: 805, carbon: 815, nitrogen: 825,
+            oxygen: 835, fluorine: 845, sodium: 855, magnesium: 865, phosphorus: 875, sulfur: 885, chlorine: 895, potassium: 905, calcium: 915, gallium: 925,
+            germanium: 935, arsenic: 945, selenium: 955, bromine: 965, rubidium: 975, strontium: 985, zirconium: 995, cadmium: 1005, indium: 1015, antimony: 1025,
+            tellurium: 1035, iodine: 1045, cesium: 1055, barium: 1065, hafnium: 1075, thallium: 1085, polonium: 1095, astatine: 1105, francium: 1115, radium: 1125
+        };
+
+        // Material properties SORTED FROM WEAKEST TO STRONGEST
+        const materialProperties = {
+            // TIER 1: Basic Materials (1-10 hits) - Weakest
+            paper: { color: '#FFFFFF', hits: 1, value: 1, money: 2 },
+            plastic: { color: '#ADD8E6', hits: 2, value: 1, money: 3 },
+            glass: { color: '#87CEEB', hits: 3, value: 1, money: 4 },
+            cardboard: { color: '#DEB887', hits: 4, value: 1, money: 5 },
+            foam: { color: '#F0F8FF', hits: 4, value: 1, money: 5 },
+            rubber: { color: '#FF69B4', hits: 3, value: 1, money: 2000 },
+            
+            // TIER 2: Common Materials (15-50 hits)
+            rock: { color: '#808080', hits: 15, value: 2, money: 15 },
+            clay: { color: '#CD7F32', hits: 18, value: 2, money: 18 },
+            sand: { color: '#F4A460', hits: 20, value: 2, money: 21 },
+            copper: { color: '#B87333', hits: 22, value: 2, money: 24 },
+            bronze: { color: '#CD7F32', hits: 24, value: 2, money: 27 },
+            brass: { color: '#B5A642', hits: 26, value: 2, money: 30 },
+            iron: { color: '#A19D94', hits: 30, value: 3, money: 30 },
+            steel: { color: '#71797E', hits: 50, value: 4, money: 60 },
+            
+            // TIER 3: Precious Metals (80-120 hits)
+            gold: { color: '#FFD700', hits: 80, value: 5, money: 150 },
+            electrum: { color: '#E6BE8A', hits: 85, value: 5.5, money: 175 },
+            silver: { color: '#C0C0C0', hits: 90, value: 6, money: 200 },
+            platinum: { color: '#E5E4E2', hits: 95, value: 6.5, money: 225 },
+            ruby: { color: '#E0115F', hits: 100, value: 7, money: 250 },
+            garnet: { color: '#9A2A2A', hits: 102, value: 7.2, money: 260 },
+            spinel: { color: '#FF69B4', hits: 103, value: 7.3, money: 265 },
+            amethyst: { color: '#9966CC', hits: 104, value: 7.4, money: 270 },
+            tanzanite: { color: '#9370DB', hits: 105, value: 7.5, money: 275 },
+            aquamarine: { color: '#7FFFD4', hits: 106, value: 7.6, money: 280 },
+            peridot: { color: '#98FB98', hits: 107, value: 7.7, money: 285 },
+            emerald: { color: '#50C878', hits: 108, value: 7.8, money: 290 },
+            sapphire: { color: '#0F52BA', hits: 110, value: 8, money: 300 },
+            topaz: { color: '#FFC87C', hits: 115, value: 8.5, money: 325 },
+            diamond: { color: '#B9F2FF', hits: 120, value: 9, money: 400 },
+            
+            // TIER 4: Advanced Materials (200-500 hits)
+            moon: { color: '#E6E6FA', hits: 200, value: 7, money: 1500 },
+            concrete: { color: '#708090', hits: 300, value: 10, money: 2500 },
+            obsidian: { color: '#4B0082', hits: 400, value: 12, money: 6000 },
+            titanium: { color: '#C0C0C0', hits: 500, value: 15, money: 8500 },
+            
+            // TIER 5: Exotic Materials (800-2000 hits)
+            uranium: { color: '#00FF00', hits: 800, value: 25, money: 18000 },
+            netherite: { color: '#4A4A4A', hits: 1000, value: 30, money: 30000 },
+            vibranium: { color: '#4169E1', hits: 1500, value: 40, money: 75000 },
+            adamantium: { color: '#C0C0C0', hits: 2000, value: 50, money: 150000 },
+            
+            // TIER 6: Legendary Materials (2500-8000 hits)
+            unobtainium: { color: '#FF1493', hits: 2500, value: 60, money: 375000 },
+            quantum: { color: '#00FFFF', hits: 3000, value: 70, money: 750000 },
+            darkmatter: { color: '#000000', hits: 4000, value: 80, money: 1500000 },
+            antimatter: { color: '#FF4500', hits: 5000, value: 90, money: 3750000 },
+            cosmic: { color: '#9400D3', hits: 6000, value: 100, money: 7500000 },
+            void: { color: '#4B0082', hits: 8000, value: 120, money: 15000000 },
+            
+            // TIER 7: Mythical Materials (10000-30000 hits)
+            crystal: { color: '#E6E6FA', hits: 10000, value: 150, money: 30000000 },
+            mythril: { color: '#B0E0E6', hits: 12000, value: 180, money: 60000000 },
+            orichalcum: { color: '#CD853F', hits: 15000, value: 220, money: 120000000 },
+            etherium: { color: '#9370DB', hits: 18000, value: 260, money: 240000000 },
+            chronium: { color: '#20B2AA', hits: 20000, value: 300, money: 480000000 },
+            astral: { color: '#FF69B4', hits: 25000, value: 350, money: 960000000 },
+            nexus: { color: '#00CED1', hits: 30000, value: 400, money: 1200000000 },
+            
+            // TIER 8: Ultimate Materials (35000+ hits) - Strongest
+            paradox: { color: '#FF4500', hits: 35000, value: 450, money: 1350000000 },
+            eternity: { color: '#8A2BE2', hits: 40000, value: 500, money: 1425000000 },
+            
+            // TIER 9: Periodic Table Elements (35-580 hits) - Sorted by strength
+            aluminum: { color: '#C0C0C0', hits: 35, value: 3, money: 40 },
+            nickel: { color: '#B8B8B8', hits: 40, value: 3, money: 50 },
+            zinc: { color: '#D2B48C', hits: 45, value: 3, money: 60 },
+            lead: { color: '#696969', hits: 50, value: 4, money: 70 },
+            tin: { color: '#C0C0C0', hits: 55, value: 4, money: 80 },
+            mercury: { color: '#E6E6FA', hits: 60, value: 4, money: 90 },
+            bismuth: { color: '#CD7F32', hits: 65, value: 4, money: 100 },
+            cobalt: { color: '#4169E1', hits: 70, value: 5, money: 110 },
+            manganese: { color: '#8B4513', hits: 75, value: 5, money: 120 },
+            chromium: { color: '#32CD32', hits: 80, value: 5, money: 130 },
+            molybdenum: { color: '#708090', hits: 85, value: 6, money: 140 },
+            tungsten: { color: '#696969', hits: 90, value: 6, money: 150 },
+            vanadium: { color: '#32CD32', hits: 95, value: 6, money: 160 },
+            niobium: { color: '#C0C0C0', hits: 100, value: 7, money: 170 },
+            tantalum: { color: '#708090', hits: 105, value: 7, money: 180 },
+            rhenium: { color: '#C0C0C0', hits: 110, value: 7, money: 190 },
+            osmium: { color: '#696969', hits: 115, value: 8, money: 200 },
+            iridium: { color: '#C0C0C0', hits: 120, value: 8, money: 210 },
+            palladium: { color: '#FFD700', hits: 125, value: 8, money: 220 },
+            rhodium: { color: '#C0C0C0', hits: 130, value: 9, money: 230 },
+            ruthenium: { color: '#708090', hits: 135, value: 9, money: 240 },
+            technetium: { color: '#00FF00', hits: 140, value: 9, money: 250 },
+            promethium: { color: '#FF69B4', hits: 145, value: 10, money: 260 },
+            neodymium: { color: '#FFD700', hits: 150, value: 10, money: 270 },
+            praseodymium: { color: '#32CD32', hits: 155, value: 10, money: 280 },
+            europium: { color: '#FFD700', hits: 160, value: 11, money: 290 },
+            gadolinium: { color: '#C0C0C0', hits: 165, value: 11, money: 300 },
+            terbium: { color: '#32CD32', hits: 170, value: 11, money: 310 },
+            dysprosium: { color: '#FFD700', hits: 175, value: 12, money: 320 },
+            holmium: { color: '#FF69B4', hits: 180, value: 12, money: 330 },
+            erbium: { color: '#FF69B4', hits: 185, value: 12, money: 340 },
+            thulium: { color: '#FF69B4', hits: 190, value: 13, money: 350 },
+            ytterbium: { color: '#FFD700', hits: 195, value: 13, money: 360 },
+            lutetium: { color: '#FF69B4', hits: 200, value: 13, money: 370 },
+            scandium: { color: '#C0C0C0', hits: 205, value: 14, money: 380 },
+            yttrium: { color: '#FFD700', hits: 210, value: 14, money: 390 },
+            lanthanum: { color: '#32CD32', hits: 215, value: 14, money: 400 },
+            cerium: { color: '#FFD700', hits: 220, value: 15, money: 410 },
+            samarium: { color: '#FFD700', hits: 225, value: 15, money: 420 },
+            actinium: { color: '#FF69B4', hits: 230, value: 15, money: 430 },
+            thorium: { color: '#32CD32', hits: 235, value: 16, money: 440 },
+            protactinium: { color: '#FF69B4', hits: 240, value: 16, money: 450 },
+            neptunium: { color: '#FF4500', hits: 245, value: 16, money: 460 },
+            plutonium: { color: '#FF4500', hits: 250, value: 17, money: 470 },
+            americium: { color: '#FF69B4', hits: 255, value: 17, money: 480 },
+            curium: { color: '#FF69B4', hits: 260, value: 17, money: 490 },
+            berkelium: { color: '#FF4500', hits: 265, value: 18, money: 500 },
+            californium: { color: '#FF4500', hits: 270, value: 18, money: 510 },
+            einsteinium: { color: '#FF4500', hits: 275, value: 18, money: 520 },
+            fermium: { color: '#FF4500', hits: 280, value: 19, money: 530 },
+            mendelevium: { color: '#FF4500', hits: 285, value: 19, money: 540 },
+            nobelium: { color: '#FF4500', hits: 290, value: 19, money: 550 },
+            lawrencium: { color: '#FF4500', hits: 295, value: 20, money: 560 },
+            rutherfordium: { color: '#FF4500', hits: 300, value: 20, money: 570 },
+            dubnium: { color: '#FF4500', hits: 305, value: 20, money: 580 },
+            seaborgium: { color: '#FF4500', hits: 310, value: 21, money: 590 },
+            bohrium: { color: '#FF4500', hits: 315, value: 21, money: 600 },
+            hassium: { color: '#FF4500', hits: 320, value: 21, money: 610 },
+            meitnerium: { color: '#FF4500', hits: 325, value: 22, money: 620 },
+            darmstadtium: { color: '#FF4500', hits: 330, value: 22, money: 630 },
+            roentgenium: { color: '#FF4500', hits: 335, value: 22, money: 640 },
+            copernicium: { color: '#FF4500', hits: 340, value: 23, money: 650 },
+            nihonium: { color: '#FF4500', hits: 345, value: 23, money: 660 },
+            flerovium: { color: '#FF4500', hits: 350, value: 23, money: 670 },
+            moscovium: { color: '#FF4500', hits: 355, value: 24, money: 680 },
+            livermorium: { color: '#FF4500', hits: 360, value: 24, money: 690 },
+            tennessine: { color: '#FF4500', hits: 365, value: 24, money: 700 },
+            oganesson: { color: '#FF4500', hits: 370, value: 25, money: 710 },
+            helium: { color: '#87CEEB', hits: 375, value: 25, money: 720 },
+            neon: { color: '#FF69B4', hits: 380, value: 25, money: 730 },
+            argon: { color: '#C0C0C0', hits: 385, value: 26, money: 740 },
+            krypton: { color: '#87CEEB', hits: 390, value: 26, money: 750 },
+            xenon: { color: '#C0C0C0', hits: 395, value: 26, money: 760 },
+            radon: { color: '#FF4500', hits: 400, value: 27, money: 770 },
+            hydrogen: { color: '#FFFFFF', hits: 405, value: 27, money: 780 },
+            lithium: { color: '#FFD700', hits: 410, value: 27, money: 790 },
+            beryllium: { color: '#32CD32', hits: 415, value: 28, money: 800 },
+            boron: { color: '#8B4513', hits: 420, value: 28, money: 810 },
+            carbon: { color: '#000000', hits: 425, value: 28, money: 820 },
+            nitrogen: { color: '#87CEEB', hits: 430, value: 29, money: 830 },
+            oxygen: { color: '#FF4500', hits: 435, value: 29, money: 840 },
+            fluorine: { color: '#32CD32', hits: 440, value: 29, money: 850 },
+            sodium: { color: '#FFD700', hits: 445, value: 30, money: 860 },
+            magnesium: { color: '#C0C0C0', hits: 450, value: 30, money: 870 },
+            phosphorus: { color: '#FFD700', hits: 455, value: 30, money: 880 },
+            sulfur: { color: '#FFD700', hits: 460, value: 31, money: 890 },
+            chlorine: { color: '#32CD32', hits: 465, value: 31, money: 900 },
+            potassium: { color: '#FFD700', hits: 470, value: 31, money: 910 },
+            calcium: { color: '#C0C0C0', hits: 475, value: 32, money: 920 },
+            gallium: { color: '#C0C0C0', hits: 480, value: 32, money: 930 },
+            germanium: { color: '#708090', hits: 485, value: 32, money: 940 },
+            arsenic: { color: '#8B4513', hits: 490, value: 33, money: 950 },
+            selenium: { color: '#FFD700', hits: 495, value: 33, money: 960 },
+            bromine: { color: '#8B4513', hits: 500, value: 33, money: 970 },
+            rubidium: { color: '#FF4500', hits: 505, value: 34, money: 980 },
+            strontium: { color: '#FFD700', hits: 510, value: 34, money: 990 },
+            zirconium: { color: '#C0C0C0', hits: 515, value: 34, money: 1000 },
+            cadmium: { color: '#FFD700', hits: 520, value: 35, money: 1010 },
+            indium: { color: '#C0C0C0', hits: 525, value: 35, money: 1020 },
+            antimony: { color: '#708090', hits: 530, value: 35, money: 1030 },
+            tellurium: { color: '#FFD700', hits: 535, value: 36, money: 1040 },
+            iodine: { color: '#8B4513', hits: 540, value: 36, money: 1050 },
+            cesium: { color: '#FFD700', hits: 545, value: 36, money: 1060 },
+            barium: { color: '#32CD32', hits: 550, value: 37, money: 1070 },
+            hafnium: { color: '#C0C0C0', hits: 555, value: 37, money: 1080 },
+            thallium: { color: '#8B4513', hits: 560, value: 37, money: 1090 },
+            polonium: { color: '#FF4500', hits: 565, value: 38, money: 1100 },
+            astatine: { color: '#FF4500', hits: 570, value: 38, money: 1110 },
+            francium: { color: '#FF4500', hits: 575, value: 38, money: 1120 },
+            radium: { color: '#FF4500', hits: 580, value: 39, money: 1130 }
+        };
+
+        const upgradeCosts = {
+            upgrade1: 20,
+            upgrade2: 75,
+            upgrade3: 300,
+            upgrade4: 1000,
+            upgrade5: 3000,
+            upgrade6: 10000,
+            upgrade7: 40000,
+            upgrade8: 150000,
+            upgrade9: 500000,
+            upgrade10: 2000000,
+            upgrade11: 5000000,
+            upgrade12: 10000000,
+            upgrade13: 25000000,
+            upgrade14: 50000000,
+            upgrade15: 100000000,
+            upgrade16: 250000000,
+            upgrade17: 500000000,
+            upgrade18: 750000000,
+            winButton: 1000000000
+        };
+
+        const upgradePowers = {
+            upgrade1: 1.5,
+            upgrade2: 3,
+            upgrade3: 6,
+            upgrade4: 12,
+            upgrade5: 25,
+            upgrade6: 50,
+            upgrade7: 100,
+            upgrade8: 250,
+            upgrade9: 500,
+            upgrade10: 5000,
+            upgrade11: 10000,
+            upgrade12: 20000,
+            upgrade13: 50000,
+            upgrade14: 100000,
+            upgrade15: 200000,
+            upgrade16: 500000,
+            upgrade17: 1000000,
+            upgrade18: 2000000,
+            winButton: 0
+        };
+
+        function updateMoneyDisplay() {
+            moneyDisplay.textContent = money;
+            updateShopButtons();
+        }
+
+        function updatePowerDisplay() {
+            powerDisplay.textContent = hammerPower.toFixed(1);
+        }
+
+        function updateShopButtons() {
+            upgradeButtons.forEach(button => {
+                const cost = upgradeCosts[button.id];
+                if (purchasedUpgrades.has(button.id)) {
+                    button.disabled = true;
+                    button.textContent = 'Purchased';
+                    button.style.background = '#666';
+                } else {
+                    button.disabled = money < cost;
+                    button.style.background = money >= cost ? '#4CAF50' : '#666';
+                }
+            });
+            updateMaterialButtons();
+        }
+
+        function purchaseUpgrade(upgradeId) {
+            const cost = upgradeCosts[upgradeId];
+            if (money >= cost && !purchasedUpgrades.has(upgradeId)) {
+                money -= cost;
+                if (upgradeId === 'winButton') {
+                    // Play epic win sound!
+                    playWinSound();
+                    alert('Congratulations! You have won the game!');
+                    return;
+                }
+                hammerPower = upgradePowers[upgradeId];
+                purchasedUpgrades.add(upgradeId);
+                
+                // Play buy sound!
+                playBuySound();
+                
+                updateMoneyDisplay();
+                updatePowerDisplay();
+                updateShopButtons();
+                checkBankruptcy();
+                
+                // Special effects for premium and legendary upgrades
+                if (upgradeId === 'upgrade5' || upgradeId === 'upgrade6') {
+                    createParticles(
+                        document.getElementById('hammer').getBoundingClientRect().left,
+                        document.getElementById('hammer').getBoundingClientRect().top,
+                        '#FFD700'
+                    );
+                } else if (upgradeId === 'upgrade7' || upgradeId === 'upgrade8') {
+                    createParticles(
+                        document.getElementById('hammer').getBoundingClientRect().left,
+                        document.getElementById('hammer').getBoundingClientRect().top,
+                        '#FFA500'
+                    );
+                }
+                
+                alert(`Upgraded to ${hammerPower}x power!`);
+            } else {
+                // Play error sound when can't afford upgrade
+                playErrorSound();
+            }
+        }
+
+        function updateResourceDisplay() {
+            // This function is now empty since we don't need to update the display
+        }
+
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.background = color;
+                
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+                
+                document.getElementById('game').appendChild(particle);
+                
+                let posX = x;
+                let posY = y;
+                
+                const particleLoop = setInterval(() => {
+                    posX += vx;
+                    posY += vy;
+                    particle.style.left = posX + 'px';
+                    particle.style.top = posY + 'px';
+                    
+                    if (parseFloat(particle.style.opacity) <= 0) {
+                        particle.remove();
+                        clearInterval(particleLoop);
+                    }
+                }, 20);
+            }
+        }
+
+        function updateMaterialSelection() {
+            const selectionArea = document.getElementById('materialSelection');
+            selectionArea.innerHTML = '';
+            
+            Object.keys(materialProperties).forEach(material => {
+                const slot = document.createElement('div');
+                slot.className = `material-slot ${material}`;
+                slot.dataset.material = material;
+                
+                if (unlockedMaterials.has(material)) {
+                    slot.classList.add('available');
+                    slot.innerHTML = material.charAt(0).toUpperCase();
+                    
+                    // Add count display
+                    const count = document.createElement('div');
+                    count.className = 'material-count';
+                    count.textContent = `Owned: ${ownedMaterials[material]}`;
+                    slot.appendChild(count);
+                    
+                    // Hide slot if no materials owned
+                    if (ownedMaterials[material] <= 0) {
+                        slot.classList.add('empty');
+                    }
+                    
+                    if (material === currentMaterial) {
+                        slot.classList.add('selected');
+                    }
+                    
+                    slot.addEventListener('click', () => {
+                        if (ownedMaterials[material] > 0) {
+                            currentMaterial = material;
+                            resource.style.background = materialProperties[material].color;
+                            progress = 0;
+                            progressBar.style.width = '0%';
+                            
+                            // Update selection UI
+                            document.querySelectorAll('.material-slot').forEach(s => s.classList.remove('selected'));
+                            slot.classList.add('selected');
+                            
+                            // Update material inventory display
+                            updateMaterialInventory();
+                        }
+                    });
+                } else {
+                    slot.innerHTML = '?';
+                }
+                
+                selectionArea.appendChild(slot);
+            });
+            
+            // Update material inventory display
+            updateMaterialInventory();
+        }
+        
+        function updateMaterialInventory() {
+            const materialName = currentMaterial.charAt(0).toUpperCase() + currentMaterial.slice(1);
+            document.getElementById('currentMaterialName').textContent = materialName;
+            document.getElementById('currentMaterialCount').textContent = ownedMaterials[currentMaterial];
+        }
+
+        function hit() {
+            if (isHitting) return;
+            
+            // Don't allow hitting if player has no materials
+            if (ownedMaterials[currentMaterial] <= 0) {
+                playErrorSound();
+                return;
+            }
+            
+            isHitting = true;
+
+            // Play hit sound!
+            playHitSound();
+
+            const rect = resource.getBoundingClientRect();
+            const gameRect = document.getElementById('game').getBoundingClientRect();
+            
+            // Animate hammer
+            hammer.style.transform = 'rotate(45deg)';
+            setTimeout(() => {
+                hammer.style.transform = 'rotate(0deg)';
+                isHitting = false;
+            }, 200);
+
+            // Animate resource
+            resource.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                resource.style.transform = 'scale(1)';
+            }, 100);
+
+            // Create particles
+            createParticles(
+                rect.left - gameRect.left + rect.width/2,
+                rect.top - gameRect.top + rect.height/2,
+                materialProperties[currentMaterial].color
+            );
+
+            progress += (100 / materialProperties[currentMaterial].hits) * hammerPower;
+            progressBar.style.width = `${Math.min(progress, 100)}%`;
+
+            if (progress >= 100) {
+                if (ownedMaterials[currentMaterial] > 0) {
+                    ownedMaterials[currentMaterial]--;
+                    money += materialProperties[currentMaterial].money;
+                    
+                    // Play break sound when material is destroyed!
+                    playBreakSound();
+                    
+                    updateMoneyDisplay();
+                    updateMaterialSelection();
+                    updateMaterialInventory();
+                    progress = 0;
+                    progressBar.style.width = '0%';
+                    
+                    // If we run out of the current material, don't auto-switch
+                    if (ownedMaterials[currentMaterial] <= 0) {
+                        // Just update the display to show 0
+                        updateMaterialInventory();
+                    }
+                }
+            }
+            
+            // Always update inventory after hitting
+            updateMaterialInventory();
+            checkBankruptcy();
+        }
+
+        function buyMaterial(material) {
+            const cost = materialCosts[material];
+            if (money >= cost) {
+                money -= cost;
+                ownedMaterials[material] += 1;
+                unlockedMaterials.add(material);
+                currentMaterial = material;
+                resource.style.background = materialProperties[material].color;
+                progress = 0;
+                progressBar.style.width = '0%';
+                
+                // Play buy sound!
+                playBuySound();
+                
+                updateMoneyDisplay();
+                updateMaterialButtons();
+                updateMaterialSelection();
+                checkBankruptcy();
+            } else {
+                // Play error sound when can't afford material
+                playErrorSound();
+                checkBankruptcy();
+            }
+        }
+
+        function initGame() {
+            money = 1; // Start with enough for 1 paper
+            hammerPower = 0.5;
+            purchasedUpgrades.clear();
+            currentMaterial = 'paper';
+            progress = 0;
+            isHitting = false;
+            ownedMaterials = {
+                paper: 1, plastic: 0, glass: 0, cardboard: 0, foam: 0, rock: 0, clay: 0, sand: 0, copper: 0,
+                bronze: 0, brass: 0, iron: 0, steel: 0, gold: 0, electrum: 0, silver: 0, platinum: 0, ruby: 0, garnet: 0,
+                spinel: 0, amethyst: 0, tanzanite: 0, aquamarine: 0, peridot: 0, emerald: 0, sapphire: 0, topaz: 0, diamond: 0, moon: 0,
+                rubber: 0, concrete: 0, obsidian: 0, titanium: 0, uranium: 0, netherite: 0, vibranium: 0, adamantium: 0, unobtainium: 0, quantum: 0,
+                darkmatter: 0, antimatter: 0, cosmic: 0, void: 0, crystal: 0, mythril: 0, orichalcum: 0, etherium: 0, chronium: 0, astral: 0,
+                nexus: 0, paradox: 0, eternity: 0, aluminum: 0, nickel: 0, zinc: 0, lead: 0, tin: 0, mercury: 0, bismuth: 0,
+                cobalt: 0, manganese: 0, chromium: 0, molybdenum: 0, tungsten: 0, vanadium: 0, niobium: 0, tantalum: 0, rhenium: 0, osmium: 0,
+                iridium: 0, palladium: 0, rhodium: 0, ruthenium: 0, technetium: 0, promethium: 0, neodymium: 0, praseodymium: 0, europium: 0, gadolinium: 0,
+                terbium: 0, dysprosium: 0, holmium: 0, erbium: 0, thulium: 0, ytterbium: 0, lutetium: 0, scandium: 0, yttrium: 0, lanthanum: 0,
+                cerium: 0, samarium: 0, actinium: 0, thorium: 0, protactinium: 0, neptunium: 0, plutonium: 0, americium: 0, curium: 0, berkelium: 0,
+                californium: 0, einsteinium: 0, fermium: 0, mendelevium: 0, nobelium: 0, lawrencium: 0, rutherfordium: 0, dubnium: 0, seaborgium: 0, bohrium: 0,
+                hassium: 0, meitnerium: 0, darmstadtium: 0, roentgenium: 0, copernicium: 0, nihonium: 0, flerovium: 0, moscovium: 0, livermorium: 0, tennessine: 0,
+                oganesson: 0, helium: 0, neon: 0, argon: 0, krypton: 0, xenon: 0, radon: 0, hydrogen: 0, lithium: 0, beryllium: 0,
+                boron: 0, carbon: 0, nitrogen: 0, oxygen: 0, fluorine: 0, sodium: 0, magnesium: 0, phosphorus: 0, sulfur: 0, chlorine: 0,
+                potassium: 0, calcium: 0, gallium: 0, germanium: 0, arsenic: 0, selenium: 0, bromine: 0, rubidium: 0, strontium: 0, zirconium: 0,
+                cadmium: 0, indium: 0, antimony: 0, tellurium: 0, iodine: 0, cesium: 0, barium: 0, hafnium: 0, thallium: 0, polonium: 0,
+                astatine: 0, francium: 0, radium: 0
+            };
+            unlockedMaterials = new Set(['paper']);
+            resource.style.background = materialProperties[currentMaterial].color;
+            progressBar.style.width = '0%';
+            hitButton.disabled = false;
+            updateMoneyDisplay();
+            updatePowerDisplay();
+            updateShopButtons();
+            updateMaterialSelection();
+            updateMaterialInventory();
+            
+            // Start the background music!
+            setTimeout(() => {
+                startBackgroundMusic();
+            }, 1000); // Start music after 1 second
+        }
+
+        function updateMaterialButtons() {
+            document.querySelectorAll('.material-shop-item').forEach(button => {
+                const material = button.id.replace('buy', '').toLowerCase();
+                const cost = materialCosts[material];
+                button.disabled = money < cost;
+                button.style.background = money >= cost ? '#4CAF50' : '#666';
+            });
+        }
+
+        // Add event listeners for material shop buttons
+        document.querySelectorAll('.material-shop-item').forEach(button => {
+            button.addEventListener('click', () => {
+                const material = button.id.replace('buy', '').toLowerCase();
+                buyMaterial(material);
+            });
+        });
+
+        // Add event listeners for shop tabs
+        document.querySelectorAll('.shop-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.shop-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + 'Tab').classList.add('active');
+            });
+        });
+
+        // Add event listeners
+        upgradeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                purchaseUpgrade(button.id);
+            });
+        });
+
+        hitButton.addEventListener('click', hit);
+
+
+
+        document.addEventListener('keydown', (e) => {
+            // If game over screen is showing, restart on any key
+            if (gameOver.style.display === 'flex') {
+                hideGameOver();
+                initGame();
+                return;
+            }
+            
+            if (e.code === 'Space') {
+                hit();
+            }
+        });
+
+        // Initialize the game
+        initGame();
+
+        // Add debug info
+        const debugInfo = document.createElement('div');
+        debugInfo.style.position = 'absolute';
+        debugInfo.style.top = '10px';
+        debugInfo.style.left = '10px';
+        debugInfo.style.background = 'rgba(0,0,0,0.7)';
+        debugInfo.style.color = 'white';
+        debugInfo.style.padding = '10px';
+        debugInfo.style.borderRadius = '5px';
+        debugInfo.style.fontSize = '12px';
+        debugInfo.style.zIndex = '1000';
+        document.body.appendChild(debugInfo);
+
+        function updateDebugInfo() {
+            debugInfo.innerHTML = `
+                Money: $${money}<br>
+                Hammer Power: ${hammerPower}x<br>
+                Purchased Upgrades: ${Array.from(purchasedUpgrades).join(', ')}
+            `;
+        }
+
+        // Update debug info every second
+        setInterval(updateDebugInfo, 1000);
+    </script>
+</body>
+</html>

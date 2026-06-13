@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useGameLoop } from '../../shared/hooks/useGameLoop'
 import { useKeyboard } from '../../shared/hooks/useKeyboard'
+import CharacterDesigner from './CharacterDesigner'
+import {
+  loadCharacterAppearance,
+  saveCharacterAppearance,
+  type CharacterAppearance,
+} from './characterAppearance'
 import { emptyInput, SOLDIERS_PER_TEAM, TeamWarEngine, type HudSnapshot, type InputState } from './teamWarEngine'
 import styles from './team-war.module.css'
 
@@ -12,7 +18,8 @@ function createInitialHud(): HudSnapshot {
     kills: 0,
     gameOver: false,
     won: null,
-    message: 'Click to join the battle',
+    message: 'Design your soldier, then enter battle',
+    spectating: false,
   }
 }
 
@@ -22,6 +29,7 @@ export default function TeamWarGame() {
   const inputRef = useRef<InputState>(emptyInput())
   const keys = useKeyboard()
   const [hud, setHud] = useState<HudSnapshot>(createInitialHud)
+  const [appearance, setAppearance] = useState<CharacterAppearance>(loadCharacterAppearance)
   const [battleStarted, setBattleStarted] = useState(false)
   const battleStartedRef = useRef(false)
   battleStartedRef.current = battleStarted
@@ -32,7 +40,7 @@ export default function TeamWarGame() {
 
     const engine = new TeamWarEngine()
     engineRef.current = engine
-    engine.mount(container)
+    engine.mount(container, appearance)
 
     const onResize = () => {
       engine.resize(container.clientWidth, container.clientHeight)
@@ -48,10 +56,14 @@ export default function TeamWarGame() {
     }
   }, [])
 
-  const joinBattle = useCallback(() => {
+  const soldierName = appearance.name.trim()
+
+  const enterBattle = useCallback(() => {
+    saveCharacterAppearance(appearance)
+    engineRef.current?.setPlayerAppearance(appearance)
     setBattleStarted(true)
     engineRef.current?.getCanvas()?.requestPointerLock()
-  }, [])
+  }, [appearance])
 
   useEffect(() => {
     const container = containerRef.current
@@ -71,7 +83,9 @@ export default function TeamWarGame() {
         canvas()?.requestPointerLock()
         return
       }
-      inputRef.current.shoot = true
+      if (!engineRef.current?.isSpectating()) {
+        inputRef.current.shoot = true
+      }
     }
 
     const onMouseUp = () => {
@@ -113,7 +127,7 @@ export default function TeamWarGame() {
         event.changedTouches[0].clientX - touchStartX,
         event.changedTouches[0].clientY - touchStartY,
       )
-      if (duration < 220 && moved < 12) {
+      if (duration < 220 && moved < 12 && !engineRef.current?.isSpectating()) {
         inputRef.current.shoot = true
         setTimeout(() => {
           inputRef.current.shoot = false
@@ -158,6 +172,7 @@ export default function TeamWarGame() {
         input.left = pressed.has('a') || pressed.has('A')
         input.right = pressed.has('d') || pressed.has('D')
         input.jump = pressed.has(' ') || pressed.has('Spacebar')
+        input.flyDown = pressed.has('Shift') || pressed.has('c') || pressed.has('C')
 
         const snapshot = engine.update(deltaMs / 1000, input)
         setHud(snapshot)
@@ -172,6 +187,7 @@ export default function TeamWarGame() {
   const restart = () => {
     engineRef.current?.reset()
     setHud(createInitialHud())
+    setAppearance(loadCharacterAppearance())
     setBattleStarted(false)
   }
 
@@ -181,11 +197,20 @@ export default function TeamWarGame() {
 
       {battleStarted && (
         <>
-          <div className={styles.crosshair} aria-hidden />
+          {!hud.spectating && <div className={styles.crosshair} aria-hidden />}
+          {hud.spectating && (
+            <div className={styles.spectatorBanner}>
+              <span className={styles.spectatorTitle}>Spectator</span>
+              <span className={styles.spectatorHint}>WASD fly · Space up · Shift down · Mouse look</span>
+            </div>
+          )}
           <div className={styles.hud}>
+            {soldierName && <div className={styles.soldierName}>{soldierName}</div>}
             <div className={styles.hudRow}>
               <span className={styles.blueTag}>Blue {hud.blueAlive}</span>
-              <span className={styles.health}>HP {Math.max(0, Math.round(hud.health))}</span>
+              <span className={styles.health}>
+                {hud.spectating ? 'Fallen' : `HP ${Math.max(0, Math.round(hud.health))}`}
+              </span>
               <span className={styles.redTag}>Red {hud.redAlive}</span>
             </div>
             <div className={styles.hudRow}>
@@ -197,13 +222,13 @@ export default function TeamWarGame() {
       )}
 
       {!battleStarted && !hud.gameOver && (
-        <button type="button" className={styles.overlay} onClick={joinBattle}>
-          <span className={styles.overlayTitle}>Team War</span>
-          <span className={styles.overlayHint}>Click to join the battle</span>
-          <span className={styles.overlayControls}>
-            WASD move · Mouse look · Click shoot · Space jump
-          </span>
-        </button>
+        <div className={styles.designerOverlay}>
+          <CharacterDesigner
+            appearance={appearance}
+            onChange={setAppearance}
+            onEnterBattle={enterBattle}
+          />
+        </div>
       )}
 
       {hud.gameOver && (
@@ -212,7 +237,8 @@ export default function TeamWarGame() {
             {hud.won ? 'Victory!' : 'Defeat'}
           </p>
           <p className={styles.endStats}>
-            Your kills: {hud.kills} · Blue left: {hud.blueAlive} · Red left: {hud.redAlive}
+            {soldierName ? `${soldierName} · ` : ''}
+            Kills {hud.kills} · Blue left: {hud.blueAlive} · Red left: {hud.redAlive}
           </p>
           <button type="button" className={styles.restartBtn} onClick={restart}>
             Fight again

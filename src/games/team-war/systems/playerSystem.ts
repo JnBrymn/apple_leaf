@@ -1,8 +1,6 @@
 import type { PerspectiveCamera } from 'three'
 import {
   EYE_HEIGHT,
-  GRAVITY,
-  JUMP_VELOCITY,
   PLAYER_IMMORTAL,
   SHOOT_COOLDOWN,
   SOLDIER_HEALTH,
@@ -12,6 +10,18 @@ import type { GameState, InputState, Soldier } from '../engine/types'
 import { syncSoldierTransform } from '../entities/soldier'
 import { clamp } from '../engine/utils'
 import { tryMove } from './movementSystem'
+import { updateSoldierVertical } from './verticalSystem'
+
+export function syncFirstPersonCamera(
+  player: Soldier,
+  state: GameState,
+  camera: PerspectiveCamera,
+) {
+  camera.position.set(player.x, player.y + EYE_HEIGHT, player.z)
+  camera.rotation.order = 'YXZ'
+  camera.rotation.y = state.player.yaw
+  camera.rotation.x = state.player.pitch
+}
 
 export function updatePlayer(
   player: Soldier,
@@ -54,18 +64,9 @@ export function updatePlayer(
 
   tryMove(player, moveX, moveZ)
 
-  if (input.jump && state.player.onGround) {
-    state.player.velocityY = JUMP_VELOCITY
-    state.player.onGround = false
-  }
-
-  state.player.velocityY -= GRAVITY * dt
-  player.y += state.player.velocityY * dt
-  if (player.y <= 0) {
-    player.y = 0
-    state.player.velocityY = 0
-    state.player.onGround = true
-  }
+  updateSoldierVertical(player, input.jump, dt)
+  state.player.velocityY = player.velocityY
+  state.player.onGround = player.onGround
 
   player.yaw = state.player.yaw
   player.moveSpeed = len > 0 ? SOLDIER_SPEED : 0
@@ -79,16 +80,10 @@ export function updatePlayer(
     player.justShot || player.shootCooldown > SHOOT_COOLDOWN - 0.12,
   )
 
-  camera.position.set(player.x, player.y + EYE_HEIGHT, player.z)
-  camera.rotation.order = 'YXZ'
-  camera.rotation.y = state.player.yaw
-  camera.rotation.x = state.player.pitch
+  syncFirstPersonCamera(player, state, camera)
 }
 
 export function syncCameraToPlayer(player: Soldier | undefined, state: GameState, camera: PerspectiveCamera) {
   if (!player) return
-  camera.position.set(player.x, player.y + EYE_HEIGHT, player.z)
-  camera.rotation.order = 'YXZ'
-  camera.rotation.y = state.player.yaw
-  camera.rotation.x = state.player.pitch
+  syncFirstPersonCamera(player, state, camera)
 }

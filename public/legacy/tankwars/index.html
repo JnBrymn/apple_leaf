@@ -1,0 +1,932 @@
+<!-- 
+Bo's Tank Wars Simulator:
+- 100 red tanks vs 100 blue tanks battle simulation
+- Sliders to control team capabilities (speed, turn rate, weapon range, weapon power)
+- AI tanks that find nearest enemies and shoot at them
+- Real-time battle with health, fuel, and weapon cooldown systems
+- Winner declared when only one team remains
+- Tanks have state: position, direction, fuel, health, gun cooldown
+- Tanks have parameters: weapon power, armor, gun refresh time, bullet distance, speed
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🚗 TANK WARS SIMULATOR 🚗</title>
+    <style>
+        body {
+            margin: 0;
+            background: #1a1a1a;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        #canvas {
+            display: block;
+            border: 2px solid #333;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #444;
+            width: 300px;
+        }
+        
+        .team-controls {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .red-team {
+            border: 2px solid #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+        
+        .blue-team {
+            border: 2px solid #4444ff;
+            background: rgba(68, 68, 255, 0.1);
+        }
+        
+        .team-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .red-title {
+            color: #ff4444;
+        }
+        
+        .blue-title {
+            color: #4444ff;
+        }
+        
+        .slider-group {
+            margin-bottom: 10px;
+        }
+        
+        .slider-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        
+        .slider-group input {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        
+        .slider-value {
+            font-size: 10px;
+            color: #aaa;
+        }
+        
+        #startButton {
+            width: 100%;
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        
+        #startButton:hover {
+            background: #45a049;
+        }
+        
+        #startButton:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        #stats {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #444;
+            min-width: 200px;
+        }
+        
+        .fuel-warning {
+            color: #ffaa00;
+            font-weight: bold;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .red-stat {
+            color: #ff4444;
+        }
+        
+        .blue-stat {
+            color: #4444ff;
+        }
+        
+        #winner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 0 0 20px currentColor;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .red-winner {
+            color: #ff4444;
+        }
+        
+        .blue-winner {
+            color: #4444ff;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div id="controls">
+        <div class="team-controls red-team">
+            <div class="team-title red-title">🔴 RED TEAM</div>
+            <div class="slider-group">
+                <label>Speed:</label>
+                <input type="range" id="redSpeed" min="0.5" max="3" step="0.1" value="1.5">
+                <div class="slider-value" id="redSpeedValue">1.5</div>
+            </div>
+            <div class="slider-group">
+                <label>Turn Rate:</label>
+                <input type="range" id="redTurnRate" min="0.02" max="0.1" step="0.01" value="0.05">
+                <div class="slider-value" id="redTurnRateValue">0.05</div>
+            </div>
+            <div class="slider-group">
+                <label>Weapon Range:</label>
+                <input type="range" id="redRange" min="50" max="200" step="10" value="100">
+                <div class="slider-value" id="redRangeValue">100</div>
+            </div>
+            <div class="slider-group">
+                <label>Weapon Power:</label>
+                <input type="range" id="redPower" min="10" max="50" step="5" value="25">
+                <div class="slider-value" id="redPowerValue">25</div>
+            </div>
+            <div class="slider-group">
+                <label>Armor Strength:</label>
+                <input type="range" id="redArmor" min="50" max="150" step="10" value="100">
+                <div class="slider-value" id="redArmorValue">100</div>
+            </div>
+        </div>
+        
+        <div class="team-controls blue-team">
+            <div class="team-title blue-title">🔵 BLUE TEAM</div>
+            <div class="slider-group">
+                <label>Speed:</label>
+                <input type="range" id="blueSpeed" min="0.5" max="3" step="0.1" value="1.5">
+                <div class="slider-value" id="blueSpeedValue">1.5</div>
+            </div>
+            <div class="slider-group">
+                <label>Turn Rate:</label>
+                <input type="range" id="blueTurnRate" min="0.02" max="0.1" step="0.01" value="0.05">
+                <div class="slider-value" id="blueTurnRateValue">0.05</div>
+            </div>
+            <div class="slider-group">
+                <label>Weapon Range:</label>
+                <input type="range" id="blueRange" min="50" max="200" step="10" value="100">
+                <div class="slider-value" id="blueRangeValue">100</div>
+            </div>
+            <div class="slider-group">
+                <label>Weapon Power:</label>
+                <input type="range" id="bluePower" min="10" max="50" step="5" value="25">
+                <div class="slider-value" id="bluePowerValue">25</div>
+            </div>
+            <div class="slider-group">
+                <label>Armor Strength:</label>
+                <input type="range" id="blueArmor" min="50" max="150" step="10" value="100">
+                <div class="slider-value" id="blueArmorValue">100</div>
+            </div>
+        </div>
+        
+        <button id="startButton">🚀 START BATTLE!</button>
+    </div>
+    
+    <div id="stats">
+        <div class="stat-row">
+            <span>🔴 Red Tanks:</span>
+            <span class="red-stat" id="redCount">100</span>
+        </div>
+        <div class="stat-row">
+            <span>🔵 Blue Tanks:</span>
+            <span class="blue-stat" id="blueCount">100</span>
+        </div>
+        <div class="stat-row">
+            <span>⛽ Red Fuel:</span>
+            <span class="fuel-warning" id="redFuel">100</span>
+        </div>
+        <div class="stat-row">
+            <span>⛽ Blue Fuel:</span>
+            <span class="fuel-warning" id="blueFuel">100</span>
+        </div>
+        <div class="stat-row">
+            <span>⏱️ Time:</span>
+            <span id="battleTime">0:00</span>
+        </div>
+        <div class="stat-row">
+            <span>💥 Shots Fired:</span>
+            <span id="shotsFired">0</span>
+        </div>
+    </div>
+    
+    <div id="winner"></div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Game state
+        let tanks = [];
+        let bullets = [];
+        let fuelCans = [];
+        let gameRunning = false;
+        let startTime = 0;
+        let shotsFired = 0;
+        
+        // Tank class
+        class Tank {
+            constructor(x, y, team) {
+                this.x = x;
+                this.y = y;
+                this.theta = Math.random() * Math.PI * 2; // direction
+                this.team = team; // 'red' or 'blue'
+                this.health = 100;
+                this.fuel_level = 100;
+                this.gun_wait_time = 0;
+                
+                // Parameters (will be set from sliders)
+                this.weapon_hit_power = 25;
+                this.armor_strength = 100;
+                this.gun_refresh_time = 0.1;
+                this.bullet_distance = 100;
+                this.speed = 1.5;
+                this.turn_rate = 0.05;
+                
+                // AI state
+                this.target = null;
+                this.last_decision_time = 0;
+                this.wander_direction = Math.random() * Math.PI * 2;
+                this.wander_timer = 0;
+            }
+            
+            update() {
+                if (this.health <= 0) return;
+                
+                // Update gun cooldown
+                if (this.gun_wait_time > 0) {
+                    this.gun_wait_time -= 1/60; // Assuming 60 FPS
+                }
+                
+                // Find nearest enemy
+                this.findTarget();
+                
+                // Make AI decision
+                this.makeDecision();
+                
+                // Execute the chosen action
+                this.executeAction();
+            }
+            
+            findTarget() {
+                let nearestEnemy = null;
+                let nearestDistance = Infinity;
+                let nearestFuel = null;
+                let nearestFuelDistance = Infinity;
+                
+                // Find nearest enemy
+                tanks.forEach(tank => {
+                    if (tank.team !== this.team && tank.health > 0) {
+                        const dx = tank.x - this.x;
+                        const dy = tank.y - this.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < nearestDistance) {
+                            nearestDistance = distance;
+                            nearestEnemy = tank;
+                        }
+                    }
+                });
+                
+                // Find nearest fuel can
+                fuelCans.forEach(fuelCan => {
+                    const dx = fuelCan.x - this.x;
+                    const dy = fuelCan.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < nearestFuelDistance) {
+                        nearestFuelDistance = distance;
+                        nearestFuel = fuelCan;
+                    }
+                });
+                
+                // Calculate if we can reach fuel
+                let canReachFuel = false;
+                if (nearestFuel) {
+                    // Calculate fuel needed to reach fuel can
+                    const fuelNeeded = nearestFuelDistance / this.speed * 0.1; // 0.1 fuel per unit moved
+                    canReachFuel = this.fuel_level >= fuelNeeded;
+                }
+                
+                // Decide what to target based on fuel level and priorities
+                if (this.fuel_level < 20 && nearestFuel && canReachFuel) {
+                    // Very low on fuel and can reach fuel - prioritize fuel over enemies
+                    this.target = nearestFuel;
+                    this.targetType = 'fuel';
+                } else if (this.fuel_level < 40 && nearestFuel && canReachFuel) {
+                    // Low on fuel and can reach fuel - go for fuel
+                    this.target = nearestFuel;
+                    this.targetType = 'fuel';
+                } else if (nearestEnemy) {
+                    // Target enemy if we have enough fuel
+                    this.target = nearestEnemy;
+                    this.targetType = 'enemy';
+                } else if (nearestFuel && canReachFuel) {
+                    // No enemies, go for fuel if we can reach it
+                    this.target = nearestFuel;
+                    this.targetType = 'fuel';
+                } else {
+                    this.target = null;
+                    this.targetType = null;
+                }
+            }
+            
+            makeDecision() {
+                const now = Date.now();
+                if (now - this.last_decision_time < 100) return; // Update every 100ms
+                this.last_decision_time = now;
+                
+                // Determine what action to take
+                this.currentAction = this.decideAction();
+            }
+            
+            decideAction() {
+                if (this.target) {
+                    // Calculate angle to target
+                    const dx = this.target.x - this.x;
+                    const dy = this.target.y - this.y;
+                    const targetAngle = Math.atan2(dy, dx);
+                    
+                    // Calculate angle difference
+                    let angleDiff = targetAngle - this.theta;
+                    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                    
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (this.targetType === 'enemy' && this.target.health > 0) {
+                        // Combat logic
+                        let turnRate = 0;
+                        let speed = 0;
+                        let fire = false;
+                        
+                        if (distance <= this.bullet_distance && Math.abs(angleDiff) < 0.3) {
+                            // In range and aimed - stop and shoot
+                            turnRate = 0;
+                            speed = 0;
+                            fire = true;
+                        } else if (Math.abs(angleDiff) > 0.1) {
+                            // Not aimed - turn towards target
+                            turnRate = Math.min(this.turn_rate, Math.abs(angleDiff) * 2);
+                            speed = 0;
+                            fire = false;
+                        } else if (distance > this.bullet_distance * 0.8) {
+                            // Aimed but too far - move towards target
+                            turnRate = 0;
+                            speed = Math.min(this.speed, (distance - this.bullet_distance * 0.8) * 0.1);
+                            fire = false;
+                        } else {
+                            // Close enough, stop and wait
+                            turnRate = 0;
+                            speed = 0;
+                            fire = false;
+                        }
+                        
+                        return { turnRate: angleDiff > 0 ? turnRate : -turnRate, speed, fire };
+                        
+                    } else if (this.targetType === 'fuel') {
+                        // Fuel logic
+                        let turnRate = 0;
+                        let speed = 0;
+                        let fire = false;
+                        
+                        if (Math.abs(angleDiff) > 0.1) {
+                            // Not aimed at fuel - turn towards fuel
+                            turnRate = Math.min(this.turn_rate, Math.abs(angleDiff) * 2);
+                            speed = 0;
+                        } else {
+                            // Aimed at fuel - move towards fuel
+                            turnRate = 0;
+                            speed = this.speed;
+                        }
+                        
+                        return { turnRate: angleDiff > 0 ? turnRate : -turnRate, speed, fire };
+                    }
+                } else {
+                    // No target - wander
+                    this.wander_timer++;
+                    if (this.wander_timer > 60) {
+                        this.wander_direction = Math.random() * Math.PI * 2;
+                        this.wander_timer = 0;
+                    }
+                    
+                    let angleDiff = this.wander_direction - this.theta;
+                    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                    
+                    let turnRate = 0;
+                    let speed = 0;
+                    let fire = false;
+                    
+                    if (Math.abs(angleDiff) > 0.1) {
+                        // Turn towards wander direction
+                        turnRate = this.turn_rate * 0.5;
+                        speed = 0;
+                    } else {
+                        // Aimed in wander direction - move forward slowly
+                        turnRate = 0;
+                        speed = this.speed * 0.3;
+                    }
+                    
+                    return { turnRate: angleDiff > 0 ? turnRate : -turnRate, speed, fire };
+                }
+                
+                return { turnRate: 0, speed: 0, fire: false };
+            }
+            
+            executeAction() {
+                if (this.fuel_level <= 0) return;
+                
+                // Extract action values
+                const { turnRate, speed, fire } = this.currentAction;
+                
+                // Apply turn rate
+                this.theta += turnRate;
+                
+                // Apply speed (movement)
+                if (speed > 0) {
+                    this.x += Math.cos(this.theta) * speed;
+                    this.y += Math.sin(this.theta) * speed;
+                    
+                    // Wrap around screen
+                    if (this.x < 0) this.x = canvas.width;
+                    if (this.x > canvas.width) this.x = 0;
+                    if (this.y < 0) this.y = canvas.height;
+                    if (this.y > canvas.height) this.y = 0;
+                    
+                    // Check for fuel can collision
+                    fuelCans.forEach((fuelCan, index) => {
+                        if (fuelCan.checkCollision(this)) {
+                            // Collect fuel
+                            this.fuel_level = Math.min(100, this.fuel_level + fuelCan.fuelAmount);
+                            
+                            // Remove fuel can
+                            fuelCans.splice(index, 1);
+                            
+                            // Spawn new fuel can
+                            spawnFuelCan();
+                        }
+                    });
+                }
+                
+                // Handle firing
+                if (fire) {
+                    this.tryShoot();
+                }
+                
+                // Calculate fuel consumption based on velocity (speed + turn rate)
+                const velocity = Math.abs(speed) + Math.abs(turnRate);
+                this.fuel_level -= velocity * 0.1;
+            }
+            
+            tryShoot() {
+                if (this.gun_wait_time > 0 || !this.target || this.target.health <= 0) return;
+                
+                const dx = this.target.x - this.x;
+                const dy = this.target.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance <= this.bullet_distance) {
+                    // Calculate angle to target
+                    const targetAngle = Math.atan2(dy, dx);
+                    let angleDiff = targetAngle - this.theta;
+                    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                    
+                    // Shoot if roughly aimed at target (shooting action already checked this)
+                    this.shoot();
+                }
+            }
+            
+            shoot() {
+                if (this.gun_wait_time > 0) return;
+                
+                bullets.push(new Bullet(
+                    this.x + Math.cos(this.theta) * 20,
+                    this.y + Math.sin(this.theta) * 20,
+                    this.theta,
+                    this.team,
+                    this.weapon_hit_power,
+                    this.bullet_distance
+                ));
+                
+                this.gun_wait_time = this.gun_refresh_time;
+                shotsFired++;
+            }
+            
+            takeDamage(damage) {
+                const actualDamage = Math.max(1, damage - this.armor_strength * 0.1);
+                this.health -= actualDamage;
+            }
+            
+            draw() {
+                if (this.health <= 0) return;
+                
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.theta);
+                
+                // Tank body
+                ctx.fillStyle = this.team === 'red' ? '#ff4444' : '#4444ff';
+                ctx.fillRect(-15, -10, 30, 20);
+                
+                // Tank turret
+                ctx.fillStyle = this.team === 'red' ? '#cc0000' : '#0000cc';
+                ctx.fillRect(-8, -8, 16, 16);
+                
+                // Tank gun
+                ctx.fillStyle = '#333';
+                ctx.fillRect(0, -2, 20, 4);
+                
+                // Health bar
+                const healthBarWidth = 30;
+                const healthBarHeight = 4;
+                ctx.fillStyle = '#333';
+                ctx.fillRect(-healthBarWidth/2, -25, healthBarWidth, healthBarHeight);
+                ctx.fillStyle = this.health > 50 ? '#0f0' : this.health > 25 ? '#ff0' : '#f00';
+                ctx.fillRect(-healthBarWidth/2, -25, healthBarWidth * (this.health / 100), healthBarHeight);
+                
+                // Fuel bar
+                ctx.fillStyle = '#333';
+                ctx.fillRect(-healthBarWidth/2, -20, healthBarWidth, 2);
+                ctx.fillStyle = '#0ff';
+                ctx.fillRect(-healthBarWidth/2, -20, healthBarWidth * (this.fuel_level / 100), 2);
+                
+                ctx.restore();
+                
+                // Draw current action values
+                const { turnRate, speed, fire } = this.currentAction;
+                if (Math.abs(speed) > 0.01 || Math.abs(turnRate) > 0.001 || fire) {
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(this.x - 25, this.y - 40, 50, 25);
+                    ctx.fillStyle = '#aaa';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`S:${speed.toFixed(1)}`, this.x, this.y - 30);
+                    ctx.fillText(`T:${turnRate.toFixed(2)}`, this.x, this.y - 20);
+                    ctx.fillText(`F:${fire ? 'Y' : 'N'}`, this.x, this.y - 10);
+                    ctx.restore();
+                }
+            }
+        }
+        
+        // Fuel Can class
+        class FuelCan {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.fuelAmount = 50; // Amount of fuel this can provides
+                this.size = 15;
+                this.pulse = 0;
+            }
+            
+            update() {
+                this.pulse += 0.1;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Pulsing effect
+                const scale = 1 + Math.sin(this.pulse) * 0.2;
+                ctx.scale(scale, scale);
+                
+                // Fuel can body
+                ctx.fillStyle = '#ffaa00';
+                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                
+                // Fuel can top
+                ctx.fillStyle = '#cc8800';
+                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size/3);
+                
+                // Fuel symbol
+                ctx.fillStyle = '#ff0000';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('F', 0, 4);
+                
+                // Glow effect
+                ctx.shadowColor = '#ffaa00';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+            
+            checkCollision(tank) {
+                const dx = this.x - tank.x;
+                const dy = this.y - tank.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                return distance < this.size + 15; // Tank radius + fuel can radius
+            }
+        }
+        
+        // Bullet class
+        class Bullet {
+            constructor(x, y, angle, team, power, maxDistance) {
+                this.x = x;
+                this.y = y;
+                this.vx = Math.cos(angle) * 8;
+                this.vy = Math.sin(angle) * 8;
+                this.team = team;
+                this.power = power;
+                this.maxDistance = maxDistance;
+                this.distanceTraveled = 0;
+                this.startX = x;
+                this.startY = y;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.distanceTraveled = Math.sqrt(
+                    (this.x - this.startX) ** 2 + (this.y - this.startY) ** 2
+                );
+                
+                // Wrap around screen
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.fillStyle = this.team === 'red' ? '#ff6666' : '#6666ff';
+                ctx.shadowColor = this.team === 'red' ? '#ff0000' : '#0000ff';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            
+            checkCollisions() {
+                tanks.forEach(tank => {
+                    if (tank.health <= 0) return;
+                    
+                    const dx = this.x - tank.x;
+                    const dy = this.y - tank.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 15) {
+                        tank.takeDamage(this.power);
+                        return true; // Bullet hit something
+                    }
+                });
+                
+                return false;
+            }
+        }
+        
+        // Spawn fuel can function
+        function spawnFuelCan() {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            fuelCans.push(new FuelCan(x, y));
+        }
+        
+        // Initialize fuel cans
+        function initFuelCans() {
+            fuelCans = [];
+            for (let i = 0; i < 10; i++) {
+                spawnFuelCan();
+            }
+        }
+        
+        // Initialize sliders
+        function initSliders() {
+            const sliders = [
+                'redSpeed', 'redTurnRate', 'redRange', 'redPower', 'redArmor',
+                'blueSpeed', 'blueTurnRate', 'blueRange', 'bluePower', 'blueArmor'
+            ];
+            
+            sliders.forEach(id => {
+                const slider = document.getElementById(id);
+                const valueDisplay = document.getElementById(id + 'Value');
+                
+                slider.addEventListener('input', () => {
+                    valueDisplay.textContent = slider.value;
+                });
+            });
+        }
+        
+        // Start battle
+        function startBattle() {
+            if (gameRunning) return;
+            
+            gameRunning = true;
+            startTime = Date.now();
+            shotsFired = 0;
+            tanks = [];
+            bullets = [];
+            initFuelCans();
+            
+            // Get slider values
+            const redSpeed = parseFloat(document.getElementById('redSpeed').value);
+            const redTurnRate = parseFloat(document.getElementById('redTurnRate').value);
+            const redRange = parseFloat(document.getElementById('redRange').value);
+            const redPower = parseFloat(document.getElementById('redPower').value);
+            const redArmor = parseFloat(document.getElementById('redArmor').value);
+            
+            const blueSpeed = parseFloat(document.getElementById('blueSpeed').value);
+            const blueTurnRate = parseFloat(document.getElementById('blueTurnRate').value);
+            const blueRange = parseFloat(document.getElementById('blueRange').value);
+            const bluePower = parseFloat(document.getElementById('bluePower').value);
+            const blueArmor = parseFloat(document.getElementById('blueArmor').value);
+            
+            // Create red tanks
+            for (let i = 0; i < 100; i++) {
+                const tank = new Tank(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height,
+                    'red'
+                );
+                tank.speed = redSpeed;
+                tank.turn_rate = redTurnRate;
+                tank.bullet_distance = redRange;
+                tank.weapon_hit_power = redPower;
+                tank.armor_strength = redArmor;
+                tanks.push(tank);
+            }
+            
+            // Create blue tanks
+            for (let i = 0; i < 100; i++) {
+                const tank = new Tank(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height,
+                    'blue'
+                );
+                tank.speed = blueSpeed;
+                tank.turn_rate = blueTurnRate;
+                tank.bullet_distance = blueRange;
+                tank.weapon_hit_power = bluePower;
+                tank.armor_strength = blueArmor;
+                tanks.push(tank);
+            }
+            
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('winner').style.display = 'none';
+        }
+        
+        // Update stats
+        function updateStats() {
+            const redCount = tanks.filter(t => t.team === 'red' && t.health > 0).length;
+            const blueCount = tanks.filter(t => t.team === 'blue' && t.health > 0).length;
+            
+            // Count tanks with fuel
+            const redWithFuel = tanks.filter(t => t.team === 'red' && t.health > 0 && t.fuel_level > 0).length;
+            const blueWithFuel = tanks.filter(t => t.team === 'blue' && t.health > 0 && t.fuel_level > 0).length;
+            
+            document.getElementById('redCount').textContent = redCount;
+            document.getElementById('blueCount').textContent = blueCount;
+            document.getElementById('redFuel').textContent = redWithFuel;
+            document.getElementById('blueFuel').textContent = blueWithFuel;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('battleTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('shotsFired').textContent = shotsFired;
+            
+            // Check for winner conditions
+            if (redCount === 0 && blueCount > 0) {
+                declareWinner('blue');
+            } else if (blueCount === 0 && redCount > 0) {
+                declareWinner('red');
+            } else if (redWithFuel === 0 && blueWithFuel === 0) {
+                // All tanks are out of fuel - winner is team with most living tanks
+                if (redCount > blueCount) {
+                    declareWinner('red');
+                } else if (blueCount > redCount) {
+                    declareWinner('blue');
+                } else {
+                    declareWinner('tie');
+                }
+            }
+        }
+        
+        // Declare winner
+        function declareWinner(team) {
+            gameRunning = false;
+            const winner = document.getElementById('winner');
+            
+            if (team === 'red') {
+                winner.textContent = '🔴 RED TEAM WINS! 🔴';
+                winner.className = 'red-winner';
+            } else if (team === 'blue') {
+                winner.textContent = '🔵 BLUE TEAM WINS! 🔵';
+                winner.className = 'blue-winner';
+            } else {
+                winner.textContent = '🤝 IT\'S A TIE! 🤝';
+                winner.className = 'red-winner'; // Use red color for tie
+            }
+            
+            winner.style.display = 'block';
+            document.getElementById('startButton').disabled = false;
+        }
+        
+        // Animation loop
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            if (gameRunning) {
+                // Update tanks
+                tanks.forEach(tank => tank.update());
+                
+                // Update fuel cans
+                fuelCans.forEach(fuelCan => fuelCan.update());
+                
+                // Update bullets
+                bullets = bullets.filter(bullet => {
+                    bullet.update();
+                    bullet.draw();
+                    
+                    // Check for collisions
+                    if (bullet.checkCollisions()) {
+                        return false; // Remove bullet
+                    }
+                    
+                    // Remove bullets that have traveled too far
+                    return bullet.distanceTraveled < bullet.maxDistance;
+                });
+                
+                // Draw fuel cans
+                fuelCans.forEach(fuelCan => fuelCan.draw());
+                
+                // Draw tanks
+                tanks.forEach(tank => tank.draw());
+                
+                // Update stats
+                updateStats();
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Event listeners
+        document.getElementById('startButton').addEventListener('click', startBattle);
+        
+        // Initialize
+        initSliders();
+        animate();
+    </script>
+</body>
+</html>

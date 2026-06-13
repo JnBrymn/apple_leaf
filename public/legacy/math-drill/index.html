@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Drill</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #eee;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .screen { display: none; width: 100%; max-width: 420px; }
+    #leaderboardsScreen { max-width: 96%; margin-left: -18px; margin-right: -18px; padding-left: 8px; padding-right: 8px; }
+    .leaderboards-layout {
+      display: grid;
+      grid-template-columns: minmax(360px, 1fr) minmax(0, 1fr);
+      gap: 24px;
+      margin-top: 16px;
+      align-items: start;
+    }
+    @media (max-width: 700px) {
+      .leaderboards-layout { grid-template-columns: 1fr; }
+    }
+    .leaderboards-layout .col-left { min-width: 0; overflow: auto; }
+    .leaderboards-layout .col-right { min-width: 0; }
+    .screen.active { display: block; }
+    h1 { font-size: 1.8rem; margin-bottom: 8px; text-align: center; }
+    .sub { font-size: 0.95rem; color: #aaa; margin-bottom: 24px; text-align: center; }
+    .row { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-size: 0.9rem; color: #ccc; }
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1rem;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #222;
+      color: #fff;
+    }
+    .ops {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .ops button {
+      padding: 12px;
+      font-size: 1.2rem;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #2a2a4a;
+      color: #eee;
+      cursor: pointer;
+    }
+    .ops button:hover { background: #3a3a5a; }
+    .ops button.selected { border-color: #6c9; background: #2d4a2d; }
+    .game-modes { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+    .game-modes button {
+      padding: 14px 20px;
+      font-size: 1rem;
+      border: 2px solid #444;
+      border-radius: 8px;
+      background: #252545;
+      color: #eee;
+      cursor: pointer;
+    }
+    .game-modes button:hover { background: #353565; }
+    .game-modes button.selected { border-color: #6c9; background: #2d4a2d; }
+    .btn-big {
+      width: 100%;
+      padding: 16px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      background: #4a7c4a;
+      color: #fff;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    .btn-big:hover { background: #5a9c5a; }
+    .btn-big:disabled { opacity: 0.5; cursor: not-allowed; }
+    .problem { font-size: 2.2rem; text-align: center; margin: 24px 0; letter-spacing: 2px; }
+    .problem .op { color: #8cf; }
+    .wrong { color: #f66; font-size: 1.1rem; margin-top: 8px; text-align: center; }
+    .stats { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 1rem; color: #aaa; }
+    #countdownOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+    }
+    #countdownOverlay.show { display: flex; }
+    #countdownOverlay .countdown-text {
+      font-size: 2.5rem;
+      color: #fff;
+      text-align: center;
+      transition: opacity 0.35s ease;
+    }
+    #countdownOverlay .countdown-text.fade-out { opacity: 0; }
+    .scoreboard-list { background: #222; border-radius: 8px; padding: 12px; margin-top: 16px; max-height: 200px; overflow-y: auto; }
+    .scoreboard-list div { padding: 6px 0; border-bottom: 1px solid #333; }
+    .scoreboard-list div:last-child { border-bottom: none; }
+    .leaderboard-table { width: 100%; min-width: 340px; border-collapse: collapse; font-size: 0.9rem; }
+    .leaderboard-table th, .leaderboard-table td { padding: 8px 6px; text-align: left; border-bottom: 1px solid #333; }
+    .leaderboard-table th:first-child, .leaderboard-table td:first-child { min-width: 5.5em; white-space: nowrap; }
+    .leaderboard-table th:nth-child(2), .leaderboard-table td:nth-child(2) { min-width: 2.5em; }
+    .leaderboard-table th { color: #8cf; font-weight: 600; }
+    .leaderboard-table tbody tr:hover { background: #252545; }
+    .leaderboard-table tbody tr.selected { background: #2d4a2d; }
+    .leaderboard-table .btn-cell { padding: 6px 8px; white-space: nowrap; }
+    .leaderboard-table .btn-cell button { padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; border: 1px solid #555; background: #333; color: #eee; cursor: pointer; }
+    .leaderboard-table .btn-cell button:hover { background: #444; }
+    .leaderboard-table .btn-cell button.play-btn { background: #4a7c4a; border-color: #5a9c5a; }
+    .leaderboard-table .btn-cell button.play-btn:hover { background: #5a9c5a; }
+    #toastContainer { position: fixed; bottom: 24px; left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; z-index: 1000; }
+    .toast {
+      padding: 12px 20px;
+      border-radius: 10px;
+      background: #2a1a1a;
+      border: 1px solid #a44;
+      color: #f99;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      font-size: 0.95rem;
+      max-width: 90%;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <!--
+    Math drill game for kids:
+    - Operations: addition, subtraction, multiplication, division
+    - Config: min and max number for operands
+    - Game 1: Complete 15 problems as fast as you can (score = time in seconds)
+    - Game 2: How many problems in 30 seconds (score = count correct)
+    - Wrong answer = "Wrong", try again until correct (no time penalty, must get past problem)
+    - After game: scoreboard screen — enter name, score saved in browser (localStorage)
+  -->
+  <div id="startScreen" class="screen active">
+    <h1>Math Drill</h1>
+    <p class="sub">Pick an operation, number range, and game</p>
+    <div class="row">
+      <label>Operation</label>
+      <div class="ops">
+        <button type="button" data-op="add">+</button>
+        <button type="button" data-op="sub">−</button>
+        <button type="button" data-op="mul">×</button>
+        <button type="button" data-op="div">÷</button>
+      </div>
+    </div>
+    <div class="row">
+      <label>Min number</label>
+      <input type="number" id="minNum" value="1" min="0" max="99">
+    </div>
+    <div class="row">
+      <label>Max number</label>
+      <input type="number" id="maxNum" value="10" min="1" max="99">
+    </div>
+    <div class="row">
+      <label>Game</label>
+      <div class="game-modes">
+        <button type="button" data-mode="15">15 problems (race)</button>
+        <button type="button" data-mode="30">30 seconds (count)</button>
+      </div>
+    </div>
+    <button type="button" class="btn-big" id="startBtn">Start</button>
+    <button type="button" class="btn-big" id="seeLeaderboardsBtn" style="margin-top:8px; background:#444;">See leaderboards</button>
+  </div>
+  <div id="toastContainer"></div>
+
+  <div id="countdownOverlay">
+    <span id="countdownEl" class="countdown-text"></span>
+  </div>
+
+  <div id="gameScreen" class="screen">
+    <div class="stats">
+      <span id="gameStat1">—</span>
+      <span id="gameStat2">—</span>
+    </div>
+    <div id="problemEl" class="problem"></div>
+    <div class="row">
+      <input type="number" id="answerInput" placeholder="Your answer" autocomplete="off">
+    </div>
+    <button type="button" class="btn-big" id="submitBtn">Check</button>
+  </div>
+
+  <div id="scoreScreen" class="screen">
+    <h1>Score</h1>
+    <p class="sub" id="scoreSummary">—</p>
+    <div class="row">
+      <label>Your name</label>
+      <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+    </div>
+    <button type="button" class="btn-big" id="saveScoreBtn">Save score</button>
+    <div class="row">
+      <label>Leaderboard (this game)</label>
+      <div id="leaderboardEl" class="scoreboard-list"></div>
+    </div>
+    <button type="button" class="btn-big" id="playAgainBtn" style="margin-top:16px; background:#444;">Play again</button>
+  </div>
+
+  <div id="leaderboardsScreen" class="screen">
+    <h1>Leaderboards</h1>
+    <p class="sub">Pick a game to see its scores</p>
+    <div class="leaderboards-layout">
+      <div class="col-left">
+        <div id="leaderboardButtons" class="row"></div>
+      </div>
+      <div class="col-right">
+        <label id="selectedLeaderboardLabel">Select a game above</label>
+        <div id="leaderboardScroll" class="scoreboard-list" style="max-height:320px; margin-top:8px;"></div>
+      </div>
+    </div>
+    <button type="button" class="btn-big" id="backFromLeaderboardsBtn" style="margin-top:16px; background:#444;">Back</button>
+  </div>
+
+  <script>
+    (function () {
+      const startScreen = document.getElementById('startScreen');
+      const gameScreen = document.getElementById('gameScreen');
+      const scoreScreen = document.getElementById('scoreScreen');
+      const leaderboardsScreen = document.getElementById('leaderboardsScreen');
+      const minNumEl = document.getElementById('minNum');
+      const maxNumEl = document.getElementById('maxNum');
+      const answerInput = document.getElementById('answerInput');
+      const problemEl = document.getElementById('problemEl');
+      const countdownEl = document.getElementById('countdownEl');
+      const gameStat1 = document.getElementById('gameStat1');
+      const gameStat2 = document.getElementById('gameStat2');
+
+      let op = 'add';
+      let minN = 1, maxN = 10;
+      let gameMode = 15; // 15 problems or 30 seconds
+      let problemCount = 0;
+      let correctCount = 0;
+      let startTime = 0;
+      let endTime = 0;
+      let timerId = null;
+      let displayTimerId = null; // live timer for 15-problem game
+      let currentA = 0, currentB = 0, currentAnswer = 0;
+      let storageKey = '';
+      let usedProblemKeys = new Set();
+      let toastTimeout = null;
+
+      function runCountdown(callback) {
+        const overlay = document.getElementById('countdownOverlay');
+        const el = countdownEl;
+        overlay.classList.add('show');
+        el.classList.remove('fade-out');
+        el.textContent = 'Ready';
+        setTimeout(() => {
+          el.classList.add('fade-out');
+          setTimeout(() => {
+            el.classList.remove('fade-out');
+            el.textContent = 'Set';
+            setTimeout(() => {
+              el.classList.add('fade-out');
+              setTimeout(() => {
+                el.classList.remove('fade-out');
+                el.textContent = 'Go';
+                setTimeout(() => {
+                  el.classList.add('fade-out');
+                  setTimeout(() => {
+                    overlay.classList.remove('show');
+                    el.classList.remove('fade-out');
+                    callback();
+                  }, 350);
+                }, 700);
+              }, 350);
+            }, 700);
+          }, 350);
+        }, 700);
+      }
+
+      function showToast(message, durationMs) {
+        if (toastTimeout) clearTimeout(toastTimeout);
+        const container = document.getElementById('toastContainer');
+        container.innerHTML = '';
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.textContent = message;
+        container.appendChild(el);
+        requestAnimationFrame(() => el.classList.add('show'));
+        toastTimeout = setTimeout(() => {
+          el.classList.remove('show');
+          setTimeout(() => el.remove(), 300);
+          toastTimeout = null;
+        }, durationMs);
+      }
+
+      function rand(min, max) {
+        return min + Math.floor(Math.random() * (max - min + 1));
+      }
+
+      function problemKey(a, b, opType) {
+        if (opType === 'add' || opType === 'mul') return Math.min(a, b) + ',' + Math.max(a, b);
+        if (opType === 'sub') return a + ',' + b; // big, small
+        return a + ',' + b; // div: dividend, divisor
+      }
+
+      function countUniqueProblems(o, minVal, maxVal) {
+        const range = maxVal - minVal;
+        if (range < 0) return 0;
+        if (o === 'div') return (range + 1) * (range + 1);
+        return Math.floor((range + 1) * (range + 2) / 2);
+      }
+
+      function makeProblem() {
+        const needUnique = usedProblemKeys.size < 999;
+        for (let tries = 0; tries < 300; tries++) {
+          const a = rand(minN, maxN);
+          const b = rand(minN, maxN);
+          let p, key;
+          if (op === 'add') {
+            key = problemKey(a, b, 'add');
+            if (needUnique && usedProblemKeys.has(key)) continue;
+            p = { a, b, answer: a + b, text: `${a} + ${b} = ?` };
+          } else if (op === 'sub') {
+            const big = Math.max(a, b), small = Math.min(a, b);
+            key = problemKey(big, small, 'sub');
+            if (needUnique && usedProblemKeys.has(key)) continue;
+            p = { a: big, b: small, answer: big - small, text: `${big} − ${small} = ?` };
+          } else if (op === 'mul') {
+            key = problemKey(a, b, 'mul');
+            if (needUnique && usedProblemKeys.has(key)) continue;
+            p = { a, b, answer: a * b, text: `${a} × ${b} = ?` };
+          } else {
+            const divisor = rand(minN, maxN);
+            const answer = rand(minN, maxN);
+            const dividend = answer * divisor;
+            key = dividend + ',' + divisor;
+            if (needUnique && usedProblemKeys.has(key)) continue;
+            p = { a: dividend, b: divisor, answer, text: `${dividend} ÷ ${divisor} = ?` };
+          }
+          if (needUnique) usedProblemKeys.add(key);
+          return p;
+        }
+        const a = rand(minN, maxN);
+        const b = rand(minN, maxN);
+        if (op === 'add') return { a, b, answer: a + b, text: `${a} + ${b} = ?` };
+        if (op === 'sub') {
+          const big = Math.max(a, b), small = Math.min(a, b);
+          return { a: big, b: small, answer: big - small, text: `${big} − ${small} = ?` };
+        }
+        if (op === 'mul') return { a, b, answer: a * b, text: `${a} × ${b} = ?` };
+        const divisor = rand(minN, maxN);
+        const answer = rand(minN, maxN);
+        return { a: answer * divisor, b: divisor, answer, text: `${answer * divisor} ÷ ${divisor} = ?` };
+      }
+
+      function showScreen(screen) {
+        startScreen.classList.remove('active');
+        gameScreen.classList.remove('active');
+        scoreScreen.classList.remove('active');
+        if (leaderboardsScreen) leaderboardsScreen.classList.remove('active');
+        screen.classList.add('active');
+      }
+
+      document.querySelectorAll('.ops button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.ops button').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          op = btn.dataset.op;
+        });
+      });
+      document.querySelector('.ops button[data-op="add"]').classList.add('selected');
+
+      document.querySelectorAll('.game-modes button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.game-modes button').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          gameMode = parseInt(btn.dataset.mode, 10);
+        });
+      });
+      document.querySelector('.game-modes button[data-mode="15"]').classList.add('selected');
+
+      function startGame() {
+        minN = Math.max(0, parseInt(minNumEl.value, 10) || 1);
+        maxN = Math.max(minN, Math.min(99, parseInt(maxNumEl.value, 10) || 10));
+        minNumEl.value = minN;
+        maxNumEl.value = maxN;
+
+        const unique = countUniqueProblems(op, minN, maxN);
+        if (unique < 15) {
+          const range = maxN - minN;
+          const need = op === 'div' ? 'Max - min must be at least 3' : 'Max - min must be at least 4';
+          showToast('Not enough unique problems (need 15). ' + need + '.', 5000);
+          return;
+        }
+
+        usedProblemKeys = new Set();
+        problemCount = 0;
+        correctCount = 0;
+        answerInput.value = '';
+        storageKey = `math_drill_${op}_${minN}_${maxN}_${gameMode}`;
+
+        showScreen(gameScreen);
+        answerInput.focus();
+
+        if (gameMode === 15) {
+          gameStat1.textContent = 'Problem 0 of 15';
+          gameStat2.textContent = 'Time: 0.0 s';
+          startTime = null;
+          runCountdown(() => {
+            startTime = Date.now();
+            nextProblem();
+            if (displayTimerId) clearInterval(displayTimerId);
+            displayTimerId = setInterval(() => {
+              if (!startTime) return;
+              const elapsed = (Date.now() - startTime) / 1000;
+              gameStat2.textContent = 'Time: ' + elapsed.toFixed(1) + ' s';
+            }, 100);
+          });
+        } else {
+          gameStat1.textContent = 'Correct: 0';
+          gameStat2.textContent = 'Time left: 30';
+          let timeLeft = 30;
+          runCountdown(() => {
+            startTime = Date.now();
+            nextProblem();
+            timerId = setInterval(() => {
+              timeLeft--;
+              gameStat2.textContent = 'Time left: ' + timeLeft;
+              if (timeLeft <= 0) {
+                clearInterval(timerId);
+                endTime = Date.now();
+                endGame();
+              }
+            }, 1000);
+          });
+        }
+      }
+
+      function nextProblem() {
+        if (gameMode === 15 && problemCount >= 15) {
+          endTime = Date.now();
+          endGame();
+          return;
+        }
+        const p = makeProblem();
+        currentA = p.a;
+        currentB = p.b;
+        currentAnswer = p.answer;
+        problemEl.textContent = p.text;
+        answerInput.value = '';
+        answerInput.focus();
+      }
+
+      function onCorrect() {
+        correctCount++;
+        if (gameMode === 15) {
+          problemCount++;
+          const elapsed = (Date.now() - startTime) / 1000;
+          gameStat1.textContent = `Problem ${problemCount} of 15`;
+          gameStat2.textContent = `Time: ${elapsed.toFixed(1)} s`;
+          if (problemCount >= 15) {
+            endTime = Date.now();
+            endGame();
+            return;
+          }
+        } else {
+          gameStat1.textContent = 'Correct: ' + correctCount;
+        }
+        nextProblem();
+      }
+
+      function endGame() {
+        if (timerId) clearInterval(timerId);
+        if (displayTimerId) clearInterval(displayTimerId);
+        displayTimerId = null;
+        const summaryEl = document.getElementById('scoreSummary');
+        if (gameMode === 15) {
+          const secs = ((endTime - startTime) / 1000).toFixed(1);
+          summaryEl.textContent = `You did 15 problems in ${secs} seconds!`;
+          window._lastScore = { value: parseFloat(secs), better: 'lower' };
+        } else {
+          summaryEl.textContent = `You got ${correctCount} correct in 30 seconds!`;
+          window._lastScore = { value: correctCount, better: 'higher' };
+        }
+        renderLeaderboard();
+        const nameEl = document.getElementById('playerName');
+        const saveBtn = document.getElementById('saveScoreBtn');
+        nameEl.value = '';
+        nameEl.disabled = false;
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save score';
+        showScreen(scoreScreen);
+      }
+
+      function checkAnswer() {
+        const raw = answerInput.value.trim();
+        const num = parseInt(raw, 10);
+        if (raw === '' || isNaN(num)) return;
+        if (num !== currentAnswer) {
+          showToast('Wrong! Try again.', 2500);
+          answerInput.value = '';
+          answerInput.focus();
+          return;
+        }
+        onCorrect();
+      }
+
+      document.getElementById('startBtn').addEventListener('click', startGame);
+      document.getElementById('submitBtn').addEventListener('click', checkAnswer);
+      answerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAnswer(); });
+
+      function getScores() {
+        try {
+          const s = localStorage.getItem(storageKey);
+          return s ? JSON.parse(s) : [];
+        } catch (_) { return []; }
+      }
+
+      function saveScore() {
+        const nameEl = document.getElementById('playerName');
+        const saveBtn = document.getElementById('saveScoreBtn');
+        if (saveBtn.disabled) return;
+        const name = nameEl.value.trim();
+        if (!name) return;
+        const score = window._lastScore;
+        if (!score) return;
+        nameEl.disabled = true;
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saved';
+        const list = getScores();
+        list.push({ name, score: score.value, date: Date.now() });
+        if (score.better === 'lower') list.sort((a, b) => a.score - b.score);
+        else list.sort((a, b) => b.score - a.score);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(list));
+        } catch (_) {}
+        renderLeaderboard();
+        nameEl.value = '';
+      }
+
+      function renderLeaderboard() {
+        const list = getScores();
+        const better = window._lastScore && window._lastScore.better;
+        const unit = gameMode === 15 ? ' s' : '';
+        const el = document.getElementById('leaderboardEl');
+        if (!list.length) {
+          el.innerHTML = '<div>No scores yet. Save yours!</div>';
+          return;
+        }
+        el.innerHTML = list.map((r, i) =>
+          `${i + 1}. ${r.name}: ${r.score}${unit}`
+        ).join('<br>');
+      }
+
+      const opNames = { add: 'Addition', sub: 'Subtraction', mul: 'Multiplication', div: 'Division' };
+      const modeNames = { 15: '15 problems (race)', 30: '30 seconds (count)' };
+
+      function getAllLeaderboardKeys() {
+        const keys = [];
+        try {
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('math_drill_')) keys.push(k);
+          }
+        } catch (_) {}
+        return keys;
+      }
+
+      function parseStorageKey(k) {
+        const parts = k.replace('math_drill_', '').split('_');
+        if (parts.length !== 4) return null;
+        return { op: parts[0], min: +parts[1], max: +parts[2], mode: +parts[3] };
+      }
+
+      function getScoresByKey(key) {
+        try {
+          const s = localStorage.getItem(key);
+          return s ? JSON.parse(s) : [];
+        } catch (_) { return []; }
+      }
+
+      function setStartParams(parsed) {
+        op = parsed.op;
+        gameMode = parsed.mode;
+        minNumEl.value = String(parsed.min);
+        maxNumEl.value = String(parsed.max);
+        document.querySelectorAll('.ops button').forEach(b => {
+          b.classList.toggle('selected', b.dataset.op === op);
+        });
+        document.querySelectorAll('.game-modes button').forEach(b => {
+          b.classList.toggle('selected', parseInt(b.dataset.mode, 10) === gameMode);
+        });
+      }
+
+      function showLeaderboardForKey(key, parsed, tr) {
+        document.querySelectorAll('#leaderboardTable tbody tr').forEach(r => r.classList.remove('selected'));
+        if (tr) tr.classList.add('selected');
+        const label = `${opNames[parsed.op] || parsed.op}, ${parsed.min}–${parsed.max} — ${modeNames[parsed.mode] || parsed.mode}`;
+        document.getElementById('selectedLeaderboardLabel').textContent = label;
+        const list = getScoresByKey(key);
+        const isTime = parsed.mode === 15;
+        const unit = isTime ? ' s' : '';
+        const sorted = isTime ? [...list].sort((a, b) => a.score - b.score) : [...list].sort((a, b) => b.score - a.score);
+        const el = document.getElementById('leaderboardScroll');
+        if (!sorted.length) el.innerHTML = '<div>No scores yet.</div>';
+        else el.innerHTML = sorted.map((r, i) => `${i + 1}. ${r.name}: ${r.score}${unit}`).join('<br>');
+      }
+
+      function renderLeaderboardsPage() {
+        const keys = getAllLeaderboardKeys();
+        const withCount = keys.map(k => {
+          const list = getScoresByKey(k);
+          const parsed = parseStorageKey(k);
+          if (!parsed) return null;
+          const isTime = parsed.mode === 15;
+          const sorted = isTime ? [...list].sort((a, b) => a.score - b.score) : [...list].sort((a, b) => b.score - a.score);
+          const best = sorted[0];
+          const unit = isTime ? ' s' : '';
+          const bestText = best ? `${best.score}${unit}` : '—';
+          return { key: k, count: list.length, parsed, bestText };
+        }).filter(Boolean);
+        withCount.sort((a, b) => b.count - a.count);
+        const container = document.getElementById('leaderboardButtons');
+        container.innerHTML = '';
+        if (!withCount.length) {
+          document.getElementById('selectedLeaderboardLabel').textContent = 'No leaderboards yet. Play a game to create one!';
+          document.getElementById('leaderboardScroll').innerHTML = '';
+          return;
+        }
+        const table = document.createElement('table');
+        table.id = 'leaderboardTable';
+        table.className = 'leaderboard-table';
+        table.innerHTML = '<thead><tr><th>Operation</th><th>Min</th><th>Max</th><th>Game</th><th>Best</th><th>Count</th><th class="btn-cell">Show</th><th class="btn-cell">Play</th></tr></thead><tbody></tbody>';
+        const tbody = table.querySelector('tbody');
+        withCount.forEach(({ key, parsed, bestText, count }) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${opNames[parsed.op] || parsed.op}</td><td>${parsed.min}</td><td>${parsed.max}</td><td>${modeNames[parsed.mode] || parsed.mode}</td><td>${bestText}</td><td>${count}</td><td class="btn-cell"></td><td class="btn-cell"></td>`;
+          const showBtn = document.createElement('button');
+          showBtn.textContent = 'Show';
+          showBtn.type = 'button';
+          showBtn.addEventListener('click', () => showLeaderboardForKey(key, parsed, tr));
+          const playBtn = document.createElement('button');
+          playBtn.textContent = 'Play';
+          playBtn.type = 'button';
+          playBtn.className = 'play-btn';
+          playBtn.addEventListener('click', () => {
+            setStartParams(parsed);
+            startGame();
+          });
+          tr.cells[6].appendChild(showBtn);
+          tr.cells[7].appendChild(playBtn);
+          tbody.appendChild(tr);
+        });
+        container.appendChild(table);
+      }
+
+      document.getElementById('seeLeaderboardsBtn').addEventListener('click', () => {
+        renderLeaderboardsPage();
+        showScreen(leaderboardsScreen);
+      });
+      document.getElementById('backFromLeaderboardsBtn').addEventListener('click', () => showScreen(startScreen));
+
+      document.getElementById('saveScoreBtn').addEventListener('click', saveScore);
+      document.getElementById('playAgainBtn').addEventListener('click', () => showScreen(startScreen));
+    })();
+  </script>
+</body>
+</html>

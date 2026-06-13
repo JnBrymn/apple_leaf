@@ -1,4 +1,4 @@
-import { Mesh, MeshStandardMaterial, Scene, SphereGeometry, Vector3 } from 'three'
+import { Mesh, MeshStandardMaterial, Scene, SphereGeometry, Vector3, type Group } from 'three'
 import {
   BULLET_HIT_RADIUS,
   BULLET_MAX_RANGE,
@@ -11,7 +11,8 @@ import {
 } from '../engine/constants'
 import type { Bullet, GameState, Soldier, Team } from '../engine/types'
 import { syncSoldierTransform } from '../entities/soldier'
-import { overlapsObstacle } from '../world/obstacles'
+import { overlapsSolidAtHeight } from '../world/obstacles'
+import { spawnAidKit } from './aidKitSystem'
 
 export { SHOOT_RANGE }
 
@@ -100,6 +101,8 @@ export function killSoldier(
   bullet: Bullet,
   hitPoint: Vector3,
   bulletImpulse: Vector3,
+  aidKitTemplate: Group | null,
+  nextAidKitId: () => number,
 ) {
   soldier.alive = false
 
@@ -109,11 +112,11 @@ export function killSoldier(
   syncSoldierTransform(soldier)
   soldier.rig.updateAnimation(0, soldier.moveSpeed, soldier.justShot)
 
-  if (soldier.isPlayer) {
-    soldier.rig.root.visible = true
-  }
-
   soldier.rig.activateRagdoll(scene, bulletImpulse, hitPoint)
+
+  if (aidKitTemplate) {
+    spawnAidKit(scene, aidKitTemplate, state.aidKits, nextAidKitId, soldier.x, soldier.y, soldier.z)
+  }
 
   const shooter = state.soldiers.find((s) => s.id === bullet.shooterId)
   if (shooter?.team === 'blue' && soldier.team === 'red') {
@@ -121,7 +124,13 @@ export function killSoldier(
   }
 }
 
-export function updateBullets(state: GameState, scene: Scene, dt: number) {
+export function updateBullets(
+  state: GameState,
+  scene: Scene,
+  dt: number,
+  aidKitTemplate: Group | null,
+  nextAidKitId: () => number,
+) {
   const { soldiers, bullets } = state
   const hitPoint = new Vector3()
   const bulletImpulse = new Vector3()
@@ -145,7 +154,7 @@ export function updateBullets(state: GameState, scene: Scene, dt: number) {
       continue
     }
 
-    if (overlapsObstacle(bullet.x, bullet.z, 0.05)) {
+    if (overlapsSolidAtHeight(bullet.x, bullet.z, bullet.y, 0.05)) {
       bullet.alive = false
       continue
     }
@@ -165,7 +174,7 @@ export function updateBullets(state: GameState, scene: Scene, dt: number) {
       bullet.alive = false
 
       if (soldier.health <= 0) {
-        killSoldier(state, scene, soldier, bullet, hitPoint, bulletImpulse)
+        killSoldier(state, scene, soldier, bullet, hitPoint, bulletImpulse, aidKitTemplate, nextAidKitId)
       }
       break
     }

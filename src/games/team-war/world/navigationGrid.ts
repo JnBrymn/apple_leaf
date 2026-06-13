@@ -1,7 +1,7 @@
 import { Grid } from 'pathfinding'
 import { BODY_RADIUS, NAV_CELL_SIZE } from '../engine/constants'
 import type { PathWaypoint } from '../engine/types'
-import { getPlayableHalfExtents, overlapsObstacle } from './obstacles'
+import { getPlayableHalfExtents, isNavWalkable } from './obstacles'
 
 export class NavigationGrid {
   readonly cols: number
@@ -21,7 +21,7 @@ export class NavigationGrid {
     for (let col = 0; col < this.cols; col++) {
       for (let row = 0; row < this.rows; row++) {
         const { x, z } = this.cellToWorld(col, row)
-        const walkable = !overlapsObstacle(x, z, BODY_RADIUS * 0.85)
+        const walkable = isNavWalkable(x, z, BODY_RADIUS * 0.85)
         this.grid.setWalkableAt(col, row, walkable)
       }
     }

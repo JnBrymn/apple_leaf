@@ -1,0 +1,2177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Circle of Life - Choice Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 700px;
+            width: 90%;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(45deg, #ff0000, #002fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .gender-choice {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .gender-btn {
+            padding: 20px 40px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            backdrop-filter: blur(5px);
+        }
+
+        .gender-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .gender-btn.selected {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            transform: scale(1.05);
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 10px;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+
+        .name-suggestions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .name-suggestion {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .name-suggestion:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .choice-btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+            text-align: left;
+            backdrop-filter: blur(5px);
+        }
+
+        .choice-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(10px);
+        }
+
+        .character-display {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        @keyframes sparkle {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(0deg);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.5) rotate(180deg);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0) rotate(360deg);
+            }
+        }
+
+        .character-avatar {
+            font-size: 4em;
+            margin: 20px 0;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        .pixel-character {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            background: #ffdbac;
+            border: 2px solid #000;
+            position: relative;
+            margin: 20px 0;
+            image-rendering: pixelated;
+        }
+
+        .pixel-character.baby {
+            width: 50px;
+            height: 50px;
+            border-radius: 0;
+        }
+
+        .pixel-character.child {
+            width: 55px;
+            height: 55px;
+            border-radius: 0;
+        }
+
+        .pixel-character.adult {
+            width: 60px;
+            height: 60px;
+            border-radius: 0;
+        }
+
+        .pixel-character.old {
+            width: 55px;
+            height: 55px;
+            border-radius: 0;
+        }
+
+        .pixel-eyes {
+            position: absolute;
+            top: 15px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 0 10px;
+        }
+
+        .pixel-eye {
+            width: 6px;
+            height: 6px;
+            background: #000;
+            border-radius: 0;
+        }
+
+        .pixel-mouth {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 10px;
+            background: #ff6b9d;
+            border-radius: 0;
+        }
+
+        .pixel-mouth.small {
+            width: 10px;
+            height: 6px;
+        }
+
+        .pixel-mouth.large {
+            width: 20px;
+            height: 12px;
+        }
+
+        .pixel-hair {
+            position: absolute;
+            top: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 45px;
+            height: 12px;
+            background: #8b4513;
+            border-radius: 0;
+        }
+
+        .pixel-hair.blonde {
+            background: #f4d03f;
+        }
+
+        .pixel-hair.black {
+            background: #000;
+        }
+
+        .pixel-hair.red {
+            background: #e74c3c;
+        }
+
+        .pixel-hair.gray {
+            background: #95a5a6;
+        }
+
+        .pixel-hair.white {
+            background: #ecf0f1;
+        }
+
+        .pixel-nose {
+            position: absolute;
+            top: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: #000;
+            border-radius: 0;
+        }
+
+        .pixel-skull {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            border: 2px solid #000;
+            margin: 20px auto;
+        }
+
+        .skull-eye {
+            position: absolute;
+            top: 15px;
+            width: 12px;
+            height: 12px;
+            background: #000;
+            border-radius: 0;
+        }
+
+        .skull-eye.left {
+            left: 10px;
+        }
+
+        .skull-eye.right {
+            right: 10px;
+        }
+
+        .skull-nose {
+            position: absolute;
+            top: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            background: #000;
+            border-radius: 0;
+        }
+
+        .skull-teeth {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 12px;
+            background: #fff;
+            border: 2px solid #000;
+            border-radius: 0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .life-events {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .event {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #4ecdc4;
+        }
+
+        .age {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            transition: width 0.3s ease;
+        }
+
+        .story-text {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .ending-screen {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .ending-title {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+        }
+
+        .ending-description {
+            font-size: 1.3em;
+            line-height: 1.8;
+            margin: 20px 0;
+        }
+
+        .life-summary {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen active">
+            <h1>🌟 The Circle of Life 🌟</h1>
+            <p>Welcome to your life journey! Every choice you make will shape your destiny and lead to different endings.</p>
+            <button class="btn" onclick="startGame()">Begin Your Life</button>
+        </div>
+
+        <!-- Gender Selection Screen -->
+        <div id="gender-screen" class="screen">
+            <h1>👶 Choose Your Gender</h1>
+            <p>Are you a boy or a girl?</p>
+            <div class="gender-choice">
+                <button class="gender-btn" onclick="selectGender('boy')">👦 Boy</button>
+                <button class="gender-btn" onclick="selectGender('girl')">👧 Girl</button>
+            </div>
+        </div>
+
+        <!-- Name Selection Screen -->
+        <div id="name-screen" class="screen">
+            <h1>📝 Choose Your Name</h1>
+            <p>What should we call you?</p>
+            <input type="text" id="name-input" class="name-input" placeholder="Type your name here..." maxlength="20">
+            <p>Or pick from these cool names:</p>
+            <div class="name-suggestions" id="name-suggestions"></div>
+            <button class="btn" onclick="confirmName()">Continue</button>
+        </div>
+
+        <!-- Life Choice Screen -->
+        <div id="life-screen" class="screen">
+            <h1>🌍 Your Life Journey</h1>
+            <div class="character-display">
+                <div id="character-avatar-container">
+                    <canvas id="character-canvas" width="240" height="240" style="image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; border: 4px solid #333; background: linear-gradient(135deg, #f8f8f8 0%, #e8e8e8 50%, #d8d8d8 100%); border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);"></canvas>
+                    <div id="particle-container" style="position: absolute; top: 0; left: 0; width: 240px; height: 240px; pointer-events: none;"></div>
+                </div>
+                <h2 id="character-name">Name</h2>
+                <div class="age" id="character-age">Age: 0</div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <h3>Health</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="health-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <h3>Happiness</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="happiness-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <h3>Intelligence</h3>
+                    <div class="progress-fill" id="intelligence-bar" style="width: 50%"></div>
+                </div>
+                <div class="stat">
+                    <h3>Strength</h3>
+                    <div class="progress-fill" id="strength-bar" style="width: 30%"></div>
+                </div>
+            </div>
+
+            <div class="story-text" id="story-text">
+                🌟 You were born! Welcome to the world!
+            </div>
+
+            <div id="choices-container">
+                <!-- Choices will be added here -->
+            </div>
+
+            <div class="life-events" id="life-events">
+                <div class="event">🌟 You were born! Welcome to the world!</div>
+            </div>
+        </div>
+
+        <!-- Ending Screen -->
+        <div id="ending-screen" class="screen">
+            <div class="ending-screen">
+                <div class="ending-title" id="ending-title">Your Life Story</div>
+                <div class="ending-description" id="ending-description">
+                    Your life journey has come to an end. Here's what happened...
+                </div>
+                <div class="life-summary" id="life-summary">
+                    <!-- Life summary will be added here -->
+                </div>
+                <button class="btn" onclick="restartGame()">Live Another Life</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            gender: null,
+            name: '',
+            age: 0,
+            health: 100,
+            happiness: 100,
+            intelligence: 50,
+            strength: 30,
+            lifePath: [],
+            choices: [],
+            deathType: null
+        };
+
+        // Name suggestions
+        const boyNames = ['Alex', 'Max', 'Sam', 'Jordan', 'Riley', 'Casey', 'Morgan', 'Taylor', 'Avery', 'Quinn', 'Blake', 'Drew', 'Cameron', 'Logan', 'Mason', 'Ethan', 'Noah', 'Liam', 'Oliver', 'Elijah'];
+        const girlNames = ['Emma', 'Olivia', 'Ava', 'Isabella', 'Sophia', 'Charlotte', 'Mia', 'Amelia', 'Harper', 'Evelyn', 'Abigail', 'Emily', 'Elizabeth', 'Sofia', 'Madison', 'Avery', 'Ella', 'Scarlett', 'Grace', 'Chloe'];
+        const neutralNames = ['River', 'Sky', 'Phoenix', 'Rowan', 'Sage', 'Indigo', 'Ocean', 'Storm', 'Rain', 'Winter', 'Autumn', 'Summer', 'Spring', 'Dawn', 'Dusk', 'Twilight', 'Zen', 'Peace', 'Hope', 'Joy'];
+
+        // Life scenarios with choices
+        const lifeScenarios = {
+            0: {
+                story: "🌟 You were born! Your parents are overjoyed. What kind of baby are you?",
+                choices: [
+                    { text: "😴 Quiet and peaceful - you sleep through the night", effects: { happiness: 10, health: 5 } },
+                    { text: "😄 Happy and giggly - you love to smile at everyone", effects: { happiness: 15, health: 10 } },
+                    { text: "🤔 Curious and alert - you observe everything around you", effects: { intelligence: 15, happiness: 5 } }
+                ]
+            },
+            1: {
+                story: "🎂 You're turning 1! Your parents want to celebrate. What do you want to do?",
+                choices: [
+                    { text: "🎈 Have a big party with lots of people", effects: { happiness: 20, health: -5 } },
+                    { text: "🍰 Have a small family celebration", effects: { happiness: 15, health: 10 } },
+                    { text: "🎁 Just play with your new toys quietly", effects: { happiness: 10, intelligence: 10 } }
+                ]
+            },
+            2: {
+                story: "🚶‍♂️ You're learning to walk! How do you approach this new skill?",
+                choices: [
+                    { text: "🏃‍♂️ Run everywhere - you're fearless!", effects: { strength: 15, health: -10 } },
+                    { text: "🚶‍♂️ Take careful steps - you're cautious", effects: { health: 15, strength: 5 } },
+                    { text: "🤔 Study how others walk first", effects: { intelligence: 15, strength: 5 } }
+                ]
+            },
+            3: {
+                story: "🎨 You're starting to show interests. What catches your attention?",
+                choices: [
+                    { text: "🎨 Art and drawing - you love colors!", effects: { happiness: 15, intelligence: 10 } },
+                    { text: "📚 Books and stories - you want to read!", effects: { intelligence: 20, happiness: 5 } },
+                    { text: "⚽ Sports and running - you're very active!", effects: { strength: 20, health: 10 } }
+                ]
+            },
+            4: {
+                story: "🏫 It's time to start preschool! How do you feel about meeting new friends?",
+                choices: [
+                    { text: "😊 Excited! You can't wait to make friends", effects: { happiness: 20, intelligence: 10 } },
+                    { text: "😰 Nervous but you'll try your best", effects: { intelligence: 15, happiness: 5 } },
+                    { text: "😤 You'd rather stay home and play alone", effects: { happiness: -10, intelligence: 5 } }
+                ]
+            },
+            5: {
+                story: "🎓 Kindergarten starts! What kind of student do you want to be?",
+                choices: [
+                    { text: "📖 Study hard and get good grades", effects: { intelligence: 25, happiness: 5 } },
+                    { text: "🎮 Have fun and make lots of friends", effects: { happiness: 25, intelligence: 5 } },
+                    { text: "🏃‍♂️ Focus on sports and being active", effects: { strength: 25, health: 10 } }
+                ]
+            },
+            6: {
+                story: "🏊‍♂️ Your parents want you to learn a new skill. What interests you?",
+                choices: [
+                    { text: "🏊‍♂️ Swimming - you love the water!", effects: { strength: 20, health: 15 } },
+                    { text: "🎹 Music lessons - you want to play an instrument", effects: { intelligence: 20, happiness: 15 } },
+                    { text: "🎨 Art classes - you love being creative", effects: { happiness: 20, intelligence: 10 } }
+                ]
+            },
+            7: {
+                story: "📚 You're reading chapter books now! What kind of stories do you love?",
+                choices: [
+                    { text: "🧙‍♂️ Fantasy and magic - dragons and wizards!", effects: { intelligence: 20, happiness: 15 } },
+                    { text: "🔬 Science and space - how things work!", effects: { intelligence: 25, happiness: 10 } },
+                    { text: "🏆 Adventure and heroes - exciting stories!", effects: { happiness: 20, strength: 10 } }
+                ]
+            },
+            8: {
+                story: "🎯 You're getting older and need to choose your main interest. What's your passion?",
+                choices: [
+                    { text: "🎨 Become an artist - you love creating", effects: { happiness: 25, intelligence: 10 } },
+                    { text: "🔬 Become a scientist - you love learning", effects: { intelligence: 30, happiness: 5 } },
+                    { text: "🏆 Become an athlete - you love sports", effects: { strength: 30, health: 15 } }
+                ]
+            },
+            9: {
+                story: "💻 Technology is everywhere! How do you want to use computers?",
+                choices: [
+                    { text: "🎮 Play video games and have fun", effects: { happiness: 20, intelligence: 5 } },
+                    { text: "💻 Learn to code and build things", effects: { intelligence: 25, happiness: 10 } },
+                    { text: "📱 Use them for school and learning", effects: { intelligence: 20, happiness: 5 } }
+                ]
+            },
+            10: {
+                story: "🎉 Double digits! You're growing up fast. What's your biggest dream?",
+                choices: [
+                    { text: "🌟 To be famous and well-known", effects: { happiness: 20, intelligence: 10 } },
+                    { text: "💡 To invent something amazing", effects: { intelligence: 30, happiness: 10 } },
+                    { text: "🏆 To be the best at something", effects: { strength: 25, happiness: 15 } }
+                ]
+            },
+            11: {
+                story: "🚗 You're crossing the street when you see a car speeding toward a little kid. What do you do?",
+                choices: [
+                    { text: "🦸‍♂️ Rush to save the child!", effects: { strength: 50, health: -100 }, death: "hero_death" },
+                    { text: "📞 Call for help and stay safe", effects: { intelligence: 20, happiness: -10 } },
+                    { text: "😱 Freeze in fear", effects: { health: -20, happiness: -30 } }
+                ]
+            },
+            12: {
+                story: "🏥 You're feeling very sick. The doctors say it's serious. How do you face this?",
+                choices: [
+                    { text: "💪 Fight with all your strength", effects: { health: 30, strength: 20 } },
+                    { text: "😔 Give up hope", effects: { health: -50, happiness: -50 }, death: "illness" },
+                    { text: "🩺 Trust the doctors completely", effects: { health: 20, intelligence: 15 } }
+                ]
+            },
+            13: {
+                story: "🌊 You're at the beach and see someone drowning far out. What do you do?",
+                choices: [
+                    { text: "🏊‍♂️ Swim out to save them", effects: { strength: 40, health: -80 }, death: "accident" },
+                    { text: "🆘 Get a lifeguard", effects: { intelligence: 25, happiness: 10 } },
+                    { text: "😰 Panic and run away", effects: { happiness: -20, health: -10 } }
+                ]
+            },
+            14: {
+                story: "🌙 You're walking home late at night through a dark alley. Suddenly, you hear footsteps behind you...",
+                choices: [
+                    { text: "🏃‍♂️ Run as fast as you can", effects: { strength: 30, health: -10 } },
+                    { text: "😱 Hide and stay quiet", effects: { intelligence: 20, health: -5 } },
+                    { text: "❓ Turn around to see who it is", effects: { health: -100 }, death: "mysterious" }
+                ]
+            },
+            15: {
+                story: "🎢 You're at an amusement park. The roller coaster looks dangerous but exciting!",
+                choices: [
+                    { text: "🎢 Ride the dangerous coaster!", effects: { happiness: 30, health: -100 }, death: "accident" },
+                    { text: "🎡 Choose a safer ride", effects: { happiness: 15, health: 10 } },
+                    { text: "🍿 Just watch and eat snacks", effects: { happiness: 10, health: 5 } }
+                ]
+            },
+            16: {
+                story: "🏔️ You're hiking and see a beautiful but dangerous cliff. The view would be amazing...",
+                choices: [
+                    { text: "📸 Get closer for the perfect photo", effects: { happiness: 20, health: -100 }, death: "accident" },
+                    { text: "👀 Admire from a safe distance", effects: { happiness: 15, health: 10 } },
+                    { text: "🚶‍♂️ Turn back to safety", effects: { health: 20, intelligence: 10 } }
+                ]
+            },
+            17: {
+                story: "🔥 There's a fire in your building! You can hear people trapped inside. What do you do?",
+                choices: [
+                    { text: "🚒 Run in to save them!", effects: { strength: 50, health: -100 }, death: "hero_death" },
+                    { text: "📞 Call the fire department", effects: { intelligence: 25, happiness: 5 } },
+                    { text: "🏃‍♂️ Get out and stay safe", effects: { health: 20, happiness: -15 } }
+                ]
+            },
+            18: {
+                story: "🌪️ A tornado is approaching! You have to make a quick decision about where to take shelter.",
+                choices: [
+                    { text: "🏠 Stay in your house", effects: { health: -100 }, death: "accident" },
+                    { text: "🏢 Go to the basement", effects: { health: 30, intelligence: 20 } },
+                    { text: "🚗 Try to drive away", effects: { health: -50, strength: 20 } }
+                ]
+            },
+            19: {
+                story: "🦈 You're swimming in the ocean when you see a shark fin nearby. What's your reaction?",
+                choices: [
+                    { text: "🏊‍♂️ Swim toward it to investigate", effects: { strength: 30, health: -100 }, death: "accident" },
+                    { text: "🏃‍♂️ Swim back to shore quickly", effects: { strength: 25, health: 10 } },
+                    { text: "😱 Float and stay very still", effects: { intelligence: 20, health: 5 } }
+                ]
+            },
+            20: {
+                story: "🎓 High school graduation! What's your next big step?",
+                choices: [
+                    { text: "🎓 Go to college and study hard", effects: { intelligence: 30, happiness: 10 } },
+                    { text: "💼 Start working and earn money", effects: { strength: 25, happiness: 15 } },
+                    { text: "🌍 Take a gap year to travel", effects: { happiness: 25, intelligence: 15 } }
+                ]
+            },
+            21: {
+                story: "🎓 College life begins! How do you want to spend your time?",
+                choices: [
+                    { text: "📚 Focus on academics and research", effects: { intelligence: 35, happiness: 5 } },
+                    { text: "🎉 Join clubs and make friends", effects: { happiness: 30, intelligence: 10 } },
+                    { text: "🏃‍♂️ Play sports and stay active", effects: { strength: 30, health: 15 } }
+                ]
+            },
+            22: {
+                story: "💼 You're looking for your first real job. What field interests you?",
+                choices: [
+                    { text: "💻 Technology and computers", effects: { intelligence: 30, happiness: 15 } },
+                    { text: "🎨 Creative arts and design", effects: { happiness: 30, intelligence: 10 } },
+                    { text: "🏢 Business and management", effects: { strength: 25, intelligence: 20 } }
+                ]
+            },
+            23: {
+                story: "🏠 You're thinking about where to live. What's your dream?",
+                choices: [
+                    { text: "🏙️ Big city life with excitement", effects: { happiness: 25, intelligence: 15 } },
+                    { text: "🏡 Quiet suburb with space", effects: { health: 20, happiness: 20 } },
+                    { text: "🌊 Beach town by the ocean", effects: { happiness: 30, health: 10 } }
+                ]
+            },
+            24: {
+                story: "💕 You meet someone special. How do you feel about relationships?",
+                choices: [
+                    { text: "💘 Fall in love and get serious", effects: { happiness: 35, health: 10 } },
+                    { text: "😊 Stay friends and take it slow", effects: { happiness: 20, intelligence: 15 } },
+                    { text: "🎯 Focus on your career first", effects: { intelligence: 25, strength: 15 } }
+                ]
+            },
+            25: {
+                story: "🎉 Quarter century! You're officially an adult. What's your priority?",
+                choices: [
+                    { text: "💰 Build wealth and save money", effects: { intelligence: 25, happiness: 10 } },
+                    { text: "🌍 Experience life and travel", effects: { happiness: 30, intelligence: 15 } },
+                    { text: "💪 Build your career and skills", effects: { strength: 30, intelligence: 20 } }
+                ]
+            },
+            26: {
+                story: "🏠 You're ready to buy your first home. What type appeals to you?",
+                choices: [
+                    { text: "🏢 Modern apartment in the city", effects: { happiness: 25, intelligence: 15 } },
+                    { text: "🏡 House with a big yard", effects: { health: 25, happiness: 20 } },
+                    { text: "🏘️ Townhouse in a community", effects: { happiness: 20, health: 15 } }
+                ]
+            },
+            27: {
+                story: "💼 Your career is taking off! What's your leadership style?",
+                choices: [
+                    { text: "👑 Take charge and lead teams", effects: { strength: 30, intelligence: 15 } },
+                    { text: "🤝 Collaborate and build consensus", effects: { happiness: 25, intelligence: 20 } },
+                    { text: "🎯 Focus on individual excellence", effects: { intelligence: 30, strength: 10 } }
+                ]
+            },
+            28: {
+                story: "🌍 You have the opportunity to work abroad. What do you choose?",
+                choices: [
+                    { text: "✈️ Take the international job", effects: { happiness: 30, intelligence: 25 } },
+                    { text: "🏠 Stay close to family", effects: { happiness: 20, health: 15 } },
+                    { text: "🔄 Find a remote work option", effects: { intelligence: 20, happiness: 15 } }
+                ]
+            },
+            29: {
+                story: "🎓 You're considering going back to school. What motivates you?",
+                choices: [
+                    { text: "📚 Pursue a higher degree", effects: { intelligence: 35, happiness: 10 } },
+                    { text: "🎨 Learn creative skills", effects: { happiness: 30, intelligence: 15 } },
+                    { text: "💼 Get professional certification", effects: { intelligence: 25, strength: 15 } }
+                ]
+            },
+            30: {
+                story: "🎉 The big 3-0! How do you feel about turning thirty?",
+                choices: [
+                    { text: "😊 Excited for new adventures", effects: { happiness: 30, intelligence: 15 } },
+                    { text: "😰 Worried about getting older", effects: { health: -10, happiness: -10 } },
+                    { text: "🎯 Focused on your goals", effects: { strength: 25, intelligence: 20 } }
+                ]
+            },
+            31: {
+                story: "👶 Your friends are starting families. How do you feel about having kids?",
+                choices: [
+                    { text: "👶 Ready to start a family", effects: { happiness: 35, health: -5 } },
+                    { text: "😊 Happy for friends, not ready", effects: { happiness: 20, intelligence: 15 } },
+                    { text: "🎯 Focus on career and travel", effects: { intelligence: 25, strength: 20 } }
+                ]
+            },
+            32: {
+                story: "🏥 You need to make a health decision. How do you approach it?",
+                choices: [
+                    { text: "💪 Take proactive steps", effects: { health: 30, strength: 20 } },
+                    { text: "🩺 Get professional advice", effects: { intelligence: 25, health: 15 } },
+                    { text: "😰 Ignore it and hope for best", effects: { health: -20, happiness: -10 } }
+                ]
+            },
+            33: {
+                story: "💼 You're offered a big promotion. What's your approach?",
+                choices: [
+                    { text: "🚀 Take the challenge", effects: { strength: 30, intelligence: 20 } },
+                    { text: "🤔 Negotiate for better terms", effects: { intelligence: 25, happiness: 15 } },
+                    { text: "😰 Decline, it's too stressful", effects: { happiness: 15, health: 10 } }
+                ]
+            },
+            34: {
+                story: "🏠 You're thinking about moving to a new city. What attracts you?",
+                choices: [
+                    { text: "🌆 Big city opportunities", effects: { intelligence: 25, happiness: 20 } },
+                    { text: "🏔️ Mountain town lifestyle", effects: { health: 25, happiness: 15 } },
+                    { text: "🌊 Coastal city by the sea", effects: { happiness: 30, health: 10 } }
+                ]
+            },
+            35: {
+                story: "🎯 Mid-thirties! You're established in your career. What's next?",
+                choices: [
+                    { text: "💼 Climb the corporate ladder", effects: { strength: 30, intelligence: 15 } },
+                    { text: "🚀 Start your own business", effects: { intelligence: 30, happiness: 20 } },
+                    { text: "🌍 Change careers entirely", effects: { happiness: 25, intelligence: 20 } }
+                ]
+            },
+            36: {
+                story: "💕 You're in a serious relationship. How do you see the future?",
+                choices: [
+                    { text: "💍 Ready to get married", effects: { happiness: 35, health: 10 } },
+                    { text: "😊 Happy as things are", effects: { happiness: 25, intelligence: 15 } },
+                    { text: "🤔 Need more time to decide", effects: { intelligence: 20, happiness: 10 } }
+                ]
+            },
+            37: {
+                story: "🏠 You're thinking about buying a bigger home. What's important?",
+                choices: [
+                    { text: "🏡 Space for a family", effects: { happiness: 30, health: 15 } },
+                    { text: "💰 Investment potential", effects: { intelligence: 25, happiness: 10 } },
+                    { text: "🎨 Perfect location and style", effects: { happiness: 25, intelligence: 15 } }
+                ]
+            },
+            38: {
+                story: "🎓 You want to learn something new. What interests you?",
+                choices: [
+                    { text: "🎨 Creative hobby or art", effects: { happiness: 30, intelligence: 15 } },
+                    { text: "💻 New technology skills", effects: { intelligence: 30, happiness: 10 } },
+                    { text: "🏃‍♂️ Physical fitness challenge", effects: { strength: 35, health: 20 } }
+                ]
+            },
+            39: {
+                story: "🌍 You have the chance to live abroad for a year. What do you do?",
+                choices: [
+                    { text: "✈️ Take the adventure", effects: { happiness: 35, intelligence: 25 } },
+                    { text: "🏠 Stay in your comfort zone", effects: { happiness: 15, health: 10 } },
+                    { text: "🔄 Plan a shorter trip", effects: { happiness: 25, intelligence: 15 } }
+                ]
+            },
+            40: {
+                story: "🎉 The big 4-0! How do you feel about middle age?",
+                choices: [
+                    { text: "😊 Excited for new chapter", effects: { happiness: 30, intelligence: 15 } },
+                    { text: "😰 Worried about aging", effects: { health: -15, happiness: -15 } },
+                    { text: "🎯 Focused on achievements", effects: { strength: 25, intelligence: 20 } }
+                ]
+            },
+            41: {
+                story: "👶 You're thinking about having children. What's your decision?",
+                choices: [
+                    { text: "👶 Ready to become a parent", effects: { happiness: 40, health: -10 } },
+                    { text: "😊 Happy without children", effects: { happiness: 25, intelligence: 20 } },
+                    { text: "🤔 Still deciding", effects: { intelligence: 20, happiness: 10 } }
+                ]
+            },
+            42: {
+                story: "💼 You're at a career crossroads. What direction do you take?",
+                choices: [
+                    { text: "🚀 Pursue executive position", effects: { strength: 30, intelligence: 20 } },
+                    { text: "🎯 Focus on work-life balance", effects: { happiness: 30, health: 20 } },
+                    { text: "🔄 Change to a new field", effects: { intelligence: 25, happiness: 20 } }
+                ]
+            },
+            43: {
+                story: "🏥 You need to make lifestyle changes. How do you approach it?",
+                choices: [
+                    { text: "💪 Make major health changes", effects: { health: 35, strength: 25 } },
+                    { text: "🩺 Get professional guidance", effects: { intelligence: 25, health: 20 } },
+                    { text: "😰 Make small adjustments", effects: { health: 15, happiness: 10 } }
+                ]
+            },
+            44: {
+                story: "🏠 You're thinking about downsizing. What's your priority?",
+                choices: [
+                    { text: "💰 Financial freedom", effects: { intelligence: 25, happiness: 15 } },
+                    { text: "🌍 Location and lifestyle", effects: { happiness: 30, health: 15 } },
+                    { text: "🏡 Keep current home", effects: { happiness: 20, health: 10 } }
+                ]
+            },
+            45: {
+                story: "🎓 You want to mentor others. How do you share your knowledge?",
+                choices: [
+                    { text: "👨‍🏫 Teach or coach", effects: { intelligence: 30, happiness: 25 } },
+                    { text: "📚 Write or create content", effects: { intelligence: 25, happiness: 20 } },
+                    { text: "🤝 Volunteer in community", effects: { happiness: 30, health: 15 } }
+                ]
+            },
+            46: {
+                story: "🌍 You're planning your dream vacation. Where do you go?",
+                choices: [
+                    { text: "🗺️ Exotic international trip", effects: { happiness: 35, intelligence: 20 } },
+                    { text: "🏔️ Adventure in nature", effects: { health: 30, happiness: 25 } },
+                    { text: "🏖️ Relaxing beach getaway", effects: { happiness: 30, health: 20 } }
+                ]
+            },
+            47: {
+                story: "💼 You're considering early retirement. What's your plan?",
+                choices: [
+                    { text: "💰 Save aggressively", effects: { intelligence: 30, happiness: 10 } },
+                    { text: "🌍 Travel and explore", effects: { happiness: 35, intelligence: 15 } },
+                    { text: "🎯 Keep working longer", effects: { strength: 25, intelligence: 20 } }
+                ]
+            },
+            48: {
+                story: "🎨 You want to pursue a creative passion. What do you choose?",
+                choices: [
+                    { text: "🎨 Visual arts or crafts", effects: { happiness: 35, intelligence: 15 } },
+                    { text: "🎵 Music or performance", effects: { happiness: 30, intelligence: 20 } },
+                    { text: "✍️ Writing or storytelling", effects: { intelligence: 30, happiness: 20 } }
+                ]
+            },
+            49: {
+                story: "🏥 You're thinking about preventive health. What's your approach?",
+                choices: [
+                    { text: "💪 Comprehensive health plan", effects: { health: 40, strength: 25 } },
+                    { text: "🩺 Regular check-ups", effects: { health: 25, intelligence: 20 } },
+                    { text: "😰 Hope for the best", effects: { health: 10, happiness: 5 } }
+                ]
+            },
+            50: {
+                story: "🎉 Half a century! How do you celebrate turning 50?",
+                choices: [
+                    { text: "🎉 Big party with friends", effects: { happiness: 35, health: 10 } },
+                    { text: "🌍 Special trip or adventure", effects: { happiness: 30, intelligence: 20 } },
+                    { text: "😊 Quiet reflection", effects: { intelligence: 25, happiness: 20 } }
+                ]
+            },
+            51: {
+                story: "👶 Your children are growing up. How do you parent?",
+                choices: [
+                    { text: "👨‍👩‍👧‍👦 Very involved and supportive", effects: { happiness: 35, health: 10 } },
+                    { text: "😊 Balanced approach", effects: { happiness: 25, intelligence: 20 } },
+                    { text: "🎯 Focus on independence", effects: { intelligence: 25, strength: 15 } }
+                ]
+            },
+            52: {
+                story: "💼 You're at the peak of your career. What's your legacy?",
+                choices: [
+                    { text: "🏆 Build a lasting company", effects: { strength: 35, intelligence: 25 } },
+                    { text: "🤝 Mentor the next generation", effects: { intelligence: 30, happiness: 25 } },
+                    { text: "💰 Focus on financial security", effects: { intelligence: 25, happiness: 15 } }
+                ]
+            },
+            53: {
+                story: "🏠 You're thinking about your forever home. What matters most?",
+                choices: [
+                    { text: "🏡 Perfect location and size", effects: { happiness: 35, health: 15 } },
+                    { text: "💰 Investment and value", effects: { intelligence: 25, happiness: 15 } },
+                    { text: "🌍 Community and neighbors", effects: { happiness: 30, intelligence: 15 } }
+                ]
+            },
+            54: {
+                story: "🌍 You want to make a difference. How do you give back?",
+                choices: [
+                    { text: "🤝 Volunteer regularly", effects: { happiness: 35, health: 15 } },
+                    { text: "💰 Donate to causes", effects: { intelligence: 25, happiness: 20 } },
+                    { text: "🎯 Use your skills to help", effects: { intelligence: 30, happiness: 25 } }
+                ]
+            },
+            55: {
+                story: "🎓 You're thinking about learning something new. What interests you?",
+                choices: [
+                    { text: "💻 Technology and digital skills", effects: { intelligence: 35, happiness: 15 } },
+                    { text: "🎨 Creative arts and hobbies", effects: { happiness: 35, intelligence: 15 } },
+                    { text: "🏃‍♂️ Physical fitness and sports", effects: { strength: 35, health: 25 } }
+                ]
+            },
+            56: {
+                story: "💼 You're considering a career change. What motivates you?",
+                choices: [
+                    { text: "🎯 Pursue your passion", effects: { happiness: 35, intelligence: 20 } },
+                    { text: "💰 Better financial security", effects: { intelligence: 25, happiness: 15 } },
+                    { text: "🌍 Work-life balance", effects: { happiness: 30, health: 20 } }
+                ]
+            },
+            57: {
+                story: "🏥 You're focusing on health and wellness. What's your priority?",
+                choices: [
+                    { text: "💪 Physical fitness and strength", effects: { health: 40, strength: 30 } },
+                    { text: "🧠 Mental health and mindfulness", effects: { intelligence: 30, happiness: 25 } },
+                    { text: "🩺 Preventive medical care", effects: { health: 30, intelligence: 25 } }
+                ]
+            },
+            58: {
+                story: "🌍 You're planning for retirement. What's your vision?",
+                choices: [
+                    { text: "🌍 Travel and adventure", effects: { happiness: 40, intelligence: 20 } },
+                    { text: "🏠 Quiet home life", effects: { happiness: 30, health: 20 } },
+                    { text: "🎯 Continue working part-time", effects: { intelligence: 25, strength: 20 } }
+                ]
+            },
+            59: {
+                story: "🎉 Almost 60! How do you feel about this milestone?",
+                choices: [
+                    { text: "😊 Excited for new chapter", effects: { happiness: 35, intelligence: 15 } },
+                    { text: "😰 Worried about aging", effects: { health: -15, happiness: -15 } },
+                    { text: "🎯 Focused on achievements", effects: { strength: 25, intelligence: 20 } }
+                ]
+            },
+            60: {
+                story: "🎉 The big 6-0! How do you want to spend your sixties?",
+                choices: [
+                    { text: "🌍 Travel and explore the world", effects: { happiness: 40, intelligence: 20 } },
+                    { text: "🏠 Enjoy quiet home life", effects: { happiness: 30, health: 25 } },
+                    { text: "🎯 Stay active and working", effects: { strength: 30, intelligence: 20 } }
+                ]
+            },
+            61: {
+                story: "👶 Your children are adults now. How do you support them?",
+                choices: [
+                    { text: "💰 Financial support when needed", effects: { intelligence: 25, happiness: 20 } },
+                    { text: "🤝 Emotional support and advice", effects: { happiness: 35, intelligence: 20 } },
+                    { text: "🎯 Let them be independent", effects: { strength: 25, intelligence: 15 } }
+                ]
+            },
+            62: {
+                story: "🏥 You're thinking about long-term health. What's your approach?",
+                choices: [
+                    { text: "💪 Stay very active", effects: { health: 40, strength: 30 } },
+                    { text: "🩺 Regular medical check-ups", effects: { health: 30, intelligence: 25 } },
+                    { text: "😰 Hope for the best", effects: { health: 10, happiness: 5 } }
+                ]
+            },
+            63: {
+                story: "🎓 You want to keep learning. What interests you now?",
+                choices: [
+                    { text: "📚 Take college courses", effects: { intelligence: 35, happiness: 20 } },
+                    { text: "🎨 Creative hobbies", effects: { happiness: 35, intelligence: 15 } },
+                    { text: "🏃‍♂️ Physical activities", effects: { strength: 30, health: 25 } }
+                ]
+            },
+            64: {
+                story: "💼 You're thinking about retirement. What's your plan?",
+                choices: [
+                    { text: "💰 Retire early with savings", effects: { intelligence: 30, happiness: 25 } },
+                    { text: "🎯 Work a few more years", effects: { strength: 25, intelligence: 20 } },
+                    { text: "🌍 Part-time work and travel", effects: { happiness: 35, intelligence: 20 } }
+                ]
+            },
+            65: {
+                story: "🎉 Official retirement age! How do you want to retire?",
+                choices: [
+                    { text: "🌍 Travel and adventure", effects: { happiness: 40, intelligence: 20 } },
+                    { text: "🏠 Quiet home life", effects: { happiness: 30, health: 25 } },
+                    { text: "🎯 Keep working part-time", effects: { strength: 25, intelligence: 20 } }
+                ]
+            },
+            66: {
+                story: "🏠 You're thinking about downsizing. What's your priority?",
+                choices: [
+                    { text: "💰 Financial freedom", effects: { intelligence: 25, happiness: 20 } },
+                    { text: "🌍 Better location", effects: { happiness: 30, health: 15 } },
+                    { text: "🏡 Stay in current home", effects: { happiness: 25, health: 20 } }
+                ]
+            },
+            67: {
+                story: "🌍 You have time to travel. Where do you want to go?",
+                choices: [
+                    { text: "🗺️ International adventures", effects: { happiness: 40, intelligence: 25 } },
+                    { text: "🏔️ National parks", effects: { health: 35, happiness: 30 } },
+                    { text: "🏖️ Relaxing beach trips", effects: { happiness: 35, health: 20 } }
+                ]
+            },
+            68: {
+                story: "🎨 You want to pursue creative interests. What do you choose?",
+                choices: [
+                    { text: "🎨 Painting or crafts", effects: { happiness: 40, intelligence: 15 } },
+                    { text: "🎵 Music or dance", effects: { happiness: 35, intelligence: 20 } },
+                    { text: "✍️ Writing or poetry", effects: { intelligence: 35, happiness: 20 } }
+                ]
+            },
+            69: {
+                story: "🏥 You're focusing on health. What's most important?",
+                choices: [
+                    { text: "💪 Physical fitness", effects: { health: 40, strength: 30 } },
+                    { text: "🧠 Mental sharpness", effects: { intelligence: 35, happiness: 20 } },
+                    { text: "😊 Emotional well-being", effects: { happiness: 40, health: 15 } }
+                ]
+            },
+            70: {
+                story: "🎉 The big 7-0! How do you feel about being 70?",
+                choices: [
+                    { text: "😊 Grateful and happy", effects: { happiness: 40, intelligence: 15 } },
+                    { text: "😰 Worried about health", effects: { health: -20, happiness: -20 } },
+                    { text: "🎯 Still setting goals", effects: { strength: 25, intelligence: 20 } }
+                ]
+            },
+            71: {
+                story: "👶 You're a grandparent now! How do you want to be involved?",
+                choices: [
+                    { text: "👨‍👩‍👧‍👦 Very involved", effects: { happiness: 45, health: 10 } },
+                    { text: "😊 Occasional visits", effects: { happiness: 30, intelligence: 15 } },
+                    { text: "🎯 Let parents handle it", effects: { strength: 20, intelligence: 15 } }
+                ]
+            },
+            72: {
+                story: "🏠 You're thinking about where to live. What's best?",
+                choices: [
+                    { text: "🏠 Stay in your home", effects: { happiness: 30, health: 20 } },
+                    { text: "🏘️ Move to retirement community", effects: { happiness: 35, health: 25 } },
+                    { text: "👨‍👩‍👧‍👦 Live near family", effects: { happiness: 40, health: 15 } }
+                ]
+            },
+            73: {
+                story: "🎓 You want to keep your mind sharp. How do you do it?",
+                choices: [
+                    { text: "📚 Read and study", effects: { intelligence: 40, happiness: 20 } },
+                    { text: "🎮 Play brain games", effects: { intelligence: 30, happiness: 25 } },
+                    { text: "🤝 Social activities", effects: { happiness: 35, intelligence: 20 } }
+                ]
+            },
+            74: {
+                story: "🏥 You need to make health decisions. How do you approach it?",
+                choices: [
+                    { text: "💪 Stay active and fight", effects: { health: 35, strength: 25 } },
+                    { text: "🩺 Follow doctor's advice", effects: { health: 30, intelligence: 25 } },
+                    { text: "😰 Avoid medical care", effects: { health: -30, happiness: -20 } }
+                ]
+            },
+            75: {
+                story: "🎉 Three quarters of a century! How do you celebrate?",
+                choices: [
+                    { text: "🎉 Big family celebration", effects: { happiness: 45, health: 10 } },
+                    { text: "🌍 Special trip", effects: { happiness: 40, intelligence: 20 } },
+                    { text: "😊 Quiet reflection", effects: { intelligence: 30, happiness: 25 } }
+                ]
+            },
+            76: {
+                story: "🌍 You still want to travel. What's your style?",
+                choices: [
+                    { text: "🗺️ International trips", effects: { happiness: 40, intelligence: 25 } },
+                    { text: "🚗 Road trips", effects: { health: 30, happiness: 35 } },
+                    { text: "🏠 Stay close to home", effects: { happiness: 30, health: 25 } }
+                ]
+            },
+            77: {
+                story: "🎨 You have time for hobbies. What do you enjoy?",
+                choices: [
+                    { text: "🎨 Creative arts", effects: { happiness: 40, intelligence: 20 } },
+                    { text: "🌱 Gardening", effects: { health: 35, happiness: 30 } },
+                    { text: "📚 Reading and writing", effects: { intelligence: 35, happiness: 25 } }
+                ]
+            },
+            78: {
+                story: "🏥 You're thinking about your health. What's your priority?",
+                choices: [
+                    { text: "💪 Stay physically active", effects: { health: 40, strength: 25 } },
+                    { text: "🧠 Keep mentally sharp", effects: { intelligence: 40, happiness: 20 } },
+                    { text: "😊 Maintain happiness", effects: { happiness: 45, health: 15 } }
+                ]
+            },
+            79: {
+                story: "👶 Your grandchildren are growing up. How do you connect?",
+                choices: [
+                    { text: "📚 Share wisdom and stories", effects: { intelligence: 30, happiness: 35 } },
+                    { text: "🎮 Play games together", effects: { happiness: 40, health: 15 } },
+                    { text: "🌍 Take them on adventures", effects: { happiness: 45, intelligence: 20 } }
+                ]
+            },
+            80: {
+                story: "🎉 The big 8-0! How do you feel about being 80?",
+                choices: [
+                    { text: "😊 Grateful for long life", effects: { happiness: 50, intelligence: 15 } },
+                    { text: "😰 Worried about future", effects: { health: -25, happiness: -25 } },
+                    { text: "🎯 Still making plans", effects: { strength: 20, intelligence: 25 } }
+                ]
+            },
+            81: {
+                story: "🏠 You're thinking about your living situation. What's best?",
+                choices: [
+                    { text: "🏠 Stay independent", effects: { strength: 30, happiness: 25 } },
+                    { text: "🏘️ Assisted living", effects: { health: 35, happiness: 30 } },
+                    { text: "👨‍👩‍👧‍👦 Live with family", effects: { happiness: 40, health: 20 } }
+                ]
+            },
+            82: {
+                story: "🎓 You want to share your life experience. How do you do it?",
+                choices: [
+                    { text: "📚 Write memoirs", effects: { intelligence: 40, happiness: 25 } },
+                    { text: "🤝 Mentor others", effects: { happiness: 40, intelligence: 25 } },
+                    { text: "🎨 Create art", effects: { happiness: 35, intelligence: 20 } }
+                ]
+            },
+            83: {
+                story: "🏥 You need to make health choices. How do you decide?",
+                choices: [
+                    { text: "💪 Fight for quality of life", effects: { health: 35, strength: 20 } },
+                    { text: "🩺 Trust medical advice", effects: { health: 30, intelligence: 25 } },
+                    { text: "😰 Give up hope", effects: { health: -40, happiness: -30 } }
+                ]
+            },
+            84: {
+                story: "🌍 You still want to experience new things. What do you choose?",
+                choices: [
+                    { text: "🌍 Travel to new places", effects: { happiness: 45, intelligence: 25 } },
+                    { text: "🎨 Try new hobbies", effects: { happiness: 40, intelligence: 20 } },
+                    { text: "🤝 Meet new people", effects: { happiness: 35, intelligence: 25 } }
+                ]
+            },
+            85: {
+                story: "🎉 Eighty-five years old! How do you spend your days?",
+                choices: [
+                    { text: "📚 Read and learn", effects: { intelligence: 40, happiness: 25 } },
+                    { text: "🎨 Create and express", effects: { happiness: 45, intelligence: 20 } },
+                    { text: "🌱 Garden and nature", effects: { health: 35, happiness: 35 } }
+                ]
+            },
+            86: {
+                story: "👶 Your great-grandchildren are born. How do you feel?",
+                choices: [
+                    { text: "😊 Overjoyed with family", effects: { happiness: 50, health: 10 } },
+                    { text: "📚 Share family history", effects: { intelligence: 35, happiness: 30 } },
+                    { text: "🎯 Focus on your own life", effects: { strength: 25, intelligence: 20 } }
+                ]
+            },
+            87: {
+                story: "🏥 You're thinking about your legacy. What matters most?",
+                choices: [
+                    { text: "👨‍👩‍👧‍👦 Family and relationships", effects: { happiness: 50, intelligence: 20 } },
+                    { text: "📚 Knowledge and wisdom", effects: { intelligence: 45, happiness: 25 } },
+                    { text: "🎨 Creative contributions", effects: { happiness: 45, intelligence: 25 } }
+                ]
+            },
+            88: {
+                story: "🌍 You want to make the most of your time. What do you do?",
+                choices: [
+                    { text: "🌍 Travel and explore", effects: { happiness: 50, intelligence: 25 } },
+                    { text: "🤝 Help others", effects: { happiness: 45, intelligence: 30 } },
+                    { text: "😊 Enjoy simple pleasures", effects: { happiness: 40, health: 25 } }
+                ]
+            },
+            89: {
+                story: "🎓 You're reflecting on your life. What are you most proud of?",
+                choices: [
+                    { text: "👨‍👩‍👧‍👦 Family and relationships", effects: { happiness: 55, intelligence: 20 } },
+                    { text: "💼 Career achievements", effects: { intelligence: 40, happiness: 25 } },
+                    { text: "🌍 Life experiences", effects: { happiness: 50, intelligence: 25 } }
+                ]
+            },
+            90: {
+                story: "🎉 Ninety years old! How do you feel about this milestone?",
+                choices: [
+                    { text: "😊 Grateful for long life", effects: { happiness: 55, intelligence: 20 } },
+                    { text: "😰 Worried about health", effects: { health: -30, happiness: -30 } },
+                    { text: "🎯 Still setting goals", effects: { strength: 20, intelligence: 30 } }
+                ]
+            },
+            91: {
+                story: "🏠 You're thinking about your final years. What's important?",
+                choices: [
+                    { text: "👨‍👩‍👧‍👦 Be with family", effects: { happiness: 60, health: 10 } },
+                    { text: "🏠 Stay in your home", effects: { happiness: 45, health: 25 } },
+                    { text: "🌍 Experience new things", effects: { happiness: 50, intelligence: 25 } }
+                ]
+            },
+            92: {
+                story: "🎓 You want to share your wisdom. How do you do it?",
+                choices: [
+                    { text: "📚 Write your story", effects: { intelligence: 50, happiness: 30 } },
+                    { text: "🤝 Give advice", effects: { happiness: 50, intelligence: 30 } },
+                    { text: "🎨 Create art", effects: { happiness: 45, intelligence: 25 } }
+                ]
+            },
+            93: {
+                story: "🏥 You're thinking about your health. What's your approach?",
+                choices: [
+                    { text: "💪 Stay active", effects: { health: 40, strength: 20 } },
+                    { text: "🩺 Accept medical help", effects: { health: 35, intelligence: 30 } },
+                    { text: "😰 Give up", effects: { health: -50, happiness: -40 } }
+                ]
+            },
+            94: {
+                story: "🌍 You want to make every day count. What do you do?",
+                choices: [
+                    { text: "🌍 Try new experiences", effects: { happiness: 55, intelligence: 30 } },
+                    { text: "🤝 Help others", effects: { happiness: 50, intelligence: 35 } },
+                    { text: "😊 Enjoy simple things", effects: { happiness: 45, health: 30 } }
+                ]
+            },
+            95: {
+                story: "🎉 Ninety-five! How do you spend your time?",
+                choices: [
+                    { text: "📚 Read and reflect", effects: { intelligence: 50, happiness: 30 } },
+                    { text: "👨‍👩‍👧‍👦 Be with family", effects: { happiness: 60, health: 10 } },
+                    { text: "🎨 Create beauty", effects: { happiness: 50, intelligence: 25 } }
+                ]
+            },
+            96: {
+                story: "🏥 You're thinking about your legacy. What matters most?",
+                choices: [
+                    { text: "👨‍👩‍👧‍👦 Family love", effects: { happiness: 65, intelligence: 20 } },
+                    { text: "📚 Knowledge shared", effects: { intelligence: 55, happiness: 25 } },
+                    { text: "🌍 Life well lived", effects: { happiness: 60, intelligence: 30 } }
+                ]
+            },
+            97: {
+                story: "🌍 You want to make the most of your time. What do you choose?",
+                choices: [
+                    { text: "🌍 Experience beauty", effects: { happiness: 60, intelligence: 30 } },
+                    { text: "🤝 Give love", effects: { happiness: 65, intelligence: 25 } },
+                    { text: "😊 Find peace", effects: { happiness: 55, health: 25 } }
+                ]
+            },
+            98: {
+                story: "🎓 You're reflecting on your long life. What are you grateful for?",
+                choices: [
+                    { text: "👨‍👩‍👧‍👦 Family and love", effects: { happiness: 70, intelligence: 25 } },
+                    { text: "🌍 Life experiences", effects: { happiness: 65, intelligence: 30 } },
+                    { text: "📚 Wisdom gained", effects: { intelligence: 60, happiness: 30 } }
+                ]
+            },
+            99: {
+                story: "🎉 Ninety-nine years old! How do you feel about your life?",
+                choices: [
+                    { text: "😊 Complete and grateful", effects: { happiness: 75, intelligence: 25 } },
+                    { text: "😰 Fearful of death", effects: { health: -40, happiness: -50 } },
+                    { text: "🎯 Still curious", effects: { strength: 15, intelligence: 40 } }
+                ]
+            },
+            100: {
+                story: "👴 You've lived a century! As you reach the end of your journey, how do you want to spend your final years?",
+                choices: [
+                    { text: "🏠 Stay home and rest peacefully", effects: { health: -100 }, death: "old_age" },
+                    { text: "🌍 Travel and have adventures", effects: { happiness: 30, health: -20 } },
+                    { text: "📚 Share your wisdom with others", effects: { intelligence: 20, happiness: 25 } }
+                ]
+            }
+        };
+
+        // Endings based on life path
+        const endings = {
+            artist: {
+                title: "🎨 The Creative Soul",
+                description: "You became a famous artist! Your creativity touched millions of lives. You lived a colorful, expressive life filled with beauty and imagination."
+            },
+            scientist: {
+                title: "🔬 The Brilliant Mind",
+                description: "You became a groundbreaking scientist! Your discoveries changed the world. You lived a life of curiosity, learning, and innovation."
+            },
+            athlete: {
+                title: "🏆 The Champion",
+                description: "You became an Olympic champion! Your determination and strength inspired people worldwide. You lived a life of discipline, achievement, and glory."
+            },
+            balanced: {
+                title: "⚖️ The Well-Rounded Life",
+                description: "You lived a balanced, happy life! You found joy in many things and touched many lives. You were loved by family and friends."
+            },
+            introvert: {
+                title: "🤔 The Thoughtful Soul",
+                description: "You became a wise philosopher! Your deep thinking and quiet wisdom helped others understand life better. You lived a peaceful, meaningful life."
+            },
+            adventurer: {
+                title: "🗺️ The Explorer",
+                description: "You became a famous explorer! You traveled the world, discovered new places, and had amazing adventures. You lived a life of excitement and discovery."
+            },
+            // Death endings
+            early_death: {
+                title: "💀 Tragic Early End",
+                description: "Your life was cut short by tragedy. You left this world too soon, but your memory lives on in the hearts of those who loved you."
+            },
+            accident: {
+                title: "🚗 Fatal Accident",
+                description: "A terrible accident ended your life unexpectedly. Your family and friends were devastated by the sudden loss."
+            },
+            illness: {
+                title: "🏥 Lost to Illness",
+                description: "A serious illness took your life. You fought bravely, but the disease was too strong. You're remembered for your courage."
+            },
+            old_age: {
+                title: "👴 Peaceful Passing",
+                description: "You lived a long, full life and passed away peacefully in your sleep. You left behind a legacy of wisdom and love."
+            },
+            hero_death: {
+                title: "🦸‍♂️ Hero's Sacrifice",
+                description: "You died saving others. Your brave actions cost you your life, but you became a hero. Your sacrifice will never be forgotten."
+            },
+            mysterious: {
+                title: "❓ Mysterious Disappearance",
+                description: "You vanished without a trace. No one knows what happened to you. Your disappearance remains one of life's great mysteries."
+            }
+        };
+
+        function startGame() {
+            showScreen('gender-screen');
+        }
+
+        function selectGender(gender) {
+            gameState.gender = gender;
+            
+            document.querySelectorAll('.gender-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            
+            setTimeout(() => {
+                showScreen('name-screen');
+                populateNameSuggestions();
+            }, 500);
+        }
+
+        function populateNameSuggestions() {
+            const suggestionsDiv = document.getElementById('name-suggestions');
+            suggestionsDiv.innerHTML = '';
+            
+            let names = [];
+            if (gameState.gender === 'boy') {
+                names = boyNames;
+            } else if (gameState.gender === 'girl') {
+                names = girlNames;
+            } else {
+                names = neutralNames;
+            }
+            
+            names = names.concat(neutralNames.slice(0, 5));
+            
+            names.forEach(name => {
+                const nameBtn = document.createElement('div');
+                nameBtn.className = 'name-suggestion';
+                nameBtn.textContent = name;
+                nameBtn.onclick = () => {
+                    document.getElementById('name-input').value = name;
+                };
+                suggestionsDiv.appendChild(nameBtn);
+            });
+        }
+
+        function confirmName() {
+            const nameInput = document.getElementById('name-input');
+            const name = nameInput.value.trim();
+            
+            if (name.length < 2) {
+                alert('Please enter a name (at least 2 characters)!');
+                return;
+            }
+            
+            gameState.name = name;
+            showScreen('life-screen');
+            startLifeJourney();
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startLifeJourney() {
+            updateCharacterDisplay();
+            presentChoice();
+        }
+
+        function presentChoice() {
+            const scenario = lifeScenarios[gameState.age];
+            if (!scenario) {
+                endGame();
+                return;
+            }
+
+            document.getElementById('story-text').textContent = scenario.story;
+            
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = '';
+            
+            scenario.choices.forEach((choice, index) => {
+                const choiceBtn = document.createElement('button');
+                choiceBtn.className = 'choice-btn';
+                choiceBtn.textContent = choice.text;
+                choiceBtn.onclick = () => makeChoice(choice, index);
+                choicesContainer.appendChild(choiceBtn);
+            });
+        }
+
+        function makeChoice(choice, choiceIndex) {
+            // Apply effects
+            if (choice.effects.health) gameState.health += choice.effects.health;
+            if (choice.effects.happiness) gameState.happiness += choice.effects.happiness;
+            if (choice.effects.intelligence) gameState.intelligence += choice.effects.intelligence;
+            if (choice.effects.strength) gameState.strength += choice.effects.strength;
+            
+            // Keep stats in bounds
+            gameState.health = Math.max(0, Math.min(100, gameState.health));
+            gameState.happiness = Math.max(0, Math.min(100, gameState.happiness));
+            gameState.intelligence = Math.max(0, Math.min(100, gameState.intelligence));
+            gameState.strength = Math.max(0, Math.min(100, gameState.strength));
+            
+            // Record choice
+            gameState.choices.push({
+                age: gameState.age,
+                choice: choice.text,
+                effects: choice.effects,
+                death: choice.death
+            });
+            
+            // Add to life events
+            addLifeEvent(`Age ${gameState.age}: ${choice.text}`);
+            
+            // Check for death
+            if (choice.death) {
+                gameState.deathType = choice.death;
+                setTimeout(() => {
+                    endGame();
+                }, 2000);
+                return;
+            }
+            
+            // Check if health is too low (early death)
+            if (gameState.health <= 0) {
+                gameState.deathType = "early_death";
+                setTimeout(() => {
+                    endGame();
+                }, 2000);
+                return;
+            }
+            
+            // Age up
+            gameState.age++;
+            
+            updateCharacterDisplay();
+            
+            // Present next choice or end game
+            setTimeout(() => {
+                if (gameState.age <= 100) {
+                    presentChoice();
+                } else {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateCharacterDisplay() {
+            document.getElementById('character-name').textContent = gameState.name;
+            document.getElementById('character-age').textContent = `Age: ${gameState.age}`;
+            
+            const canvas = document.getElementById('character-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, 240, 240);
+            
+            // Add sparkle effect for new age
+            if (gameState.age > 0) {
+                createSparkles();
+            }
+            
+            // Draw character based on age
+            if (gameState.deathType) {
+                drawSkull(ctx);
+            } else if (gameState.age <= 2) {
+                drawBaby(ctx);
+            } else if (gameState.age <= 8) {
+                drawChild(ctx);
+            } else if (gameState.age <= 16) {
+                drawTeenager(ctx);
+            } else if (gameState.age <= 30) {
+                drawYoungAdult(ctx);
+            } else if (gameState.age <= 50) {
+                drawAdult(ctx);
+            } else if (gameState.age <= 70) {
+                drawMiddleAged(ctx);
+            } else {
+                drawElderly(ctx);
+            }
+            
+            document.getElementById('health-bar').style.width = gameState.health + '%';
+            document.getElementById('happiness-bar').style.width = gameState.happiness + '%';
+            document.getElementById('intelligence-bar').style.width = gameState.intelligence + '%';
+            document.getElementById('strength-bar').style.width = gameState.strength + '%';
+        }
+
+        function drawPixel(ctx, x, y, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x * 5, y * 5, 5, 5);
+        }
+
+        function drawPixelLarge(ctx, x, y, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x * 5, y * 5, 10, 10);
+        }
+
+        function drawGradient(ctx, x, y, w, h, color1, color2) {
+            const gradient = ctx.createLinearGradient(x * 5, y * 5, (x + w) * 5, (y + h) * 5);
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color2);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x * 5, y * 5, w * 5, h * 5);
+        }
+
+        function drawRadialGradient(ctx, x, y, radius, color1, color2) {
+            const gradient = ctx.createRadialGradient(x * 5, y * 5, 0, x * 5, y * 5, radius * 5);
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color2);
+            ctx.fillStyle = gradient;
+            ctx.fillRect((x - radius) * 5, (y - radius) * 5, radius * 10, radius * 10);
+        }
+
+        function createSparkles() {
+            const container = document.getElementById('particle-container');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 8; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.style.position = 'absolute';
+                sparkle.style.width = '4px';
+                sparkle.style.height = '4px';
+                sparkle.style.background = '#fff';
+                sparkle.style.borderRadius = '50%';
+                sparkle.style.boxShadow = '0 0 8px #fff, 0 0 16px #fff';
+                sparkle.style.left = Math.random() * 200 + 20 + 'px';
+                sparkle.style.top = Math.random() * 200 + 20 + 'px';
+                sparkle.style.animation = `sparkle 2s ease-out forwards`;
+                container.appendChild(sparkle);
+            }
+            
+            // Remove sparkles after animation
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 2000);
+        }
+
+        function drawBaby(ctx) {
+            // Face with ultra-advanced shading and radial gradients
+            for (let y = 16; y < 36; y++) {
+                for (let x = 16; x < 40; x++) {
+                    let color = '#ffdbac';
+                    if (x < 24) color = '#f4c088'; // Left shadow
+                    if (x > 32) color = '#f4c088'; // Right shadow
+                    if (y < 24) color = '#f4c088'; // Top shadow
+                    if (x < 20 && y < 26) color = '#e6b17a'; // Deep shadow
+                    if (x > 36 && y < 26) color = '#e6b17a'; // Deep shadow
+                    if (x === 24 && y === 26) color = '#ffedcc'; // Center highlight
+                    if (x === 32 && y === 26) color = '#ffedcc'; // Center highlight
+                    drawPixel(ctx, x, y, color);
+                }
+            }
+            
+            // Cheeks with radial gradients
+            drawRadialGradient(ctx, 18, 28, 2, '#ffb3ba', '#ff9ba3');
+            drawRadialGradient(ctx, 38, 28, 2, '#ffb3ba', '#ff9ba3');
+            
+            // Eyes with ultra-detailed highlights and depth
+            drawPixel(ctx, 22, 26, '#000');
+            drawPixel(ctx, 34, 26, '#000');
+            drawPixel(ctx, 23, 25, '#fff'); // Eye highlight
+            drawPixel(ctx, 35, 25, '#fff'); // Eye highlight
+            drawPixel(ctx, 22, 27, '#333'); // Eye depth
+            drawPixel(ctx, 34, 27, '#333'); // Eye depth
+            drawPixel(ctx, 23, 26, '#666'); // Eye detail
+            drawPixel(ctx, 35, 26, '#666'); // Eye detail
+            
+            // Large mouth with 4D effect
+            for (let y = 32; y < 38; y++) {
+                for (let x = 22; x < 34; x++) {
+                    let color = '#ff6b9d';
+                    if (y === 37) color = '#e55a8a'; // Darker bottom
+                    if (y === 36) color = '#ff8ab4'; // Middle tone
+                    if (y === 35) color = '#ff9bc4'; // Light tone
+                    if (x < 24 || x > 32) color = '#ff8ab4'; // Sides
+                    if (x === 26 || x === 30) color = '#ff9bc4'; // Highlights
+                    drawPixel(ctx, x, y, color);
+                }
+            }
+            
+            // Nose with advanced shading
+            drawPixel(ctx, 28, 28, '#f4c088');
+            drawPixel(ctx, 28, 29, '#e6b17a');
+            drawPixel(ctx, 28, 30, '#d4a574');
+            
+            // Eyebrows with texture
+            drawPixel(ctx, 20, 24, '#8b4513');
+            drawPixel(ctx, 36, 24, '#8b4513');
+            drawPixel(ctx, 21, 24, '#a0522d');
+            drawPixel(ctx, 35, 24, '#a0522d');
+            
+            // Outline with thickness and gradient
+            for (let x = 16; x < 40; x++) {
+                drawPixel(ctx, x, 16, '#000');
+                drawPixel(ctx, x, 35, '#000');
+            }
+            for (let y = 16; y < 36; y++) {
+                drawPixel(ctx, 16, y, '#000');
+                drawPixel(ctx, 39, y, '#000');
+            }
+        }
+
+        function drawChild(ctx) {
+            // Hair with advanced texture and highlights
+            for (let y = 10; y < 16; y++) {
+                for (let x = 11; x < 33; x++) {
+                    let color = '#8b4513';
+                    if (y === 10) color = '#a0522d'; // Lighter top
+                    if (y === 11) color = '#9b5a2d'; // Second layer
+                    if (x % 3 === 0) color = '#654321'; // Texture pattern
+                    if (x % 4 === 0) color = '#a0522d'; // Highlight pattern
+                    drawPixel(ctx, x, y, color);
+                }
+            }
+            
+            // Face with advanced shading
+            for (let y = 16; y < 32; y++) {
+                for (let x = 12; x < 32; x++) {
+                    let color = '#ffdbac';
+                    if (x < 18) color = '#f4c088'; // Left shadow
+                    if (x > 26) color = '#f4c088'; // Right shadow
+                    if (y < 20) color = '#f4c088'; // Top shadow
+                    if (x < 16 && y < 22) color = '#e6b17a'; // Deep shadow
+                    if (x > 28 && y < 22) color = '#e6b17a'; // Deep shadow
+                    drawPixel(ctx, x, y, color);
+                }
+            }
+            
+            // Cheeks with gradient
+            drawGradient(ctx, 13, 24, 2, 2, '#ffb3ba', '#ff9ba3');
+            drawGradient(ctx, 29, 24, 2, 2, '#ffb3ba', '#ff9ba3');
+            
+            // Eyes with detailed highlights
+            drawPixel(ctx, 17, 22, '#000');
+            drawPixel(ctx, 27, 22, '#000');
+            drawPixel(ctx, 18, 21, '#fff'); // Eye highlight
+            drawPixel(ctx, 28, 21, '#fff'); // Eye highlight
+            drawPixel(ctx, 17, 23, '#333'); // Eye depth
+            drawPixel(ctx, 27, 23, '#333'); // Eye depth
+            
+            // Nose with advanced shading
+            drawPixel(ctx, 22, 24, '#f4c088');
+            drawPixel(ctx, 22, 25, '#e6b17a');
+            drawPixel(ctx, 22, 26, '#d4a574');
+            
+            // Small mouth with 3D effect
+            for (let y = 28; y < 30; y++) {
+                for (let x = 18; x < 26; x++) {
+                    let color = '#ff6b9d';
+                    if (y === 29) color = '#e55a8a'; // Darker bottom
+                    if (y === 28) color = '#ff8ab4'; // Middle tone
+                    if (x < 20 || x > 24) color = '#ff8ab4'; // Sides
+                    drawPixel(ctx, x, y, color);
+                }
+            }
+            
+            // Eyebrows
+            drawPixel(ctx, 16, 20, '#8b4513');
+            drawPixel(ctx, 26, 20, '#8b4513');
+            
+            // Outline with thickness
+            for (let x = 12; x < 32; x++) {
+                drawPixel(ctx, x, 16, '#000');
+                drawPixel(ctx, x, 31, '#000');
+            }
+            for (let y = 16; y < 32; y++) {
+                drawPixel(ctx, 12, y, '#000');
+                drawPixel(ctx, 31, y, '#000');
+            }
+        }
+
+        function drawTeenager(ctx) {
+            // Hair
+            for (let y = 6; y < 10; y++) {
+                for (let x = 7; x < 23; x++) {
+                    drawPixel(ctx, x, y, '#8b4513');
+                }
+            }
+            
+            // Face
+            for (let y = 10; y < 20; y++) {
+                for (let x = 8; x < 22; x++) {
+                    drawPixel(ctx, x, y, '#ffdbac');
+                }
+            }
+            
+            // Eyes
+            drawPixel(ctx, 11, 14, '#000');
+            drawPixel(ctx, 19, 14, '#000');
+            
+            // Nose
+            drawPixel(ctx, 15, 16, '#000');
+            
+            // Mouth
+            for (let y = 18; y < 19; y++) {
+                for (let x = 12; x < 18; x++) {
+                    drawPixel(ctx, x, y, '#ff6b9d');
+                }
+            }
+            
+            // Outline
+            for (let x = 8; x < 22; x++) {
+                drawPixel(ctx, x, 10, '#000');
+                drawPixel(ctx, x, 19, '#000');
+            }
+            for (let y = 10; y < 20; y++) {
+                drawPixel(ctx, 8, y, '#000');
+                drawPixel(ctx, 21, y, '#000');
+            }
+        }
+
+        function drawYoungAdult(ctx) {
+            // Hair
+            for (let y = 5; y < 11; y++) {
+                for (let x = 6; x < 24; x++) {
+                    drawPixel(ctx, x, y, '#8b4513');
+                }
+            }
+            
+            // Face
+            for (let y = 11; y < 21; y++) {
+                for (let x = 8; x < 22; x++) {
+                    drawPixel(ctx, x, y, '#ffdbac');
+                }
+            }
+            
+            // Eyes
+            drawPixel(ctx, 11, 15, '#000');
+            drawPixel(ctx, 19, 15, '#000');
+            
+            // Nose
+            drawPixel(ctx, 15, 17, '#000');
+            
+            // Mouth
+            for (let y = 19; y < 20; y++) {
+                for (let x = 12; x < 18; x++) {
+                    drawPixel(ctx, x, y, '#ff6b9d');
+                }
+            }
+            
+            // Outline
+            for (let x = 8; x < 22; x++) {
+                drawPixel(ctx, x, 11, '#000');
+                drawPixel(ctx, x, 20, '#000');
+            }
+            for (let y = 11; y < 21; y++) {
+                drawPixel(ctx, 8, y, '#000');
+                drawPixel(ctx, 21, y, '#000');
+            }
+        }
+
+        function drawAdult(ctx) {
+            // Hair
+            for (let y = 5; y < 11; y++) {
+                for (let x = 6; x < 24; x++) {
+                    drawPixel(ctx, x, y, '#8b4513');
+                }
+            }
+            
+            // Face
+            for (let y = 11; y < 21; y++) {
+                for (let x = 8; x < 22; x++) {
+                    drawPixel(ctx, x, y, '#ffdbac');
+                }
+            }
+            
+            // Eyes
+            drawPixel(ctx, 11, 15, '#000');
+            drawPixel(ctx, 19, 15, '#000');
+            
+            // Nose
+            drawPixel(ctx, 15, 17, '#000');
+            
+            // Mouth
+            for (let y = 19; y < 20; y++) {
+                for (let x = 12; x < 18; x++) {
+                    drawPixel(ctx, x, y, '#ff6b9d');
+                }
+            }
+            
+            // Outline
+            for (let x = 8; x < 22; x++) {
+                drawPixel(ctx, x, 11, '#000');
+                drawPixel(ctx, x, 20, '#000');
+            }
+            for (let y = 11; y < 21; y++) {
+                drawPixel(ctx, 8, y, '#000');
+                drawPixel(ctx, 21, y, '#000');
+            }
+        }
+
+        function drawMiddleAged(ctx) {
+            // Gray hair
+            for (let y = 5; y < 11; y++) {
+                for (let x = 6; x < 24; x++) {
+                    drawPixel(ctx, x, y, '#95a5a6');
+                }
+            }
+            
+            // Face
+            for (let y = 11; y < 21; y++) {
+                for (let x = 8; x < 22; x++) {
+                    drawPixel(ctx, x, y, '#ffdbac');
+                }
+            }
+            
+            // Eyes
+            drawPixel(ctx, 11, 15, '#000');
+            drawPixel(ctx, 19, 15, '#000');
+            
+            // Nose
+            drawPixel(ctx, 15, 17, '#000');
+            
+            // Mouth
+            for (let y = 19; y < 20; y++) {
+                for (let x = 12; x < 18; x++) {
+                    drawPixel(ctx, x, y, '#ff6b9d');
+                }
+            }
+            
+            // Outline
+            for (let x = 8; x < 22; x++) {
+                drawPixel(ctx, x, 11, '#000');
+                drawPixel(ctx, x, 20, '#000');
+            }
+            for (let y = 11; y < 21; y++) {
+                drawPixel(ctx, 8, y, '#000');
+                drawPixel(ctx, 21, y, '#000');
+            }
+        }
+
+        function drawElderly(ctx) {
+            // White hair
+            for (let y = 5; y < 11; y++) {
+                for (let x = 6; x < 24; x++) {
+                    drawPixel(ctx, x, y, '#ecf0f1');
+                }
+            }
+            
+            // Face
+            for (let y = 11; y < 21; y++) {
+                for (let x = 8; x < 22; x++) {
+                    drawPixel(ctx, x, y, '#ffdbac');
+                }
+            }
+            
+            // Eyes
+            drawPixel(ctx, 11, 15, '#000');
+            drawPixel(ctx, 19, 15, '#000');
+            
+            // Nose
+            drawPixel(ctx, 15, 17, '#000');
+            
+            // Small mouth
+            for (let y = 19; y < 20; y++) {
+                for (let x = 13; x < 17; x++) {
+                    drawPixel(ctx, x, y, '#ff6b9d');
+                }
+            }
+            
+            // Outline
+            for (let x = 8; x < 22; x++) {
+                drawPixel(ctx, x, 11, '#000');
+                drawPixel(ctx, x, 20, '#000');
+            }
+            for (let y = 11; y < 21; y++) {
+                drawPixel(ctx, 8, y, '#000');
+                drawPixel(ctx, 21, y, '#000');
+            }
+        }
+
+        function drawSkull(ctx) {
+            // Skull base with shading
+            for (let y = 8; y < 22; y++) {
+                for (let x = 8; x < 22; x++) {
+                    let color = '#fff';
+                    if (x < 12) color = '#f0f0f0'; // Left shadow
+                    if (x > 18) color = '#f0f0f0'; // Right shadow
+                    if (y < 12) color = '#f0f0f0'; // Top shadow
+                    drawPixel(ctx, x, y, color);
+                }
+            }
+            
+            // Large eye sockets with depth
+            for (let y = 12; y < 16; y++) {
+                for (let x = 10; x < 14; x++) {
+                    let color = '#000';
+                    if (y === 15) color = '#333'; // Bottom shadow
+                    drawPixel(ctx, x, y, color);
+                }
+                for (let x = 16; x < 20; x++) {
+                    let color = '#000';
+                    if (y === 15) color = '#333'; // Bottom shadow
+                    drawPixel(ctx, x, y, color);
+                }
+            }
+            
+            // Nose cavity with depth
+            for (let y = 16; y < 18; y++) {
+                for (let x = 14; x < 16; x++) {
+                    let color = '#000';
+                    if (y === 17) color = '#333'; // Bottom shadow
+                    drawPixel(ctx, x, y, color);
+                }
+            }
+            
+            // Teeth with individual detail
+            for (let y = 20; y < 22; y++) {
+                for (let x = 10; x < 20; x++) {
+                    let color = '#fff';
+                    if (x % 2 === 0) color = '#f0f0f0'; // Tooth separation
+                    if (y === 21) color = '#e0e0e0'; // Bottom shadow
+                    drawPixel(ctx, x, y, color);
+                }
+            }
+            
+            // Cracks and details
+            drawPixel(ctx, 13, 10, '#ccc');
+            drawPixel(ctx, 17, 10, '#ccc');
+            drawPixel(ctx, 15, 19, '#ccc');
+            
+            // Outline with thickness
+            for (let x = 8; x < 22; x++) {
+                drawPixel(ctx, x, 8, '#000');
+                drawPixel(ctx, x, 21, '#000');
+            }
+            for (let y = 8; y < 22; y++) {
+                drawPixel(ctx, 8, y, '#000');
+                drawPixel(ctx, 21, y, '#000');
+            }
+        }
+
+        function addLifeEvent(eventText) {
+            const eventsDiv = document.getElementById('life-events');
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'event';
+            eventDiv.textContent = eventText;
+            eventsDiv.appendChild(eventDiv);
+            eventsDiv.scrollTop = eventsDiv.scrollHeight;
+            
+            // Remove the event after 3 seconds
+            setTimeout(() => {
+                if (eventDiv.parentNode) {
+                    eventDiv.style.opacity = '0';
+                    eventDiv.style.transform = 'translateX(-20px)';
+                    eventDiv.style.transition = 'all 0.5s ease';
+                    setTimeout(() => {
+                        if (eventDiv.parentNode) {
+                            eventDiv.remove();
+                        }
+                    }, 500);
+                }
+            }, 3000);
+        }
+
+        function endGame() {
+            console.log('Ending game! Age:', gameState.age, 'Choices:', gameState.choices.length);
+            
+            let ending;
+            
+            // Check for death ending first
+            if (gameState.deathType) {
+                ending = endings[gameState.deathType];
+                console.log('Death ending:', gameState.deathType);
+            } else {
+                ending = determineEnding();
+                console.log('Selected ending:', ending.title);
+            }
+            
+            document.getElementById('ending-title').textContent = ending.title;
+            document.getElementById('ending-description').textContent = ending.description;
+            
+            // Create life summary
+            const summary = document.getElementById('life-summary');
+            const deathMessage = gameState.deathType ? `<h3>💀 Cause of Death:</h3><p>${ending.description}</p>` : '';
+            
+            summary.innerHTML = `
+                <h3>📊 Your Final Stats:</h3>
+                <p>Health: ${gameState.health}% | Happiness: ${gameState.happiness}% | Intelligence: ${gameState.intelligence}% | Strength: ${gameState.strength}%</p>
+                <h3>🎯 Your Life Choices:</h3>
+                ${gameState.choices.map(choice => `<p>• Age ${choice.age}: ${choice.choice}</p>`).join('')}
+                ${deathMessage}
+            `;
+            
+            showScreen('ending-screen');
+        }
+
+        function determineEnding() {
+            // Determine ending based on choices and stats
+            const artChoices = gameState.choices.filter(c => 
+                c.choice.includes('art') || 
+                c.choice.includes('draw') || 
+                c.choice.includes('creative') ||
+                c.choice.includes('color')
+            ).length;
+            
+            const scienceChoices = gameState.choices.filter(c => 
+                c.choice.includes('science') || 
+                c.choice.includes('learn') || 
+                c.choice.includes('study') || 
+                c.choice.includes('code') ||
+                c.choice.includes('invent') ||
+                c.choice.includes('space')
+            ).length;
+            
+            const sportsChoices = gameState.choices.filter(c => 
+                c.choice.includes('sport') || 
+                c.choice.includes('run') || 
+                c.choice.includes('active') || 
+                c.choice.includes('swim') ||
+                c.choice.includes('athlete') ||
+                c.choice.includes('champion')
+            ).length;
+            
+            const socialChoices = gameState.choices.filter(c => 
+                c.choice.includes('friend') || 
+                c.choice.includes('party') || 
+                c.choice.includes('people') ||
+                c.choice.includes('famous')
+            ).length;
+            
+            const quietChoices = gameState.choices.filter(c => 
+                c.choice.includes('quiet') || 
+                c.choice.includes('alone') || 
+                c.choice.includes('observe') ||
+                c.choice.includes('peaceful')
+            ).length;
+            
+            console.log('Ending analysis:', {
+                artChoices,
+                scienceChoices,
+                sportsChoices,
+                socialChoices,
+                quietChoices,
+                totalChoices: gameState.choices.length
+            });
+            
+            if (artChoices >= 2) return endings.artist;
+            if (scienceChoices >= 2) return endings.scientist;
+            if (sportsChoices >= 2) return endings.athlete;
+            if (quietChoices >= 2) return endings.introvert;
+            if (socialChoices >= 2) return endings.adventurer;
+            
+            return endings.balanced;
+        }
+
+        function restartGame() {
+            gameState = {
+                gender: null,
+                name: '',
+                age: 0,
+                health: 100,
+                happiness: 100,
+                intelligence: 50,
+                strength: 30,
+                lifePath: [],
+                choices: [],
+                deathType: null
+            };
+            showScreen('welcome-screen');
+        }
+
+        // Allow Enter key to confirm name
+        document.getElementById('name-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                confirmName();
+            }
+        });
+    </script>
+</body>
+</html>

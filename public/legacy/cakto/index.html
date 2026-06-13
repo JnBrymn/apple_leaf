@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cakto</title>
+  <!--
+    Cakto request log:
+    - Name: Cakto
+    - Hardware: "everything"
+    - Goal: "just a regular computer software"
+    - Updated style request: "make it better like mac or somthn"
+    - Plan: single-file desktop-like app with dock + windows + hardware tools.
+    - New request: record videos, microphones, and both at the same time, plus many more tools.
+    - New request: "add everything to everything and make more things too."
+  -->
+  <style>
+    :root {
+      color-scheme: dark;
+      --text: #eff2f8;
+      --muted: #cad2e2;
+      --glass: rgba(24, 28, 36, 0.52);
+      --line: rgba(255, 255, 255, 0.22);
+      --ok: #42d392;
+      --warn: #ffbf5f;
+      --bad: #ff7f7f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "SF Pro Text", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 18%, #8f8ee8 0%, transparent 46%),
+        radial-gradient(circle at 82% 10%, #57b8f9 0%, transparent 44%),
+        radial-gradient(circle at 50% 88%, #5dcf96 0%, transparent 40%),
+        #1e2330;
+      overflow: hidden;
+    }
+
+    .topbar {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(1000px, calc(100vw - 20px));
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      backdrop-filter: blur(20px);
+      background: var(--glass);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+      z-index: 20;
+    }
+
+    .desktop {
+      padding: 76px 16px 108px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-auto-rows: max-content;
+      align-items: start;
+      gap: 14px;
+      max-width: 1180px;
+      margin: 0 auto;
+      height: 100vh;
+      overflow: auto;
+    }
+
+    .window {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      backdrop-filter: blur(22px);
+      background: rgba(18, 23, 32, 0.58);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.26);
+      min-height: 210px;
+      height: fit-content;
+      overflow: hidden;
+      contain: layout paint;
+    }
+
+    .title {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .dots { display: flex; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 999px; }
+    .r { background: #ff5f57; }
+    .y { background: #febc2e; }
+    .g { background: #28c840; }
+
+    .content { padding: 12px 14px 14px; }
+    .muted { color: var(--muted); }
+    .mono { font-family: Consolas, "Courier New", monospace; font-size: 0.9rem; }
+
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .row > * { flex: 1 1 180px; min-width: 0; }
+
+    button {
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.14);
+      color: var(--text);
+      padding: 8px 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover { background: rgba(255, 255, 255, 0.22); }
+    .status { font-weight: 700; margin: 6px 0; }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+
+    #cam, #recordPreview, #screenPreview {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      display: block;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      background: #020409;
+      min-height: 180px;
+    }
+
+    #micBar {
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.26);
+    }
+
+    #micFill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #60a5fa, #22d3ee, #42d392);
+      transition: width 55ms linear;
+    }
+
+    .dock {
+      position: fixed;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      padding: 10px 12px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(21, 26, 35, 0.62);
+      backdrop-filter: blur(22px);
+      display: flex;
+      gap: 10px;
+      z-index: 20;
+    }
+
+    .dock-item {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.12);
+      font-size: 1.1rem;
+      user-select: none;
+    }
+
+    .input, textarea, select {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.24);
+      color: var(--text);
+      padding: 8px 9px;
+      font: inherit;
+    }
+
+    textarea { min-height: 86px; resize: vertical; }
+
+    .small {
+      font-size: 0.82rem;
+      opacity: 0.9;
+    }
+
+    #recordPreview { margin-top: 8px; }
+
+    #drawPad {
+      width: 100%;
+      height: 220px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      background: white;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    @media (max-width: 1020px) {
+      .desktop {
+        grid-template-columns: 1fr;
+        max-width: 760px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .topbar {
+        width: calc(100vw - 12px);
+        top: 6px;
+        padding: 8px 10px;
+        font-size: 0.85rem;
+      }
+
+      .desktop {
+        padding: 62px 8px 108px;
+      }
+
+      .title, .content {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .dock {
+        width: calc(100vw - 12px);
+        overflow-x: auto;
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div><strong>Cakto OS</strong> <span class="muted">Desktop</span></div>
+    <div class="mono" id="clock">--:--:--</div>
+  </div>
+
+  <main class="desktop">
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> System</div>
+      <div class="content">
+        <p class="muted">Regular computer software with a smooth Mac-style look.</p>
+        <p class="mono">Screen: <span id="screenInfo">...</span></p>
+        <p class="mono">Browser: <span id="browserInfo">...</span></p>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Keyboard + Mouse</div>
+      <div class="content">
+        <p class="mono">Last key: <span id="lastKey">none</span></p>
+        <p class="mono">Mouse: <span id="mousePos">x:0 y:0</span></p>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Audio</div>
+      <div class="content">
+        <div class="row"><button id="beepBtn">Play Beep</button></div>
+        <p id="audioState" class="status warn">Waiting</p>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Studio Recorder</div>
+      <div class="content">
+        <div class="row">
+          <select id="recordMode">
+            <option value="video">Video only (camera)</option>
+            <option value="audio">Microphone only</option>
+            <option value="both">Video + Microphone</option>
+          </select>
+        </div>
+        <div class="row">
+          <button id="recordStartBtn">Start Recording</button>
+          <button id="recordStopBtn">Stop Recording</button>
+          <button id="recordDownloadBtn">Download Last Recording</button>
+        </div>
+        <p id="recordState" class="status warn">Recorder idle</p>
+        <p class="mono">Time: <span id="recordTimer">00:00</span></p>
+        <video id="recordPreview" autoplay playsinline muted></video>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Camera</div>
+      <div class="content">
+        <div class="row">
+          <button id="camOnBtn">Turn Camera On</button>
+          <button id="camOffBtn">Turn Camera Off</button>
+        </div>
+        <p id="camState" class="status warn">Camera off</p>
+        <video id="cam" autoplay playsinline muted></video>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Microphone</div>
+      <div class="content">
+        <div class="row">
+          <button id="micOnBtn">Turn Mic On</button>
+          <button id="micOffBtn">Turn Mic Off</button>
+        </div>
+        <p id="micState" class="status warn">Mic off</p>
+        <div id="micBar"><div id="micFill"></div></div>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Notes</div>
+      <div class="content">
+        <textarea id="notesBox" placeholder="Write notes here..."></textarea>
+        <div class="row">
+          <button id="saveNotesBtn">Save Notes</button>
+          <button id="clearNotesBtn">Clear Notes</button>
+        </div>
+        <p id="notesState" class="status warn">Not saved yet</p>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Utility Tools</div>
+      <div class="content">
+        <p class="mono">Battery: <span id="batteryInfo">Loading...</span></p>
+        <p class="mono">Network: <span id="networkInfo">Loading...</span></p>
+        <p class="mono">Stopwatch: <span id="stopwatch">00:00.0</span></p>
+        <div class="row">
+          <button id="swStartBtn">Start</button>
+          <button id="swStopBtn">Stop</button>
+          <button id="swResetBtn">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Screen Capture</div>
+      <div class="content">
+        <div class="row">
+          <button id="screenOnBtn">Share Screen</button>
+          <button id="screenOffBtn">Stop Screen</button>
+        </div>
+        <p id="screenState" class="status warn">Screen share off</p>
+        <video id="screenPreview" autoplay playsinline muted></video>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Voice Lab</div>
+      <div class="content">
+        <div class="row">
+          <button id="speechListenBtn">Start Listening</button>
+          <button id="speechStopBtn">Stop Listening</button>
+        </div>
+        <p id="speechState" class="status warn">Voice idle</p>
+        <p class="mono">Heard: <span id="speechText">nothing yet</span></p>
+        <input id="ttsInput" class="input" placeholder="Type words to speak..." />
+        <div class="row">
+          <button id="ttsSpeakBtn">Speak Text</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Tools+</div>
+      <div class="content">
+        <p class="mono">Location: <span id="geoInfo">unknown</span></p>
+        <div class="row">
+          <button id="geoBtn">Get Location</button>
+          <button id="copyTimeBtn">Copy Time</button>
+          <button id="themeBtn">Change Theme</button>
+        </div>
+        <p id="toolState" class="status warn">Ready</p>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Calculator + Todo</div>
+      <div class="content">
+        <input id="calcInput" class="input" placeholder="Example: 6 * (3 + 2)" />
+        <div class="row">
+          <button id="calcBtn">Calculate</button>
+          <span class="mono" id="calcResult">Result: ...</span>
+        </div>
+        <input id="todoInput" class="input" placeholder="New todo..." />
+        <div class="row">
+          <button id="todoAddBtn">Add Todo</button>
+          <button id="todoClearBtn">Clear Todos</button>
+        </div>
+        <ul id="todoList" class="small"></ul>
+      </div>
+    </section>
+
+    <section class="window">
+      <div class="title"><span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span> Drawing Pad</div>
+      <div class="content">
+        <canvas id="drawPad" width="460" height="220"></canvas>
+        <div class="row">
+          <button id="drawClearBtn">Clear Drawing</button>
+          <button id="drawSaveBtn">Save PNG</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="dock" aria-label="Dock">
+    <div class="dock-item" title="System">🖥️</div>
+    <div class="dock-item" title="Keyboard">⌨️</div>
+    <div class="dock-item" title="Audio">🔊</div>
+    <div class="dock-item" title="Recorder">🎬</div>
+    <div class="dock-item" title="Camera">📷</div>
+    <div class="dock-item" title="Microphone">🎙️</div>
+    <div class="dock-item" title="Notes">📝</div>
+    <div class="dock-item" title="Screen">🪟</div>
+    <div class="dock-item" title="Draw">🎨</div>
+  </div>
+
+  <script>
+    const clock = document.getElementById("clock");
+    const screenInfo = document.getElementById("screenInfo");
+    const browserInfo = document.getElementById("browserInfo");
+    const lastKey = document.getElementById("lastKey");
+    const mousePos = document.getElementById("mousePos");
+    const cam = document.getElementById("cam");
+    const camState = document.getElementById("camState");
+    const micState = document.getElementById("micState");
+    const micFill = document.getElementById("micFill");
+    const audioState = document.getElementById("audioState");
+    const recordMode = document.getElementById("recordMode");
+    const recordState = document.getElementById("recordState");
+    const recordTimer = document.getElementById("recordTimer");
+    const recordPreview = document.getElementById("recordPreview");
+    const notesBox = document.getElementById("notesBox");
+    const notesState = document.getElementById("notesState");
+    const batteryInfo = document.getElementById("batteryInfo");
+    const networkInfo = document.getElementById("networkInfo");
+    const stopwatch = document.getElementById("stopwatch");
+    const screenState = document.getElementById("screenState");
+    const screenPreview = document.getElementById("screenPreview");
+    const speechState = document.getElementById("speechState");
+    const speechText = document.getElementById("speechText");
+    const ttsInput = document.getElementById("ttsInput");
+    const geoInfo = document.getElementById("geoInfo");
+    const toolState = document.getElementById("toolState");
+    const calcResult = document.getElementById("calcResult");
+    const todoList = document.getElementById("todoList");
+    const drawPad = document.getElementById("drawPad");
+
+    let camStream = null;
+    let micStream = null;
+    let audioCtx = null;
+    let analyser = null;
+    let rafId = null;
+    let mediaRecorder = null;
+    let recordStream = null;
+    let recordedChunks = [];
+    let lastRecordingUrl = null;
+    let recordStartedAt = 0;
+    let recordInterval = null;
+    let swInterval = null;
+    let swStartedAt = 0;
+    let swElapsed = 0;
+    let screenStream = null;
+    let recognition = null;
+    let currentTheme = 0;
+    let todos = [];
+
+    function paintStatus(el, text, tone) {
+      el.textContent = text;
+      el.className = "status " + tone;
+    }
+
+    function updateClock() {
+      clock.textContent = new Date().toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function updateSystemInfo() {
+      screenInfo.textContent = `${window.screen.width}x${window.screen.height} (${window.devicePixelRatio}x)`;
+      browserInfo.textContent = navigator.userAgent;
+    }
+    updateSystemInfo();
+    window.addEventListener("resize", updateSystemInfo);
+
+    window.addEventListener("keydown", (ev) => {
+      lastKey.textContent = `${ev.key} (${ev.code})`;
+    });
+    window.addEventListener("mousemove", (ev) => {
+      mousePos.textContent = `x:${ev.clientX} y:${ev.clientY}`;
+    });
+
+    function formatMsToClock(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+      const seconds = String(totalSeconds % 60).padStart(2, "0");
+      return `${minutes}:${seconds}`;
+    }
+
+    document.getElementById("beepBtn").addEventListener("click", () => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = 740;
+        gain.gain.value = 0.08;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        setTimeout(() => { osc.stop(); ctx.close(); }, 200);
+        paintStatus(audioState, "Beep played", "ok");
+      } catch (err) {
+        paintStatus(audioState, "Speaker blocked: " + err.message, "bad");
+      }
+    });
+
+    async function turnCameraOn() {
+      try {
+        camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        cam.srcObject = camStream;
+        paintStatus(camState, "Camera on", "ok");
+      } catch (err) {
+        paintStatus(camState, "Camera blocked: " + err.message, "bad");
+      }
+    }
+    function turnCameraOff() {
+      if (camStream) camStream.getTracks().forEach((t) => t.stop());
+      camStream = null;
+      cam.srcObject = null;
+      paintStatus(camState, "Camera off", "warn");
+    }
+
+    async function turnMicOn() {
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const src = audioCtx.createMediaStreamSource(micStream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        src.connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+
+        const draw = () => {
+          analyser.getByteTimeDomainData(data);
+          let peak = 0;
+          for (let i = 0; i < data.length; i += 1) {
+            const centered = Math.abs(data[i] - 128);
+            if (centered > peak) peak = centered;
+          }
+          micFill.style.width = Math.min(100, Math.round((peak / 128) * 220)) + "%";
+          rafId = requestAnimationFrame(draw);
+        };
+        draw();
+        paintStatus(micState, "Mic on", "ok");
+      } catch (err) {
+        paintStatus(micState, "Mic blocked: " + err.message, "bad");
+      }
+    }
+    function turnMicOff() {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+      micFill.style.width = "0%";
+      if (micStream) micStream.getTracks().forEach((t) => t.stop());
+      if (audioCtx) audioCtx.close();
+      micStream = null;
+      audioCtx = null;
+      analyser = null;
+      paintStatus(micState, "Mic off", "warn");
+    }
+
+    async function startRecording() {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        paintStatus(recordState, "Already recording", "warn");
+        return;
+      }
+      try {
+        const mode = recordMode.value;
+        const constraints = {
+          video: mode === "video" || mode === "both",
+          audio: mode === "audio" || mode === "both"
+        };
+        recordStream = await navigator.mediaDevices.getUserMedia(constraints);
+        recordPreview.srcObject = recordStream;
+
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(recordStream);
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) recordedChunks.push(event.data);
+        };
+        mediaRecorder.onstop = () => {
+          if (lastRecordingUrl) URL.revokeObjectURL(lastRecordingUrl);
+          const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || "video/webm" });
+          lastRecordingUrl = URL.createObjectURL(blob);
+          recordPreview.srcObject = null;
+          recordPreview.src = lastRecordingUrl;
+          recordPreview.controls = true;
+          recordStream.getTracks().forEach((t) => t.stop());
+          paintStatus(recordState, "Recording ready to download", "ok");
+        };
+        mediaRecorder.start(250);
+        recordStartedAt = Date.now();
+        recordInterval = setInterval(() => {
+          recordTimer.textContent = formatMsToClock(Date.now() - recordStartedAt);
+        }, 250);
+        paintStatus(recordState, "Recording...", "ok");
+      } catch (err) {
+        paintStatus(recordState, "Record blocked: " + err.message, "bad");
+      }
+    }
+
+    function stopRecording() {
+      if (!mediaRecorder || mediaRecorder.state !== "recording") {
+        paintStatus(recordState, "Not recording", "warn");
+        return;
+      }
+      mediaRecorder.stop();
+      clearInterval(recordInterval);
+      recordInterval = null;
+    }
+
+    function downloadRecording() {
+      if (!lastRecordingUrl) {
+        paintStatus(recordState, "No recording yet", "warn");
+        return;
+      }
+      const a = document.createElement("a");
+      a.href = lastRecordingUrl;
+      a.download = `cakto-recording-${Date.now()}.webm`;
+      a.click();
+      paintStatus(recordState, "Download started", "ok");
+    }
+
+    function saveNotes() {
+      localStorage.setItem("caktoNotes", notesBox.value);
+      paintStatus(notesState, "Notes saved", "ok");
+    }
+
+    function clearNotes() {
+      notesBox.value = "";
+      localStorage.removeItem("caktoNotes");
+      paintStatus(notesState, "Notes cleared", "warn");
+    }
+
+    function updateNetwork() {
+      networkInfo.textContent = navigator.onLine ? "Online" : "Offline";
+    }
+
+    function setTheme(index) {
+      const themes = [
+        "radial-gradient(circle at 18% 18%, #8f8ee8 0%, transparent 46%),radial-gradient(circle at 82% 10%, #57b8f9 0%, transparent 44%),radial-gradient(circle at 50% 88%, #5dcf96 0%, transparent 40%),#1e2330",
+        "radial-gradient(circle at 10% 10%, #f39bb8 0%, transparent 44%),radial-gradient(circle at 88% 14%, #7a7ffc 0%, transparent 42%),radial-gradient(circle at 50% 84%, #6de0c8 0%, transparent 42%),#201e32",
+        "radial-gradient(circle at 20% 16%, #f7b35e 0%, transparent 45%),radial-gradient(circle at 80% 12%, #5fc0ff 0%, transparent 43%),radial-gradient(circle at 46% 86%, #92ea77 0%, transparent 40%),#232321"
+      ];
+      document.body.style.background = themes[index];
+      localStorage.setItem("caktoTheme", String(index));
+    }
+
+    async function setupBattery() {
+      if (!navigator.getBattery) {
+        batteryInfo.textContent = "Not supported here";
+        return;
+      }
+      const battery = await navigator.getBattery();
+      const showBattery = () => {
+        const pct = Math.round(battery.level * 100);
+        batteryInfo.textContent = `${pct}%${battery.charging ? " (charging)" : ""}`;
+      };
+      battery.addEventListener("levelchange", showBattery);
+      battery.addEventListener("chargingchange", showBattery);
+      showBattery();
+    }
+
+    async function turnScreenOn() {
+      try {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        screenPreview.srcObject = screenStream;
+        paintStatus(screenState, "Screen sharing", "ok");
+      } catch (err) {
+        paintStatus(screenState, "Screen blocked: " + err.message, "bad");
+      }
+    }
+
+    function turnScreenOff() {
+      if (screenStream) screenStream.getTracks().forEach((t) => t.stop());
+      screenStream = null;
+      screenPreview.srcObject = null;
+      paintStatus(screenState, "Screen share off", "warn");
+    }
+
+    function initSpeech() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        paintStatus(speechState, "Speech not supported", "bad");
+        return;
+      }
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.onresult = (e) => {
+        const text = Array.from(e.results).map((r) => r[0].transcript).join(" ");
+        speechText.textContent = text || "listening...";
+      };
+      recognition.onerror = (e) => paintStatus(speechState, "Voice error: " + e.error, "bad");
+      recognition.onend = () => {
+        if (speechState.textContent.includes("Listening")) paintStatus(speechState, "Voice stopped", "warn");
+      };
+    }
+
+    function startSpeech() {
+      if (!recognition) initSpeech();
+      if (!recognition) return;
+      try {
+        recognition.start();
+        paintStatus(speechState, "Listening...", "ok");
+      } catch (err) {
+        paintStatus(speechState, "Voice start blocked", "bad");
+      }
+    }
+
+    function stopSpeech() {
+      if (!recognition) return;
+      recognition.stop();
+      paintStatus(speechState, "Voice idle", "warn");
+    }
+
+    function speakText() {
+      const text = ttsInput.value.trim();
+      if (!text) {
+        paintStatus(speechState, "Type text first", "warn");
+        return;
+      }
+      const utter = new SpeechSynthesisUtterance(text);
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
+      paintStatus(speechState, "Speaking text", "ok");
+    }
+
+    function getLocation() {
+      if (!navigator.geolocation) {
+        geoInfo.textContent = "not supported";
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          geoInfo.textContent = `${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)}`;
+          paintStatus(toolState, "Location loaded", "ok");
+        },
+        (err) => {
+          geoInfo.textContent = err.message;
+          paintStatus(toolState, "Location blocked", "bad");
+        }
+      );
+    }
+
+    async function copyTime() {
+      try {
+        await navigator.clipboard.writeText(new Date().toString());
+        paintStatus(toolState, "Time copied", "ok");
+      } catch (err) {
+        paintStatus(toolState, "Clipboard blocked", "bad");
+      }
+    }
+
+    function cycleTheme() {
+      currentTheme = (currentTheme + 1) % 3;
+      setTheme(currentTheme);
+      paintStatus(toolState, "Theme changed", "ok");
+    }
+
+    function calculateExpression() {
+      const expr = document.getElementById("calcInput").value.trim();
+      if (!expr) return;
+      try {
+        const value = Function(`"use strict"; return (${expr})`)();
+        calcResult.textContent = `Result: ${value}`;
+      } catch (err) {
+        calcResult.textContent = "Result: error";
+      }
+    }
+
+    function renderTodos() {
+      todoList.innerHTML = "";
+      todos.forEach((todo, index) => {
+        const li = document.createElement("li");
+        li.textContent = `${index + 1}. ${todo}`;
+        todoList.appendChild(li);
+      });
+      localStorage.setItem("caktoTodos", JSON.stringify(todos));
+    }
+
+    function addTodo() {
+      const todoInput = document.getElementById("todoInput");
+      const value = todoInput.value.trim();
+      if (!value) return;
+      todos.push(value);
+      todoInput.value = "";
+      renderTodos();
+    }
+
+    function clearTodos() {
+      todos = [];
+      renderTodos();
+    }
+
+    const drawCtx = drawPad.getContext("2d");
+    let drawing = false;
+    function drawStart(e) {
+      drawing = true;
+      drawCtx.lineWidth = 3;
+      drawCtx.lineCap = "round";
+      drawCtx.strokeStyle = "#111827";
+      drawCtx.beginPath();
+      drawCtx.moveTo(e.offsetX, e.offsetY);
+    }
+    function drawMove(e) {
+      if (!drawing) return;
+      drawCtx.lineTo(e.offsetX, e.offsetY);
+      drawCtx.stroke();
+    }
+    function drawEnd() {
+      drawing = false;
+    }
+
+    function clearDrawing() {
+      drawCtx.clearRect(0, 0, drawPad.width, drawPad.height);
+    }
+
+    function saveDrawing() {
+      const a = document.createElement("a");
+      a.href = drawPad.toDataURL("image/png");
+      a.download = `cakto-drawing-${Date.now()}.png`;
+      a.click();
+    }
+
+    function renderStopwatch() {
+      const ms = swElapsed + (swInterval ? Date.now() - swStartedAt : 0);
+      const totalTenths = Math.floor(ms / 100);
+      const mins = String(Math.floor(totalTenths / 600)).padStart(2, "0");
+      const secs = String(Math.floor((totalTenths % 600) / 10)).padStart(2, "0");
+      const tenth = String(totalTenths % 10);
+      stopwatch.textContent = `${mins}:${secs}.${tenth}`;
+    }
+
+    function startStopwatch() {
+      if (swInterval) return;
+      swStartedAt = Date.now();
+      swInterval = setInterval(renderStopwatch, 80);
+    }
+    function stopStopwatch() {
+      if (!swInterval) return;
+      swElapsed += Date.now() - swStartedAt;
+      clearInterval(swInterval);
+      swInterval = null;
+      renderStopwatch();
+    }
+    function resetStopwatch() {
+      swElapsed = 0;
+      swStartedAt = Date.now();
+      renderStopwatch();
+    }
+
+    document.getElementById("camOnBtn").addEventListener("click", turnCameraOn);
+    document.getElementById("camOffBtn").addEventListener("click", turnCameraOff);
+    document.getElementById("micOnBtn").addEventListener("click", turnMicOn);
+    document.getElementById("micOffBtn").addEventListener("click", turnMicOff);
+    document.getElementById("recordStartBtn").addEventListener("click", startRecording);
+    document.getElementById("recordStopBtn").addEventListener("click", stopRecording);
+    document.getElementById("recordDownloadBtn").addEventListener("click", downloadRecording);
+    document.getElementById("saveNotesBtn").addEventListener("click", saveNotes);
+    document.getElementById("clearNotesBtn").addEventListener("click", clearNotes);
+    document.getElementById("swStartBtn").addEventListener("click", startStopwatch);
+    document.getElementById("swStopBtn").addEventListener("click", stopStopwatch);
+    document.getElementById("swResetBtn").addEventListener("click", resetStopwatch);
+    document.getElementById("screenOnBtn").addEventListener("click", turnScreenOn);
+    document.getElementById("screenOffBtn").addEventListener("click", turnScreenOff);
+    document.getElementById("speechListenBtn").addEventListener("click", startSpeech);
+    document.getElementById("speechStopBtn").addEventListener("click", stopSpeech);
+    document.getElementById("ttsSpeakBtn").addEventListener("click", speakText);
+    document.getElementById("geoBtn").addEventListener("click", getLocation);
+    document.getElementById("copyTimeBtn").addEventListener("click", copyTime);
+    document.getElementById("themeBtn").addEventListener("click", cycleTheme);
+    document.getElementById("calcBtn").addEventListener("click", calculateExpression);
+    document.getElementById("todoAddBtn").addEventListener("click", addTodo);
+    document.getElementById("todoClearBtn").addEventListener("click", clearTodos);
+    document.getElementById("drawClearBtn").addEventListener("click", clearDrawing);
+    document.getElementById("drawSaveBtn").addEventListener("click", saveDrawing);
+    drawPad.addEventListener("pointerdown", drawStart);
+    drawPad.addEventListener("pointermove", drawMove);
+    drawPad.addEventListener("pointerup", drawEnd);
+    drawPad.addEventListener("pointerleave", drawEnd);
+
+    const savedNotes = localStorage.getItem("caktoNotes");
+    if (savedNotes) {
+      notesBox.value = savedNotes;
+      paintStatus(notesState, "Loaded saved notes", "ok");
+    }
+    const savedTodos = localStorage.getItem("caktoTodos");
+    if (savedTodos) {
+      try { todos = JSON.parse(savedTodos) || []; } catch { todos = []; }
+      renderTodos();
+    }
+    const savedTheme = Number(localStorage.getItem("caktoTheme"));
+    if (!Number.isNaN(savedTheme) && savedTheme >= 0 && savedTheme < 3) {
+      currentTheme = savedTheme;
+      setTheme(currentTheme);
+    }
+    updateNetwork();
+    window.addEventListener("online", updateNetwork);
+    window.addEventListener("offline", updateNetwork);
+    setupBattery();
+    initSpeech();
+    renderStopwatch();
+    clearDrawing();
+
+    window.addEventListener("beforeunload", () => {
+      turnCameraOff();
+      turnMicOff();
+      turnScreenOff();
+      stopSpeech();
+      if (recordStream) recordStream.getTracks().forEach((t) => t.stop());
+      clearInterval(recordInterval);
+      clearInterval(swInterval);
+      if (lastRecordingUrl) URL.revokeObjectURL(lastRecordingUrl);
+    });
+  </script>
+</body>
+</html>

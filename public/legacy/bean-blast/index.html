@@ -1,0 +1,1587 @@
+<!--
+Bean Blast — idle fart clicker
+- Eat beans and gassy food to fill your gas meter
+- Click FART to blast out fart points (FP)
+- Buy upgrades: food, tank size, louder farts, auto-farters
+- Wide layout: left = stats + log, center = play, right = shop, bottom = bean field arena
+- Tank full = 5 second fuse! Fart in time or 💥 explode (lose gas + 50% FP)
+- Gas tank grows with upgrades; idle earnings when you come back
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bean Blast 💨</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      font-family: system-ui, 'Segoe UI', sans-serif;
+      background: linear-gradient(160deg, #2d5016 0%, #4a7c23 40%, #6b8e3d 100%);
+      color: #2e2e2e;
+      padding: 0.75rem;
+      user-select: none;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+      gap: 0.75rem;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      align-items: stretch;
+      position: relative;
+      z-index: 2;
+    }
+
+    @media (min-width: 900px) {
+      .layout {
+        grid-template-columns: 220px minmax(300px, 1fr) minmax(260px, 320px);
+        grid-template-rows: 1fr minmax(140px, 28vh);
+      }
+    }
+
+    .panel {
+      background: #f8f4e8;
+      border: 3px solid #5c4033;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      padding: 1rem;
+      position: relative;
+      z-index: 2;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .game {
+      position: relative;
+      min-height: 0;
+    }
+
+    .side-panel {
+      display: none;
+    }
+
+    @media (min-width: 900px) {
+      .side-panel {
+        display: block;
+      }
+    }
+
+    .side-panel h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1rem;
+      color: #3d2914;
+      border-bottom: 2px dashed #c4b89a;
+      padding-bottom: 0.4rem;
+    }
+
+    .belly-buddy {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .buddy-face {
+      font-size: 5.5rem;
+      line-height: 1;
+      display: block;
+      transition: transform 0.15s;
+    }
+
+    .buddy-face.shake {
+      animation: bellyShake 0.35s ease;
+    }
+
+    .buddy-face.full {
+      animation: bellyPulse 0.6s infinite;
+    }
+
+    @keyframes bellyShake {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-6deg) scale(1.05); }
+      75% { transform: rotate(6deg) scale(1.05); }
+    }
+
+    @keyframes bellyPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .buddy-label {
+      font-size: 0.85rem;
+      color: #6b5b45;
+      font-weight: 700;
+      margin-top: 0.35rem;
+    }
+
+    .detail-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      margin-bottom: 1rem;
+    }
+
+    .detail-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ebe4d4;
+      border: 2px solid #c4b89a;
+      border-radius: 8px;
+      padding: 0.45rem 0.6rem;
+      font-size: 0.8rem;
+    }
+
+    .detail-stat span:last-child {
+      font-weight: 800;
+      color: #3d2914;
+    }
+
+    .fart-log {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    .side-left {
+      min-height: 0;
+    }
+
+    .shop-panel-side {
+      min-height: 0;
+    }
+
+    .shop-panel-side .upgrade-list,
+    .shop-panel-mobile .upgrade-list {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .log-entry {
+      background: #fff;
+      border: 1px solid #d4cbb8;
+      border-radius: 8px;
+      padding: 0.4rem 0.55rem;
+      font-size: 0.75rem;
+      color: #5c4a32;
+      animation: logIn 0.25s ease;
+    }
+
+    @keyframes logIn {
+      from { transform: translateX(-8px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .log-entry .log-fp {
+      font-weight: 800;
+      color: #2e7d32;
+    }
+
+    .log-empty {
+      font-size: 0.8rem;
+      color: #9e8b6e;
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    .auto-roster {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+
+    .roster-item {
+      background: #ebe4d4;
+      border: 2px solid #c4b89a;
+      border-radius: 8px;
+      padding: 0.35rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #3d2914;
+    }
+
+    .bean-rain {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none !important;
+    }
+
+    .falling-bean {
+      position: absolute;
+      font-size: 1.4rem;
+      animation: beanFall linear forwards;
+      opacity: 0.5;
+    }
+
+    @keyframes beanFall {
+      0% { transform: translateY(-30px) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.6; }
+      100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+    }
+
+    @media (max-width: 899px) {
+      .shop-panel-mobile {
+        display: block;
+      }
+      .shop-panel-side {
+        display: none;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .shop-panel-mobile {
+        display: none;
+      }
+    }
+
+    .arena {
+      display: none;
+      padding: 0.75rem 1rem;
+      background: linear-gradient(180deg, #e8f5c8 0%, #c5e1a5 55%, #8bc34a 100%);
+      border-color: #558b2f;
+      overflow: hidden;
+    }
+
+    @media (min-width: 900px) {
+      .arena {
+        display: flex;
+        grid-column: 1 / -1;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 1rem;
+      }
+    }
+
+    .arena-tank {
+      width: 72px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .arena-tank-label {
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: #33691e;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .arena-tank-body {
+      flex: 1;
+      width: 100%;
+      min-height: 60px;
+      background: #d4cbb8;
+      border: 3px solid #5c4033;
+      border-radius: 10px 10px 14px 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .arena-tank-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0%;
+      background: linear-gradient(0deg, #ffeb3b, #cddc39, #8bc34a);
+      transition: height 0.15s ease-out;
+    }
+
+    .arena-tank-fill.danger {
+      background: linear-gradient(0deg, #f44336, #ff9800, #ffeb3b);
+      animation: wobble 0.4s infinite;
+    }
+
+    .arena-tank-fill.critical {
+      animation: tankFlash 0.3s infinite;
+    }
+
+    @keyframes tankFlash {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.3); }
+    }
+
+    .arena-scene {
+      flex: 1;
+      position: relative;
+      min-width: 0;
+      border: 2px dashed #7cb342;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.35);
+      overflow: hidden;
+    }
+
+    .arena-ground {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 38%;
+      background: linear-gradient(180deg, #aed581, #7cb342);
+      border-top: 2px solid #558b2f;
+    }
+
+    .arena-buddy {
+      position: absolute;
+      left: 50%;
+      bottom: 28%;
+      transform: translateX(-50%);
+      font-size: clamp(3rem, 8vw, 6rem);
+      line-height: 1;
+      transition: transform 0.2s;
+      z-index: 3;
+    }
+
+    .arena-buddy.full {
+      animation: bellyPulse 0.6s infinite;
+    }
+
+    .arena-buddy.critical {
+      animation: bellyShake 0.25s infinite;
+    }
+
+    .bean-pile {
+      position: absolute;
+      bottom: 8%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.15rem;
+      max-width: 70%;
+      z-index: 2;
+    }
+
+    .bean-pile span {
+      font-size: clamp(0.9rem, 2vw, 1.3rem);
+      line-height: 1;
+      animation: beanWiggle 2s ease-in-out infinite;
+    }
+
+    .bean-pile span:nth-child(odd) { animation-delay: 0.3s; }
+
+    @keyframes beanWiggle {
+      0%, 100% { transform: rotate(-5deg); }
+      50% { transform: rotate(5deg); }
+    }
+
+    .arena-worker {
+      position: absolute;
+      bottom: 36%;
+      font-size: 1.6rem;
+      animation: workerBounce 1.2s ease-in-out infinite;
+      z-index: 4;
+    }
+
+    @keyframes workerBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .arena-cloud {
+      position: absolute;
+      font-size: 1.4rem;
+      opacity: 0.55;
+      animation: arenaDrift 8s linear infinite;
+      z-index: 1;
+    }
+
+    @keyframes arenaDrift {
+      0% { transform: translateX(-20px); opacity: 0; }
+      10% { opacity: 0.55; }
+      90% { opacity: 0.55; }
+      100% { transform: translateX(120px); opacity: 0; }
+    }
+
+    .arena-status {
+      width: 200px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .arena-status-box {
+      background: rgba(255, 255, 255, 0.7);
+      border: 2px solid #7cb342;
+      border-radius: 10px;
+      padding: 0.5rem 0.65rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #33691e;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    .arena-status-box.warn {
+      background: #ffebee;
+      border-color: #e53935;
+      color: #b71c1c;
+      animation: fuseBlink 0.4s infinite;
+    }
+
+    .arena-beans-eaten {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #3d2914;
+    }
+
+    h1 {
+      margin: 0;
+      text-align: center;
+      font-size: 2rem;
+      color: #3d2914;
+    }
+
+    .subtitle {
+      text-align: center;
+      margin: 0.25rem 0 1rem;
+      color: #6b5b45;
+      font-size: 0.95rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat {
+      background: #ebe4d4;
+      border: 2px solid #c4b89a;
+      border-radius: 10px;
+      padding: 0.65rem;
+      text-align: center;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.75rem;
+      color: #7a6a52;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: #3d2914;
+    }
+
+    .gas-wrap {
+      margin-bottom: 1rem;
+    }
+
+    .gas-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: #5c4a32;
+      margin-bottom: 0.35rem;
+      font-weight: 600;
+    }
+
+    .gas-bar {
+      height: 22px;
+      background: #d4cbb8;
+      border: 2px solid #a89878;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .gas-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #8bc34a, #cddc39, #ffeb3b);
+      border-radius: 999px;
+      transition: width 0.12s ease-out;
+    }
+
+    .gas-fill.danger {
+      background: linear-gradient(90deg, #ff9800, #ff5722, #f44336);
+      animation: wobble 0.4s infinite;
+    }
+
+    .explode-timer {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffebee;
+      border: 2px solid #e53935;
+      border-radius: 10px;
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 1rem;
+      animation: fuseBlink 0.5s infinite;
+    }
+
+    .explode-timer.show {
+      display: flex;
+    }
+
+    .explode-timer.critical {
+      background: #ffcdd2;
+      animation: fuseBlink 0.25s infinite;
+    }
+
+    @keyframes fuseBlink {
+      0%, 100% { border-color: #e53935; }
+      50% { border-color: #ff9800; }
+    }
+
+    .explode-label {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #b71c1c;
+    }
+
+    .explode-count {
+      font-size: 1.6rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: #c62828;
+    }
+
+    .game.exploding {
+      animation: screenShake 0.5s ease;
+    }
+
+    @keyframes screenShake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-8px, 4px); }
+      40% { transform: translate(8px, -4px); }
+      60% { transform: translate(-6px, -6px); }
+      80% { transform: translate(6px, 6px); }
+    }
+
+    .boom {
+      position: fixed;
+      font-size: 3rem;
+      z-index: 50;
+      animation: boomPop 1s ease-out forwards;
+      pointer-events: none !important;
+    }
+
+    @keyframes boomPop {
+      0% { transform: scale(0.2); opacity: 0; }
+      30% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(3); opacity: 0; }
+    }
+
+    @keyframes wobble {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.15); }
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .btn,
+    .tab,
+    .upgrade,
+    .reset-btn {
+      touch-action: manipulation;
+      pointer-events: auto;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 1rem 0.5rem;
+      font-size: 1.05rem;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.05s, box-shadow 0.05s;
+      position: relative;
+      z-index: 3;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(4px);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+      transform: none;
+    }
+
+    .btn-eat {
+      background: #8d6e3f;
+      color: #fff8e7;
+      box-shadow: 0 6px 0 #5c4033;
+      border: 2px solid #5c4033;
+    }
+
+    .btn-eat:active:not(:disabled) {
+      box-shadow: 0 2px 0 #5c4033;
+    }
+
+    .btn-fart {
+      background: #7cb342;
+      color: #1b3a0f;
+      box-shadow: 0 6px 0 #558b2f;
+      border: 2px solid #33691e;
+      font-size: 1.2rem;
+    }
+
+    .btn-fart:active:not(:disabled) {
+      box-shadow: 0 2px 0 #558b2f;
+    }
+
+    .btn-fart.ready {
+      animation: pulse 0.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+
+    .message {
+      min-height: 2.5rem;
+      text-align: center;
+      font-size: 0.95rem;
+      color: #5c4a32;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      line-height: 1.35;
+    }
+
+    .shop h2 {
+      margin: 0 0 0.6rem;
+      font-size: 1.1rem;
+      color: #3d2914;
+      border-bottom: 2px dashed #c4b89a;
+      padding-bottom: 0.4rem;
+    }
+
+    .shop-tabs {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 0.5rem;
+      border: 2px solid #a89878;
+      border-radius: 8px;
+      background: #ebe4d4;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: #5c4a32;
+    }
+
+    .tab.active {
+      background: #7cb342;
+      border-color: #558b2f;
+      color: #1b3a0f;
+    }
+
+    .upgrade-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      overflow-y: auto;
+    }
+
+    @media (max-width: 899px) {
+      body { height: auto; min-height: 100vh; overflow: auto; }
+      .upgrade-list { max-height: 280px; }
+    }
+
+    .upgrade {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: #fff;
+      border: 2px solid #d4cbb8;
+      border-radius: 10px;
+      padding: 0.55rem 0.65rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .upgrade:hover:not(.maxed) {
+      background: #f5f0e4;
+    }
+
+    .upgrade.maxed {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .upgrade.cant-afford {
+      opacity: 0.7;
+    }
+
+    .upgrade-emoji {
+      font-size: 1.6rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .upgrade-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .upgrade-name {
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #3d2914;
+    }
+
+    .upgrade-desc {
+      font-size: 0.75rem;
+      color: #7a6a52;
+    }
+
+    .upgrade-cost {
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: #2e7d32;
+      white-space: nowrap;
+    }
+
+    .upgrade-cost.expensive {
+      color: #c62828;
+    }
+
+    .upgrade-lvl {
+      font-size: 0.7rem;
+      color: #9e8b6e;
+      text-align: right;
+    }
+
+    .float-pop {
+      position: fixed;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #33691e;
+      text-shadow: 0 1px 0 #fff;
+      animation: floatUp 1.4s ease-out forwards;
+      pointer-events: none !important;
+      z-index: 50;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(0.6); opacity: 0; }
+      20% { opacity: 1; transform: translateY(-10px) scale(1.1); }
+      100% { transform: translateY(-80px) scale(1); opacity: 0; }
+    }
+
+    .cloud {
+      position: fixed;
+      font-size: 2.5rem;
+      z-index: 50;
+      animation: cloudDrift 2s ease-out forwards;
+      opacity: 0.85;
+      pointer-events: none !important;
+    }
+
+    @keyframes cloudDrift {
+      0% { transform: scale(0.3); opacity: 0; }
+      30% { opacity: 0.9; transform: scale(1.2); }
+      100% { transform: scale(2) translateY(-120px); opacity: 0; }
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+      color: #9e8b6e;
+    }
+
+    .reset-btn {
+      margin-top: 0.5rem;
+      background: none;
+      border: 1px solid #c4b89a;
+      border-radius: 6px;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.7rem;
+      color: #9e8b6e;
+      cursor: pointer;
+      font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+  <div class="bean-rain" id="beanRain"></div>
+
+  <div class="layout">
+    <aside class="panel side-panel side-left">
+      <div class="belly-buddy">
+        <span class="buddy-face" id="buddyFace">🙂</span>
+        <div class="buddy-label" id="buddyLabel">Feeling fine</div>
+      </div>
+
+      <h2>📊 Stats</h2>
+      <div class="detail-stats">
+        <div class="detail-stat"><span>Total farts</span><span id="totalFarts">0</span></div>
+        <div class="detail-stat"><span>Gas per eat</span><span id="gasPerEat">5</span></div>
+        <div class="detail-stat"><span>FP per fart</span><span id="fpPerFart">1</span></div>
+        <div class="detail-stat"><span>Max gas</span><span id="maxGasStat">100</span></div>
+        <div class="detail-stat"><span>Explosions</span><span id="totalExplosions">0</span></div>
+      </div>
+
+      <h2>👷 Auto-Farters</h2>
+      <div class="auto-roster" id="autoRoster">
+        <span class="log-empty">None yet — buy from shop!</span>
+      </div>
+
+      <h2 style="margin-top:1rem">📜 Fart Log</h2>
+      <div class="fart-log" id="fartLog">
+        <div class="log-empty">No farts yet…</div>
+      </div>
+    </aside>
+
+    <main class="panel game" id="gamePanel">
+      <h1>💨 Bean Blast</h1>
+      <p class="subtitle">Eat beans. Build gas. Blast fart points.</p>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Fart Points</span>
+          <span class="stat-value" id="fp">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Per Second</span>
+          <span class="stat-value" id="fps">0</span>
+        </div>
+      </div>
+
+      <div class="gas-wrap">
+        <div class="gas-label">
+          <span>🫧 Gas Meter</span>
+          <span id="gasText">0 / 100</span>
+        </div>
+        <div class="gas-bar">
+          <div class="gas-fill" id="gasFill"></div>
+        </div>
+      </div>
+
+      <div class="explode-timer" id="explodeTimer">
+        <span class="explode-label">💣 FART NOW OR EXPLODE!</span>
+        <span class="explode-count" id="explodeCount">5.0</span>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-eat" id="eatBtn">🫘 Eat Beans</button>
+        <button class="btn btn-fart" id="fartBtn">💨 FART!</button>
+      </div>
+
+      <p class="message" id="message">Eat some beans first!</p>
+
+      <div class="shop shop-panel-mobile">
+        <h2>🛒 Gassy Shop</h2>
+        <div class="shop-tabs">
+          <button class="tab active" data-tab="food">Food</button>
+          <button class="tab" data-tab="tank">Tank</button>
+          <button class="tab" data-tab="farts">Farts</button>
+          <button class="tab" data-tab="auto">Auto</button>
+        </div>
+        <div class="upgrade-list" id="upgradeListMobile"></div>
+      </div>
+
+      <p class="footer">
+        Idle farts keep going while you're away (up to 8 hours).
+        <br>
+        <button class="reset-btn" id="resetBtn">reset save</button>
+      </p>
+    </main>
+
+    <aside class="panel side-panel shop-panel-side">
+      <h2>🛒 Gassy Shop</h2>
+      <div class="shop-tabs">
+        <button class="tab active" data-tab="food">Food</button>
+        <button class="tab" data-tab="tank">Tank</button>
+        <button class="tab" data-tab="farts">Farts</button>
+        <button class="tab" data-tab="auto">Auto</button>
+      </div>
+      <div class="upgrade-list" id="upgradeList"></div>
+    </aside>
+
+    <section class="panel arena" id="arena">
+      <div class="arena-tank">
+        <span class="arena-tank-label">Gas Tank</span>
+        <div class="arena-tank-body">
+          <div class="arena-tank-fill" id="arenaTankFill"></div>
+        </div>
+        <span class="arena-tank-label" id="arenaTankPct">0%</span>
+      </div>
+
+      <div class="arena-scene" id="arenaScene">
+        <div class="arena-ground"></div>
+        <div class="bean-pile" id="beanPile"></div>
+        <span class="arena-buddy" id="arenaBuddy">🙂</span>
+        <div id="arenaWorkers"></div>
+        <div id="arenaClouds"></div>
+      </div>
+
+      <div class="arena-status">
+        <div class="arena-status-box">
+          <div>Beans eaten</div>
+          <div class="arena-beans-eaten" id="beansEaten">0</div>
+        </div>
+        <div class="arena-status-box" id="arenaStatus">Fill the tank. Don't explode!</div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const SAVE_KEY = 'bean_blast_save_v1';
+
+    const FOOD_UPGRADES = [
+      { id: 'beans', name: 'Baked Beans', emoji: '🫘', desc: '+gas per eat', baseCost: 15, costMult: 1.35, effect: 3, max: 25 },
+      { id: 'cabbage', name: 'Cabbage', emoji: '🥬', desc: '+gas per eat', baseCost: 50, costMult: 1.4, effect: 8, max: 20 },
+      { id: 'broccoli', name: 'Broccoli', emoji: '🥦', desc: '+gas per eat', baseCost: 200, costMult: 1.45, effect: 20, max: 15 },
+      { id: 'soda', name: 'Burpy Soda', emoji: '🥤', desc: '+gas per eat', baseCost: 800, costMult: 1.5, effect: 55, max: 12 },
+      { id: 'chili', name: 'Chili Bowl', emoji: '🌶️', desc: '+gas per eat', baseCost: 3500, costMult: 1.55, effect: 150, max: 10 },
+      { id: 'eggs', name: 'Egg Sandwich', emoji: '🥚', desc: '+gas per eat', baseCost: 15000, costMult: 1.6, effect: 400, max: 8 },
+    ];
+
+    const TANK_UPGRADES = [
+      { id: 'tank', name: 'Bigger Belly', emoji: '🎈', desc: '+max gas', baseCost: 100, costMult: 1.45, effect: 50, max: 25 },
+      { id: 'pants', name: 'Stretchy Pants', emoji: '🩳', desc: '+max gas', baseCost: 350, costMult: 1.5, effect: 120, max: 20 },
+      { id: 'waistband', name: 'Elastic Waistband', emoji: '👖', desc: '+max gas', baseCost: 1500, costMult: 1.55, effect: 350, max: 15 },
+      { id: 'silo', name: 'Bean Silo', emoji: '🏗️', desc: '+max gas', baseCost: 8000, costMult: 1.6, effect: 900, max: 12 },
+      { id: 'megagut', name: 'Mega Gut', emoji: '🛢️', desc: '+max gas', baseCost: 40000, costMult: 1.65, effect: 2500, max: 10 },
+      { id: 'infinity', name: 'Infinity Tank', emoji: '♾️', desc: '+max gas', baseCost: 200000, costMult: 1.7, effect: 10000, max: 8 },
+    ];
+
+    const FART_UPGRADES = [
+      { id: 'squeak', name: 'Squeaker', emoji: '🐭', desc: '+FP per fart', baseCost: 25, costMult: 1.4, effect: 2, max: 20 },
+      { id: 'honk', name: 'Honker', emoji: '📯', desc: '+FP per fart', baseCost: 120, costMult: 1.45, effect: 8, max: 18 },
+      { id: 'trumpet', name: 'Trumpet Blast', emoji: '🎺', desc: '+FP per fart', baseCost: 600, costMult: 1.5, effect: 35, max: 15 },
+      { id: 'thunder', name: 'Thunder Cheek', emoji: '⛈️', desc: '+FP per fart', baseCost: 4000, costMult: 1.55, effect: 150, max: 12 },
+      { id: 'toxic', name: 'Toxic Cloud', emoji: '☠️', desc: '+FP per fart', baseCost: 25000, costMult: 1.6, effect: 600, max: 8 },
+    ];
+
+    const AUTO_UPGRADES = [
+      { id: 'fan', name: 'Bean Fan', emoji: '🪭', desc: 'FP/sec', baseCost: 40, costMult: 1.3, effect: 1, max: 50 },
+      { id: 'burrito', name: 'Burrito Bot', emoji: '🌯', desc: 'FP/sec', baseCost: 250, costMult: 1.35, effect: 5, max: 40 },
+      { id: 'goblin', name: 'Cabbage Goblin', emoji: '👺', desc: 'FP/sec', baseCost: 1200, costMult: 1.4, effect: 22, max: 30 },
+      { id: 'factory', name: 'Fart Factory', emoji: '🏭', desc: 'FP/sec', baseCost: 8000, costMult: 1.45, effect: 95, max: 25 },
+      { id: 'volcano', name: 'Bean Volcano', emoji: '🌋', desc: 'FP/sec', baseCost: 50000, costMult: 1.5, effect: 420, max: 15 },
+    ];
+
+    const FART_MSGS = [
+      'Pffft!', 'BRAAAP!', 'Squeak!', 'Honk!', 'Toot toot!',
+      'The dog ran away!', 'Windows rattled!', 'Legendary blast!',
+      'Someone opened a window!', 'That was wet…', 'Earthquake!',
+      'NASA detected it!', 'The beans have spoken!', 'Critical hit!',
+    ];
+
+    const EXPLODE_SECS = 5;
+
+    let state = {
+      fp: 0,
+      gas: 0,
+      maxGas: 100,
+      levels: {},
+      lastTick: Date.now(),
+      totalFarts: 0,
+      totalExplosions: 0,
+      beansEaten: 0,
+      fartLog: [],
+    };
+
+    let activeTab = 'food';
+    let explodeDeadline = null;
+    const BUDDY_FACES = [
+      { min: 0, face: '🙂', label: 'Feeling fine' },
+      { min: 0.25, face: '😊', label: 'A little gassy' },
+      { min: 0.5, face: '😬', label: 'Uh oh…' },
+      { min: 0.75, face: '🤢', label: 'So much pressure!' },
+      { min: 0.9, face: '🤯', label: 'ABOUT TO POP!' },
+    ];
+
+    function defaultLevels() {
+      const all = [...FOOD_UPGRADES, ...TANK_UPGRADES, ...FART_UPGRADES, ...AUTO_UPGRADES];
+      const levels = {};
+      for (const u of all) levels[u.id] = 0;
+      return levels;
+    }
+
+    function upgradeCost(u) {
+      const lvl = state.levels[u.id] || 0;
+      return Math.floor(u.baseCost * Math.pow(u.costMult, lvl));
+    }
+
+    function gasPerEat() {
+      let g = 5;
+      for (const u of FOOD_UPGRADES) {
+        g += (state.levels[u.id] || 0) * u.effect;
+      }
+      return g;
+    }
+
+    function maxGas() {
+      let m = 100;
+      for (const u of TANK_UPGRADES) {
+        m += (state.levels[u.id] || 0) * u.effect;
+      }
+      return m;
+    }
+
+    function fpPerFart() {
+      let fp = 1;
+      for (const u of FART_UPGRADES) {
+        fp += (state.levels[u.id] || 0) * u.effect;
+      }
+      return fp;
+    }
+
+    function autoRate() {
+      let r = 0;
+      for (const u of AUTO_UPGRADES) {
+        r += (state.levels[u.id] || 0) * u.effect;
+      }
+      return r;
+    }
+
+    function fmt(n) {
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+      if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+      if (n >= 1e4) return (n / 1e3).toFixed(1) + 'K';
+      if (n >= 1000) return (n / 1e3).toFixed(2) + 'K';
+      return Math.floor(n).toLocaleString();
+    }
+
+    function save() {
+      state.lastTick = Date.now();
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (_) {}
+    }
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        state = { ...state, ...data, levels: { ...defaultLevels(), ...data.levels } };
+        applyOfflineEarnings(data.lastTick);
+      } catch (_) {}
+    }
+
+    function applyOfflineEarnings(lastTick) {
+      if (!lastTick) return;
+      const dt = Math.min(Date.now() - lastTick, 8 * 60 * 60 * 1000);
+      const secs = dt / 1000;
+      const earned = autoRate() * secs;
+      if (earned > 0) {
+        state.fp += earned;
+        setMessage(`You farted offline and earned ${fmt(earned)} FP! 💨`);
+      }
+    }
+
+    function setMessage(text) {
+      document.getElementById('message').textContent = text;
+    }
+
+    function addFartLog(msg, fpGain) {
+      state.fartLog.unshift({ msg, fp: fpGain, time: Date.now() });
+      if (state.fartLog.length > 12) state.fartLog.pop();
+    }
+
+    function isTankFull() {
+      return state.gas >= state.maxGas;
+    }
+
+    function armExplodeTimer() {
+      if (explodeDeadline === null) {
+        explodeDeadline = Date.now() + EXPLODE_SECS * 1000;
+      }
+    }
+
+    function disarmExplodeTimer() {
+      explodeDeadline = null;
+    }
+
+    function syncExplodeTimer() {
+      state.maxGas = maxGas();
+      if (isTankFull()) armExplodeTimer();
+      else disarmExplodeTimer();
+    }
+
+    function explodeSecondsLeft() {
+      if (explodeDeadline === null) return null;
+      return Math.max(0, (explodeDeadline - Date.now()) / 1000);
+    }
+
+    function addEffect(el) {
+      el.style.pointerEvents = 'none';
+      document.body.appendChild(el);
+      return el;
+    }
+
+    function spawnBoom() {
+      const emojis = ['💥', '💨', '🫘', '☁️'];
+      for (let i = 0; i < 8; i++) {
+        const el = document.createElement('div');
+        el.className = 'boom';
+        el.textContent = emojis[i % emojis.length];
+        el.style.left = (20 + Math.random() * 60) + 'vw';
+        el.style.top = (20 + Math.random() * 40) + 'vh';
+        el.style.animationDelay = (i * 0.05) + 's';
+        addEffect(el);
+        setTimeout(() => el.remove(), 1200);
+      }
+    }
+
+    function explode() {
+      disarmExplodeTimer();
+      const fpLoss = Math.floor(state.fp * 0.5);
+      state.fp = Math.max(0, state.fp - fpLoss);
+      state.gas = 0;
+      state.totalExplosions++;
+
+      addFartLog('💥 KABOOM!', -fpLoss);
+      setMessage(`💥 YOU EXPLODED! Lost ${fmt(fpLoss)} FP and all your gas!`);
+      spawnBoom();
+
+      const panel = document.getElementById('gamePanel');
+      panel.classList.remove('exploding');
+      void panel.offsetWidth;
+      panel.classList.add('exploding');
+      setTimeout(() => panel.classList.remove('exploding'), 500);
+
+      const face = document.getElementById('buddyFace');
+      if (face) {
+        face.textContent = '💥';
+        document.getElementById('buddyLabel').textContent = 'Bean shrapnel everywhere…';
+      }
+
+      render();
+      save();
+    }
+
+    function updateExplodeTimer() {
+      const left = explodeSecondsLeft();
+      const timerEl = document.getElementById('explodeTimer');
+      const countEl = document.getElementById('explodeCount');
+
+      if (left === null) {
+        timerEl.classList.remove('show', 'critical');
+        return;
+      }
+
+      if (left <= 0) {
+        explode();
+        return;
+      }
+
+      timerEl.classList.add('show');
+      timerEl.classList.toggle('critical', left <= 2);
+      countEl.textContent = left.toFixed(1);
+
+    }
+
+    let lastArenaCloud = 0;
+
+    function renderArena() {
+      const arena = document.getElementById('arena');
+      if (!arena || arena.offsetParent === null) return;
+
+      const pct = state.maxGas > 0 ? (state.gas / state.maxGas) * 100 : 0;
+      const tankFill = document.getElementById('arenaTankFill');
+      tankFill.style.height = pct + '%';
+      tankFill.classList.toggle('danger', pct >= 90);
+      tankFill.classList.toggle('critical', explodeDeadline !== null && isTankFull());
+
+      document.getElementById('arenaTankPct').textContent = Math.round(pct) + '%';
+      document.getElementById('beansEaten').textContent = fmt(state.beansEaten);
+
+      const buddy = document.getElementById('arenaBuddy');
+      if (explodeDeadline !== null && isTankFull()) {
+        const left = explodeSecondsLeft();
+        buddy.textContent = left <= 2 ? '😱' : '🤯';
+        buddy.classList.add('full', 'critical');
+      } else if (pct >= 90) {
+        buddy.textContent = '🤢';
+        buddy.classList.add('full');
+        buddy.classList.remove('critical');
+      } else if (pct >= 50) {
+        buddy.textContent = '😬';
+        buddy.classList.remove('full', 'critical');
+      } else {
+        buddy.textContent = '🙂';
+        buddy.classList.remove('full', 'critical');
+      }
+
+      const pile = document.getElementById('beanPile');
+      const pileCount = Math.min(24, Math.floor(state.beansEaten / 3) + 1);
+      pile.innerHTML = Array.from({ length: pileCount }, () => '<span>🫘</span>').join('');
+
+      const workers = document.getElementById('arenaWorkers');
+      const owned = AUTO_UPGRADES.filter(u => (state.levels[u.id] || 0) > 0);
+      workers.innerHTML = owned.map((u, i) => {
+        const left = 12 + (i * 18) % 70;
+        return `<span class="arena-worker" style="left:${left}%">${u.emoji}</span>`;
+      }).join('');
+
+      const status = document.getElementById('arenaStatus');
+      if (explodeDeadline !== null && isTankFull()) {
+        const left = explodeSecondsLeft();
+        status.textContent = `💣 FART IN ${left.toFixed(1)}s OR LOSE 50% FP!`;
+        status.classList.add('warn');
+      } else if (pct >= 90) {
+        status.textContent = 'Tank almost full — get ready to fart!';
+        status.classList.remove('warn');
+      } else if (autoRate() > 0) {
+        status.textContent = `Auto-farting ${fmt(autoRate())} FP/sec down here…`;
+        status.classList.remove('warn');
+      } else {
+        status.textContent = 'Eat beans. Grow the pile. Rule the field!';
+        status.classList.remove('warn');
+      }
+
+      const now = performance.now();
+      if (autoRate() > 0 && now - lastArenaCloud > 2000) {
+        lastArenaCloud = now;
+        const cloud = document.createElement('span');
+        cloud.className = 'arena-cloud';
+        cloud.textContent = '💨';
+        cloud.style.left = (10 + Math.random() * 60) + '%';
+        cloud.style.top = (15 + Math.random() * 40) + '%';
+        cloud.style.animationDuration = (6 + Math.random() * 4) + 's';
+        document.getElementById('arenaClouds').appendChild(cloud);
+        setTimeout(() => cloud.remove(), 10000);
+      }
+    }
+
+    function renderSidePanels() {
+      const pct = state.maxGas > 0 ? state.gas / state.maxGas : 0;
+      const face = document.getElementById('buddyFace');
+
+      if (explodeDeadline !== null && isTankFull()) {
+        const left = explodeSecondsLeft();
+        face.textContent = left <= 2 ? '😱' : '🤯';
+        document.getElementById('buddyLabel').textContent =
+          left <= 2 ? 'FART FART FART!!!' : 'Tank is FULL — fart now!';
+        face.classList.add('full');
+      } else {
+        let buddy = BUDDY_FACES[0];
+        for (const b of BUDDY_FACES) {
+          if (pct >= b.min) buddy = b;
+        }
+        face.textContent = buddy.face;
+        document.getElementById('buddyLabel').textContent = buddy.label;
+        face.classList.toggle('full', pct >= 0.9);
+      }
+      face.classList.remove('shake');
+
+      document.getElementById('totalFarts').textContent = fmt(state.totalFarts);
+      document.getElementById('gasPerEat').textContent = fmt(gasPerEat());
+      document.getElementById('fpPerFart').textContent = fmt(fpPerFart());
+      document.getElementById('maxGasStat').textContent = fmt(state.maxGas);
+      document.getElementById('totalExplosions').textContent = fmt(state.totalExplosions);
+
+      const roster = document.getElementById('autoRoster');
+      const owned = AUTO_UPGRADES.filter(u => (state.levels[u.id] || 0) > 0);
+      if (owned.length === 0) {
+        roster.innerHTML = '<span class="log-empty">None yet — buy from shop!</span>';
+      } else {
+        roster.innerHTML = owned.map(u => {
+          const lvl = state.levels[u.id];
+          const prod = lvl * u.effect;
+          return `<span class="roster-item">${u.emoji} ${u.name} ×${lvl} (+${fmt(prod)}/s)</span>`;
+        }).join('');
+      }
+
+      const logEl = document.getElementById('fartLog');
+      if (state.fartLog.length === 0) {
+        logEl.innerHTML = '<div class="log-empty">No farts yet…</div>';
+      } else {
+        logEl.innerHTML = state.fartLog.map(e => {
+          const fpText = e.fp >= 0 ? `+${fmt(e.fp)}` : fmt(e.fp);
+          const color = e.fp >= 0 ? '' : ' style="color:#c62828"';
+          return `<div class="log-entry">${e.msg} <span class="log-fp"${color}>${fpText} FP</span></div>`;
+        }).join('');
+      }
+    }
+
+    function shakeBuddy() {
+      const face = document.getElementById('buddyFace');
+      face.classList.remove('shake');
+      void face.offsetWidth;
+      face.classList.add('shake');
+    }
+
+    function spawnFallingBean() {
+      const rain = document.getElementById('beanRain');
+      const el = document.createElement('div');
+      el.className = 'falling-bean';
+      el.textContent = ['🫘', '🥬', '🌯'][Math.floor(Math.random() * 3)];
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.animationDuration = (4 + Math.random() * 4) + 's';
+      el.style.pointerEvents = 'none';
+      rain.appendChild(el);
+      setTimeout(() => el.remove(), 9000);
+    }
+
+    function spawnPop(text, x, y) {
+      const el = document.createElement('div');
+      el.className = 'float-pop';
+      el.textContent = text;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      addEffect(el);
+      setTimeout(() => el.remove(), 1400);
+    }
+
+    function spawnCloud(x, y) {
+      const el = document.createElement('div');
+      el.className = 'cloud';
+      el.textContent = '💨';
+      el.style.left = (x - 20) + 'px';
+      el.style.top = (y - 20) + 'px';
+      addEffect(el);
+      setTimeout(() => el.remove(), 2000);
+    }
+
+    function bindPress(el, fn) {
+      el.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        if (el.disabled) return;
+        e.preventDefault();
+        fn(e);
+      });
+    }
+
+    function eatBeans(e) {
+      state.maxGas = maxGas();
+      const gain = gasPerEat();
+      const before = state.gas;
+      state.gas = Math.min(state.maxGas, state.gas + gain);
+      state.beansEaten++;
+
+      syncExplodeTimer();
+
+      if (isTankFull()) {
+        const left = explodeSecondsLeft();
+        setMessage(`Tank FULL! Fart within ${left.toFixed(1)}s or 💥 EXPLODE!`);
+      } else if (state.gas - before > 0) {
+        setMessage(`+${fmt(gain)} gas. Keep eating!`);
+      }
+
+      const rect = e.target.getBoundingClientRect();
+      spawnPop('+' + fmt(gain) + ' 🫧', rect.left + rect.width / 2, rect.top);
+      if (Math.random() < 0.35) spawnFallingBean();
+      render();
+      save();
+    }
+
+    function fart(e) {
+      const cost = 10;
+      if (state.gas < cost) {
+        setMessage('Not enough gas! Eat more beans! 🫘');
+        return;
+      }
+
+      state.gas -= cost;
+      syncExplodeTimer();
+
+      const fpGain = fpPerFart();
+      state.fp += fpGain;
+      state.totalFarts++;
+
+      const msg = FART_MSGS[Math.floor(Math.random() * FART_MSGS.length)];
+      setMessage(`${msg} +${fmt(fpGain)} FP`);
+      addFartLog(msg, fpGain);
+      shakeBuddy();
+
+      const rect = e.target.getBoundingClientRect();
+      spawnPop('+' + fmt(fpGain) + ' 💨', rect.left + rect.width / 2, rect.top);
+      spawnCloud(rect.left + rect.width / 2, rect.top);
+      for (let i = 0; i < 2; i++) setTimeout(spawnFallingBean, i * 120);
+
+      render();
+      save();
+    }
+
+    function buyUpgrade(u) {
+      const lvl = state.levels[u.id] || 0;
+      if (lvl >= u.max) return;
+      const cost = upgradeCost(u);
+      if (state.fp < cost) return;
+
+      state.fp -= cost;
+      state.levels[u.id] = lvl + 1;
+      state.maxGas = maxGas();
+      syncExplodeTimer();
+
+      const isTank = TANK_UPGRADES.some(t => t.id === u.id);
+      setMessage(isTank
+        ? `Bought ${u.emoji} ${u.name}! Max gas is now ${fmt(state.maxGas)}!`
+        : `Bought ${u.emoji} ${u.name}!`);
+      render();
+      save();
+    }
+
+    function getTabUpgrades() {
+      if (activeTab === 'food') return FOOD_UPGRADES;
+      if (activeTab === 'tank') return TANK_UPGRADES;
+      if (activeTab === 'farts') return FART_UPGRADES;
+      return AUTO_UPGRADES;
+    }
+
+    function buildUpgradeRow(u) {
+      const lvl = state.levels[u.id] || 0;
+      const maxed = lvl >= u.max;
+      const cost = upgradeCost(u);
+      const afford = state.fp >= cost;
+
+      const row = document.createElement('div');
+      row.className = 'upgrade' + (maxed ? ' maxed' : afford ? '' : ' cant-afford');
+      row.innerHTML = `
+        <span class="upgrade-emoji">${u.emoji}</span>
+        <div class="upgrade-info">
+          <div class="upgrade-name">${u.name}</div>
+          <div class="upgrade-desc">${u.desc} (+${u.effect} each)</div>
+        </div>
+        <div>
+          <div class="upgrade-cost ${afford || maxed ? '' : 'expensive'}">${maxed ? 'MAX' : fmt(cost) + ' FP'}</div>
+          <div class="upgrade-lvl">lvl ${lvl}/${u.max}</div>
+        </div>
+      `;
+      if (!maxed) bindPress(row, () => buyUpgrade(u));
+      return row;
+    }
+
+    function renderUpgrades() {
+      const ups = getTabUpgrades();
+      for (const listId of ['upgradeList', 'upgradeListMobile']) {
+        const list = document.getElementById(listId);
+        if (!list) continue;
+        list.innerHTML = '';
+        for (const u of ups) list.appendChild(buildUpgradeRow(u));
+      }
+    }
+
+    function renderHud() {
+      state.maxGas = maxGas();
+      document.getElementById('fp').textContent = fmt(state.fp);
+      document.getElementById('fps').textContent = fmt(autoRate());
+      document.getElementById('gasText').textContent = `${fmt(state.gas)} / ${fmt(state.maxGas)}`;
+
+      const pct = state.maxGas > 0 ? (state.gas / state.maxGas) * 100 : 0;
+      const fill = document.getElementById('gasFill');
+      fill.style.width = pct + '%';
+      fill.classList.toggle('danger', pct >= 90);
+
+      const fartBtn = document.getElementById('fartBtn');
+      fartBtn.disabled = state.gas < 10;
+      fartBtn.classList.toggle('ready', isTankFull() || state.gas >= 30);
+
+      updateExplodeTimer();
+
+      if (explodeDeadline !== null && isTankFull()) {
+        const face = document.getElementById('buddyFace');
+        if (face) {
+          const left = explodeSecondsLeft();
+          face.textContent = left <= 2 ? '😱' : '🤯';
+          document.getElementById('buddyLabel').textContent =
+            left <= 2 ? 'FART FART FART!!!' : 'Tank is FULL — fart now!';
+        }
+      }
+
+      renderArena();
+    }
+
+    let lastUpgradeRender = 0;
+
+    function render() {
+      renderHud();
+      renderUpgrades();
+      renderSidePanels();
+      renderArena();
+      lastUpgradeRender = performance.now();
+    }
+
+    let lastAuto = performance.now();
+
+    function tick(now) {
+      const dt = (now - lastAuto) / 1000;
+      lastAuto = now;
+
+      const rate = autoRate();
+      if (rate > 0) {
+        state.fp += rate * dt;
+      }
+
+      renderHud();
+
+      if (rate > 0 && now - lastUpgradeRender > 400) {
+        renderUpgrades();
+        lastUpgradeRender = now;
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    bindPress(document.getElementById('eatBtn'), eatBeans);
+    bindPress(document.getElementById('fartBtn'), fart);
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      bindPress(tab, () => {
+        activeTab = tab.dataset.tab;
+        document.querySelectorAll('.tab').forEach(t => {
+          t.classList.toggle('active', t.dataset.tab === activeTab);
+        });
+        renderUpgrades();
+      });
+    });
+
+    bindPress(document.getElementById('resetBtn'), () => {
+      if (!confirm('Reset all progress?')) return;
+      localStorage.removeItem(SAVE_KEY);
+      disarmExplodeTimer();
+      state = { fp: 0, gas: 0, maxGas: 100, levels: defaultLevels(), lastTick: Date.now(), totalFarts: 0, totalExplosions: 0, beansEaten: 0, fartLog: [] };
+      setMessage('Fresh start! Eat some beans!');
+      render();
+    });
+
+    state.levels = defaultLevels();
+    load();
+    syncExplodeTimer();
+    render();
+    requestAnimationFrame(tick);
+
+    setInterval(save, 10000);
+    setInterval(spawnFallingBean, 2500);
+  </script>
+</body>
+</html>

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dear Diary</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: 'Comic Sans MS', cursive, sans-serif;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			min-height: 100vh;
+			padding: 20px;
+		}
+
+		.container {
+			max-width: 800px;
+			margin: 0 auto;
+			background: white;
+			border-radius: 20px;
+			box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+			padding: 30px;
+		}
+
+		h1 {
+			color: #667eea;
+			text-align: center;
+			margin-bottom: 30px;
+			font-size: 2.5em;
+			text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+		}
+
+		.write-section {
+			margin-bottom: 40px;
+		}
+
+		textarea {
+			width: 100%;
+			min-height: 300px;
+			padding: 15px;
+			border: 3px solid #667eea;
+			border-radius: 10px;
+			font-size: 16px;
+			font-family: 'Comic Sans MS', cursive, sans-serif;
+			resize: vertical;
+			margin-bottom: 15px;
+		}
+
+		textarea:focus {
+			outline: none;
+			border-color: #764ba2;
+			box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+		}
+
+		.save-btn {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			border: none;
+			padding: 15px 40px;
+			font-size: 18px;
+			border-radius: 25px;
+			cursor: pointer;
+			font-family: 'Comic Sans MS', cursive, sans-serif;
+			box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+			transition: transform 0.2s, box-shadow 0.2s;
+		}
+
+		.save-btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+		}
+
+		.save-btn:active {
+			transform: translateY(0);
+		}
+
+		.past-entries {
+			border-top: 3px solid #667eea;
+			padding-top: 30px;
+		}
+
+		.past-entries h2 {
+			color: #764ba2;
+			margin-bottom: 20px;
+			font-size: 1.8em;
+		}
+
+		.entry {
+			background: #f8f9fa;
+			border-left: 4px solid #667eea;
+			padding: 15px;
+			margin-bottom: 15px;
+			border-radius: 8px;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+			overflow-wrap: break-word;
+			word-wrap: break-word;
+		}
+
+		.entry-date {
+			color: #764ba2;
+			font-weight: bold;
+			margin-bottom: 10px;
+			font-size: 0.9em;
+		}
+
+		.entry-text {
+			color: #333;
+			line-height: 1.6;
+			white-space: pre-wrap;
+			word-wrap: break-word;
+			overflow-wrap: break-word;
+			word-break: break-word;
+		}
+
+		.no-entries {
+			text-align: center;
+			color: #999;
+			font-style: italic;
+			padding: 20px;
+		}
+
+		.clear-btn {
+			background: #ff6b6b;
+			color: white;
+			border: none;
+			padding: 10px 20px;
+			font-size: 14px;
+			border-radius: 15px;
+			cursor: pointer;
+			font-family: 'Comic Sans MS', cursive, sans-serif;
+			margin-top: 10px;
+		}
+
+		.clear-btn:hover {
+			background: #ff5252;
+		}
+
+		.password-section {
+			text-align: center;
+			margin-bottom: 30px;
+		}
+
+		.password-input {
+			width: 100%;
+			max-width: 400px;
+			padding: 15px;
+			border: 3px solid #667eea;
+			border-radius: 10px;
+			font-size: 18px;
+			font-family: 'Comic Sans MS', cursive, sans-serif;
+			margin: 10px auto;
+			display: block;
+		}
+
+		.password-input:focus {
+			outline: none;
+			border-color: #764ba2;
+			box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+		}
+
+		.account-name-input {
+			width: 100%;
+			max-width: 400px;
+			padding: 15px;
+			border: 3px solid #667eea;
+			border-radius: 10px;
+			font-size: 18px;
+			font-family: 'Comic Sans MS', cursive, sans-serif;
+			margin: 10px auto;
+			display: block;
+		}
+
+		.account-name-input:focus {
+			outline: none;
+			border-color: #764ba2;
+			box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+		}
+
+		.account-switcher {
+			text-align: center;
+			margin-bottom: 20px;
+			padding: 15px;
+			background: #f8f9fa;
+			border-radius: 10px;
+		}
+
+		.switch-account-btn {
+			background: #28a745;
+			color: white;
+			border: none;
+			padding: 10px 20px;
+			font-size: 14px;
+			border-radius: 15px;
+			cursor: pointer;
+			font-family: 'Comic Sans MS', cursive, sans-serif;
+			margin: 5px;
+		}
+
+		.switch-account-btn:hover {
+			background: #218838;
+		}
+
+		.warning-box {
+			background: #fff3cd;
+			border: 3px solid #ffc107;
+			border-radius: 10px;
+			padding: 20px;
+			margin: 20px 0;
+			color: #856404;
+			font-weight: bold;
+			text-align: center;
+		}
+
+		.warning-box::before {
+			content: "⚠️ ";
+			font-size: 1.5em;
+		}
+
+		.hidden {
+			display: none;
+		}
+
+		.error-message {
+			color: red;
+			font-weight: bold;
+			margin-top: 10px;
+			text-align: center;
+			font-size: 16px;
+		}
+
+		.main-btn {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			border: none;
+			padding: 15px 40px;
+			font-size: 18px;
+			border-radius: 25px;
+			cursor: pointer;
+			font-family: 'Comic Sans MS', cursive, sans-serif;
+			box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+			transition: transform 0.2s, box-shadow 0.2s;
+			margin: 10px;
+		}
+
+		.main-btn:hover:not(:disabled) {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+		}
+
+		.main-btn:active:not(:disabled) {
+			transform: translateY(0);
+		}
+
+		.main-btn:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<!-- Main Screen -->
+		<div id="mainScreen" class="password-section">
+			<h1>📔 Dear Diary</h1>
+			<input type="text" id="accountName" class="account-name-input" placeholder="Enter account name here" oninput="checkCreateButton()">
+			<input type="password" id="newPassword" class="password-input" placeholder="Create password here" oninput="checkCreateButton()">
+			<input type="password" id="confirmPassword" class="password-input" placeholder="type password again to clarify" oninput="checkCreateButton()" onkeypress="if(event.key==='Enter' && !document.getElementById('createAccountBtn').disabled) createPassword()">
+			<button id="createAccountBtn" class="main-btn" onclick="createPassword()" disabled>click to make new account</button>
+			<button class="main-btn" onclick="showLoginScreen()">Already made an account? Click here!</button>
+		</div>
+
+		<!-- Login Screen -->
+		<div id="loginScreen" class="password-section hidden">
+			<h1>🔐 Login to Your Diary</h1>
+			<input type="text" id="loginAccountName" class="account-name-input" placeholder="Account name" onkeypress="if(event.key==='Enter') document.getElementById('loginPassword').focus()">
+			<input type="password" id="loginPassword" class="password-input" placeholder="Account password" onkeypress="if(event.key==='Enter') checkPassword()">
+			<button class="save-btn" onclick="checkPassword()">🔓 Login</button>
+			<div id="errorMessage" class="error-message hidden">Account not found.</div>
+			<div style="margin-top: 20px;">
+				<button class="switch-account-btn" onclick="showMainScreen()">← Back to Main Screen</button>
+			</div>
+		</div>
+
+		<!-- Main Diary Screen -->
+		<div id="diaryContent" class="hidden">
+			<div class="account-switcher">
+				<div style="margin-bottom: 10px;">
+					<strong>Current Account: <span id="currentAccountName"></span></strong>
+				</div>
+				<div style="margin-bottom: 10px; font-size: 12px; color: #666;">
+					📱 Here's a QR code just in case! (Find it on the Apple Bobs page)
+				</div>
+				<button class="switch-account-btn" onclick="logOut()">Log out</button>
+			</div>
+			<h1>📔 Dear Diary</h1>
+			
+			<div class="write-section">
+				<textarea id="diaryEntry" placeholder="Write whatever you want here..."></textarea>
+				<button class="save-btn" onclick="saveEntry()">💾 Save Entry</button>
+			</div>
+
+			<div class="past-entries">
+				<h2>📚 Past Entries</h2>
+				<div id="entriesList"></div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// Check if user is logged in, otherwise show main screen
+		checkPasswordStatus();
+
+		function getAllAccounts() {
+			const accountsData = localStorage.getItem('diaryAccounts');
+			return accountsData ? JSON.parse(accountsData) : {};
+		}
+
+		function saveAllAccounts(accounts) {
+			localStorage.setItem('diaryAccounts', JSON.stringify(accounts));
+		}
+
+		function getCurrentAccount() {
+			return sessionStorage.getItem('currentAccount');
+		}
+
+		function setCurrentAccount(accountName) {
+			sessionStorage.setItem('currentAccount', accountName);
+		}
+
+		function checkPasswordStatus() {
+			const currentAccount = getCurrentAccount();
+
+			if (currentAccount) {
+				// Show diary
+				document.getElementById('mainScreen').classList.add('hidden');
+				document.getElementById('loginScreen').classList.add('hidden');
+				document.getElementById('diaryContent').classList.remove('hidden');
+				document.getElementById('currentAccountName').textContent = currentAccount;
+				loadEntries();
+			} else {
+				// Show main screen
+				showMainScreen();
+			}
+		}
+
+		function showMainScreen() {
+			document.getElementById('mainScreen').classList.remove('hidden');
+			document.getElementById('loginScreen').classList.add('hidden');
+			document.getElementById('diaryContent').classList.add('hidden');
+			document.getElementById('errorMessage').classList.add('hidden');
+			checkCreateButton();
+		}
+
+		function showLoginScreen() {
+			document.getElementById('mainScreen').classList.add('hidden');
+			document.getElementById('loginScreen').classList.remove('hidden');
+			document.getElementById('diaryContent').classList.add('hidden');
+			document.getElementById('errorMessage').classList.add('hidden');
+			document.getElementById('loginAccountName').value = '';
+			document.getElementById('loginPassword').value = '';
+		}
+
+		function checkCreateButton() {
+			const accountName = document.getElementById('accountName').value.trim();
+			const newPassword = document.getElementById('newPassword').value;
+			const confirmPassword = document.getElementById('confirmPassword').value;
+			const createBtn = document.getElementById('createAccountBtn');
+
+			if (accountName !== '' && newPassword !== '' && confirmPassword !== '') {
+				createBtn.disabled = false;
+			} else {
+				createBtn.disabled = true;
+			}
+		}
+
+		function createPassword() {
+			const accountName = document.getElementById('accountName').value.trim();
+			const newPassword = document.getElementById('newPassword').value;
+			const confirmPassword = document.getElementById('confirmPassword').value;
+
+			if (accountName === '') {
+				alert('Please enter an account name!');
+				return;
+			}
+
+			if (newPassword === '') {
+				alert('Please enter a password!');
+				return;
+			}
+
+			if (newPassword !== confirmPassword) {
+				alert('Passwords don\'t match! Try again.');
+				return;
+			}
+
+			const accounts = getAllAccounts();
+			
+			if (accounts[accountName]) {
+				alert('This account name already exists! Choose a different name.');
+				return;
+			}
+
+			// Create new account
+			accounts[accountName] = {
+				password: newPassword,
+				entries: []
+			};
+			
+			saveAllAccounts(accounts);
+			setCurrentAccount(accountName);
+			
+			// Clear inputs
+			document.getElementById('accountName').value = '';
+			document.getElementById('newPassword').value = '';
+			document.getElementById('confirmPassword').value = '';
+			checkCreateButton();
+			
+			alert('Account created! Your diary is now protected! 🔒');
+			checkPasswordStatus();
+		}
+
+		function checkPassword() {
+			const accountName = document.getElementById('loginAccountName').value.trim();
+			const enteredPassword = document.getElementById('loginPassword').value;
+			const accounts = getAllAccounts();
+			const errorMessage = document.getElementById('errorMessage');
+
+			if (accountName === '') {
+				errorMessage.textContent = 'Please enter an account name!';
+				errorMessage.classList.remove('hidden');
+				return;
+			}
+
+			if (!accounts[accountName]) {
+				errorMessage.textContent = 'Account not found.';
+				errorMessage.classList.remove('hidden');
+				return;
+			}
+
+			if (enteredPassword === accounts[accountName].password) {
+				setCurrentAccount(accountName);
+				document.getElementById('loginAccountName').value = '';
+				document.getElementById('loginPassword').value = '';
+				errorMessage.classList.add('hidden');
+				checkPasswordStatus();
+			} else {
+				errorMessage.textContent = 'Account not found.';
+				errorMessage.classList.remove('hidden');
+				document.getElementById('loginPassword').value = '';
+			}
+		}
+
+		function logOut() {
+			setCurrentAccount(null);
+			showMainScreen();
+		}
+
+		function saveEntry() {
+			const text = document.getElementById('diaryEntry').value.trim();
+			const currentAccount = getCurrentAccount();
+			
+			if (!currentAccount) {
+				alert('No account selected!');
+				return;
+			}
+			
+			if (text === '') {
+				alert('Write something before saving!');
+				return;
+			}
+
+			const accounts = getAllAccounts();
+			if (!accounts[currentAccount]) {
+				alert('Account not found!');
+				return;
+			}
+
+			// Create new entry with date and time
+			const now = new Date();
+			const entry = {
+				date: now.toLocaleDateString('en-US', { 
+					year: 'numeric', 
+					month: 'long', 
+					day: 'numeric',
+					hour: '2-digit',
+					minute: '2-digit'
+				}),
+				text: text,
+				timestamp: now.getTime()
+			};
+
+			// Add new entry to the beginning of the list
+			accounts[currentAccount].entries.unshift(entry);
+			
+			// Save back to localStorage
+			saveAllAccounts(accounts);
+			
+			// Clear the text area
+			document.getElementById('diaryEntry').value = '';
+			
+			// Refresh the entries list
+			loadEntries();
+			
+			alert('Entry saved! ✨');
+		}
+
+		function loadEntries() {
+			const currentAccount = getCurrentAccount();
+			if (!currentAccount) {
+				return;
+			}
+
+			const accounts = getAllAccounts();
+			const entries = accounts[currentAccount] ? accounts[currentAccount].entries : [];
+			const entriesList = document.getElementById('entriesList');
+			
+			if (entries.length === 0) {
+				entriesList.innerHTML = '<div class="no-entries">No entries yet. Start writing!</div>';
+				return;
+			}
+
+			entriesList.innerHTML = entries.map(entry => `
+				<div class="entry">
+					<div class="entry-date">📅 ${entry.date}</div>
+					<div class="entry-text">${entry.text}</div>
+				</div>
+			`).join('');
+		}
+	</script>
+</body>
+</html>

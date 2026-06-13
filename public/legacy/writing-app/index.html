@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bo's Writing App</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 3em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+
+        .writing-area {
+            flex: 2;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .sidebar {
+            flex: 1;
+            background: #e9ecef;
+            padding: 20px;
+            border-left: 3px solid #4ecdc4;
+        }
+
+        .story-input {
+            width: 100%;
+            height: 400px;
+            padding: 20px;
+            border: 3px solid #4ecdc4;
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            resize: vertical;
+            background: white;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .story-input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 20px rgba(255,107,107,0.3);
+        }
+
+        .writing-tools {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78,205,196,0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,107,107,0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #51cf66, #40c057);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(81,207,102,0.4);
+        }
+
+        .sidebar h3 {
+            color: #495057;
+            border-bottom: 2px solid #4ecdc4;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .writing-tips {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4ecdc4;
+        }
+
+        .writing-tips h4 {
+            color: #4ecdc4;
+            margin: 0 0 10px 0;
+        }
+
+        .writing-tips ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .writing-tips li {
+            margin-bottom: 5px;
+            color: #495057;
+        }
+
+        .story-ideas {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .story-ideas h4 {
+            color: #ff6b6b;
+            margin: 0 0 10px 0;
+        }
+
+        .idea-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid #ff6b6b;
+        }
+
+        .idea-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .corrections {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #51cf66;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .corrections h4 {
+            color: #51cf66;
+            margin: 0 0 10px 0;
+        }
+
+        .correction-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 3px solid #51cf66;
+        }
+
+        .correction-item .original {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .correction-item .suggestion {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .correction-item .explanation {
+            color: #6c757d;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-box .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        .stat-box .label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .word-count {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 2px solid #4ecdc4;
+        }
+
+        .word-count .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        .word-count .label {
+            color: #6c757d;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .writing-tools {
+                justify-content: center;
+            }
+            
+            .stats {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✍️ Bo's Writing App ✍️</h1>
+            <p>Write amazing stories and get help with your writing!</p>
+        </div>
+
+        <div class="main-content">
+            <div class="writing-area">
+                <div class="word-count">
+                    <div class="number" id="wordCount">0</div>
+                    <div class="label">Words</div>
+                </div>
+
+                <textarea 
+                    id="storyInput" 
+                    class="story-input" 
+                    placeholder="Start writing your amazing story here! 🚀
+
+Try writing about:
+• A magical adventure in a forest
+• A robot who learns to feel emotions
+• A time-traveling detective
+• A superhero with a secret identity
+
+Just start typing and let your imagination run wild! ✨"
+                ></textarea>
+
+                <div class="writing-tools">
+                    <button class="btn btn-primary" onclick="checkWriting()">🔍 Check My Writing</button>
+                    <button class="btn btn-secondary" onclick="clearStory()">🗑️ Clear Story</button>
+                    <button class="btn btn-success" onclick="saveStory()">💾 Save Story</button>
+                    <button class="btn btn-primary" onclick="loadStory()">📂 Load Story</button>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="number" id="pageCount">0</div>
+                        <div class="label">Pages</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="sentenceCount">0</div>
+                        <div class="label">Sentences</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="paragraphCount">0</div>
+                        <div class="label">Paragraphs</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="writing-tips">
+                    <h4>📝 Writing Tips</h4>
+                    <ul>
+                        <li>Start with a strong opening sentence</li>
+                        <li>Use descriptive words to paint pictures</li>
+                        <li>Show, don't just tell</li>
+                        <li>Read your story out loud</li>
+                        <li>Edit and rewrite to make it better</li>
+                    </ul>
+                </div>
+
+                <div class="story-ideas">
+                    <h4>💡 Story Ideas</h4>
+                    <div class="idea-item" onclick="useIdea('A magical cat who can talk to plants')">
+                        A magical cat who can talk to plants
+                    </div>
+                    <div class="idea-item" onclick="useIdea('A kid who discovers a secret door in their bedroom')">
+                        A kid who discovers a secret door in their bedroom
+                    </div>
+                    <div class="idea-item" onclick="useIdea('A robot who wants to be a chef')">
+                        A robot who wants to be a chef
+                    </div>
+                    <div class="idea-item" onclick="useIdea('A superhero who is afraid of heights')">
+                        A superhero who is afraid of heights
+                    </div>
+                    <div class="idea-item" onclick="useIdea('A time machine that only goes to breakfast time')">
+                        A time machine that only goes to breakfast time
+                    </div>
+                </div>
+
+                <div class="corrections" id="corrections">
+                    <h4>✅ Writing Help</h4>
+                    <p>Click "Check My Writing" to see suggestions!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const storyInput = document.getElementById('storyInput');
+        const wordCount = document.getElementById('wordCount');
+        const pageCount = document.getElementById('pageCount');
+        const sentenceCount = document.getElementById('sentenceCount');
+        const paragraphCount = document.getElementById('paragraphCount');
+        const corrections = document.getElementById('corrections');
+
+        // Update counts as user types
+        storyInput.addEventListener('input', updateCounts);
+
+        function updateCounts() {
+            const text = storyInput.value;
+            
+            // Word count
+            const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+            wordCount.textContent = words;
+            
+            // Page count (approximately 250 words per page)
+            const pages = Math.ceil(words / 250);
+            pageCount.textContent = pages;
+            
+            // Sentence count
+            const sentences = text.split(/[.!?]+/).filter(sentence => sentence.trim().length > 0).length;
+            sentenceCount.textContent = sentences;
+            
+            // Paragraph count
+            const paragraphs = text.split(/\n\s*\n/).filter(para => para.trim().length > 0).length;
+            paragraphCount.textContent = paragraphs;
+        }
+
+        function useIdea(idea) {
+            storyInput.value = idea + '\n\n';
+            storyInput.focus();
+            updateCounts();
+        }
+
+        function clearStory() {
+            if (confirm('Are you sure you want to clear your story? This cannot be undone!')) {
+                storyInput.value = '';
+                updateCounts();
+                corrections.innerHTML = '<h4>✅ Writing Help</h4><p>Click "Check My Writing" to see suggestions!</p>';
+            }
+        }
+
+        function saveStory() {
+            const text = storyInput.value;
+            if (text.trim() === '') {
+                alert('There\'s nothing to save! Write a story first!');
+                return;
+            }
+            
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'my-story.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('Story saved! 📁');
+        }
+
+        function loadStory() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.txt';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        storyInput.value = e.target.result;
+                        updateCounts();
+                        alert('Story loaded! 📂');
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        function checkWriting() {
+            const text = storyInput.value;
+            if (text.trim() === '') {
+                alert('Write something first! 📝');
+                return;
+            }
+
+            const suggestions = analyzeWriting(text);
+            displayCorrections(suggestions);
+        }
+
+        function analyzeWriting(text) {
+            const suggestions = [];
+
+            // Check for common writing issues
+            const checks = [
+                {
+                    pattern: /\b(i)\b/g,
+                    suggestion: 'I',
+                    explanation: 'The word "I" should always be capitalized when talking about yourself.'
+                },
+                {
+                    pattern: /\b(im)\b/g,
+                    suggestion: 'I\'m',
+                    explanation: 'Use "I\'m" instead of "im" - it\'s the contraction of "I am".'
+                },
+                {
+                    pattern: /\b(ive)\b/g,
+                    suggestion: 'I\'ve',
+                    explanation: 'Use "I\'ve" instead of "ive" - it\'s the contraction of "I have".'
+                },
+                {
+                    pattern: /\b(ill)\b/g,
+                    suggestion: 'I\'ll',
+                    explanation: 'Use "I\'ll" instead of "ill" - it\'s the contraction of "I will".'
+                },
+                {
+                    pattern: /\b(id)\b/g,
+                    suggestion: 'I\'d',
+                    explanation: 'Use "I\'d" instead of "id" - it\'s the contraction of "I would" or "I had".'
+                },
+                {
+                    pattern: /\b(dont)\b/g,
+                    suggestion: 'don\'t',
+                    explanation: 'Use "don\'t" instead of "dont" - it\'s the contraction of "do not".'
+                },
+                {
+                    pattern: /\b(cant)\b/g,
+                    suggestion: 'can\'t',
+                    explanation: 'Use "can\'t" instead of "cant" - it\'s the contraction of "cannot".'
+                },
+                {
+                    pattern: /\b(wont)\b/g,
+                    suggestion: 'won\'t',
+                    explanation: 'Use "won\'t" instead of "wont" - it\'s the contraction of "will not".'
+                },
+                {
+                    pattern: /\b(its)\b/g,
+                    suggestion: 'it\'s',
+                    explanation: 'Use "it\'s" instead of "its" - it\'s the contraction of "it is".'
+                },
+                {
+                    pattern: /\b(youre)\b/g,
+                    suggestion: 'you\'re',
+                    explanation: 'Use "you\'re" instead of "youre" - it\'s the contraction of "you are".'
+                },
+                {
+                    pattern: /\b(theyre)\b/g,
+                    suggestion: 'they\'re',
+                    explanation: 'Use "they\'re" instead of "theyre" - it\'s the contraction of "they are".'
+                },
+                {
+                    pattern: /\b(weve)\b/g,
+                    suggestion: 'we\'ve',
+                    explanation: 'Use "we\'ve" instead of "weve" - it\'s the contraction of "we have".'
+                },
+                {
+                    pattern: /\b(hes)\b/g,
+                    suggestion: 'he\'s',
+                    explanation: 'Use "he\'s" instead of "hes" - it\'s the contraction of "he is".'
+                },
+                {
+                    pattern: /\b(shes)\b/g,
+                    suggestion: 'she\'s',
+                    explanation: 'Use "she\'s" instead of "shes" - it\'s the contraction of "she is".'
+                },
+                {
+                    pattern: /\b(lets)\b/g,
+                    suggestion: 'let\'s',
+                    explanation: 'Use "let\'s" instead of "lets" - it\'s the contraction of "let us".'
+                },
+                {
+                    pattern: /\b(thatll)\b/g,
+                    suggestion: 'that\'ll',
+                    explanation: 'Use "that\'ll" instead of "thatll" - it\'s the contraction of "that will".'
+                },
+                {
+                    pattern: /\b(whos)\b/g,
+                    suggestion: 'who\'s',
+                    explanation: 'Use "who\'s" instead of "whos" - it\'s the contraction of "who is".'
+                },
+                {
+                    pattern: /\b(whats)\b/g,
+                    suggestion: 'what\'s',
+                    explanation: 'Use "what\'s" instead of "whats" - it\'s the contraction of "what is".'
+                },
+                {
+                    pattern: /\b(wheres)\b/g,
+                    suggestion: 'where\'s',
+                    explanation: 'Use "where\'s" instead of "wheres" - it\'s the contraction of "where is".'
+                },
+                {
+                    pattern: /\b(whens)\b/g,
+                    suggestion: 'when\'s',
+                    explanation: 'Use "when\'s" instead of "whens" - it\'s the contraction of "when is".'
+                },
+                {
+                    pattern: /\b(whys)\b/g,
+                    suggestion: 'why\'s',
+                    explanation: 'Use "why\'s" instead of "whys" - it\'s the contraction of "why is".'
+                },
+                {
+                    pattern: /\b(hows)\b/g,
+                    suggestion: 'how\'s',
+                    explanation: 'Use "how\'s" instead of "hows" - it\'s the contraction of "how is".'
+                }
+            ];
+
+            checks.forEach(check => {
+                const matches = text.match(check.pattern);
+                if (matches) {
+                    suggestions.push({
+                        original: matches[0],
+                        suggestion: check.suggestion,
+                        explanation: check.explanation
+                    });
+                }
+            });
+
+            // Check for sentence starters
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            sentences.forEach((sentence, index) => {
+                const trimmed = sentence.trim();
+                if (trimmed.length > 0) {
+                    const firstWord = trimmed.split(' ')[0].toLowerCase();
+                    if (['and', 'but', 'or', 'so', 'because'].includes(firstWord)) {
+                        suggestions.push({
+                            original: firstWord,
+                            suggestion: 'Try starting with a different word',
+                            explanation: 'Starting sentences with "and", "but", "or", "so", or "because" can make writing sound choppy. Try using different words to start your sentences.'
+                        });
+                    }
+                }
+            });
+
+            // Check for repetitive words
+            const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+            const wordCount = {};
+            words.forEach(word => {
+                wordCount[word] = (wordCount[word] || 0) + 1;
+            });
+
+            Object.entries(wordCount).forEach(([word, count]) => {
+                if (count > 5 && word.length > 3) {
+                    suggestions.push({
+                        original: `"${word}" used ${count} times`,
+                        suggestion: 'Try using different words',
+                        explanation: `You used the word "${word}" ${count} times. Try using synonyms to make your writing more interesting!`
+                    });
+                }
+            });
+
+            // Check for very short sentences
+            sentences.forEach(sentence => {
+                const wordCount = sentence.trim().split(' ').length;
+                if (wordCount < 3 && sentence.trim().length > 0) {
+                    suggestions.push({
+                        original: sentence.trim(),
+                        suggestion: 'Add more details',
+                        explanation: 'This sentence is very short. Try adding more details to make it more interesting!'
+                    });
+                }
+            });
+
+            // Check for very long sentences
+            sentences.forEach(sentence => {
+                const wordCount = sentence.trim().split(' ').length;
+                if (wordCount > 25) {
+                    suggestions.push({
+                        original: sentence.trim().substring(0, 50) + '...',
+                        suggestion: 'Break into shorter sentences',
+                        explanation: 'This sentence is very long. Try breaking it into two or three shorter sentences to make it easier to read!'
+                    });
+                }
+            });
+
+            return suggestions;
+        }
+
+        function displayCorrections(suggestions) {
+            if (suggestions.length === 0) {
+                corrections.innerHTML = '<h4>✅ Writing Help</h4><p>🎉 Great job! Your writing looks good!</p>';
+                return;
+            }
+
+            let html = '<h4>✅ Writing Help</h4>';
+            suggestions.forEach((suggestion, index) => {
+                html += `
+                    <div class="correction-item" onclick="fixWritingIssue('${suggestion.original}', '${suggestion.suggestion}', ${index})">
+                        <div class="original">❌ ${suggestion.original}</div>
+                        <div class="suggestion">💡 ${suggestion.suggestion}</div>
+                        <div class="explanation">${suggestion.explanation}</div>
+                        <div style="color: #007bff; font-size: 0.9em; margin-top: 5px; font-weight: bold;">🖱️ Click to fix automatically!</div>
+                    </div>
+                `;
+            });
+
+            corrections.innerHTML = html;
+        }
+
+        function fixWritingIssue(original, suggestion, index) {
+            const text = storyInput.value;
+            let newText = text;
+            let fixed = false;
+            
+            // Handle different types of fixes
+            if (suggestion === 'I') {
+                // Fix capitalization of "i" to "I"
+                newText = text.replace(/\bi\b/g, 'I');
+                fixed = true;
+            } else if (suggestion.includes("'")) {
+                // Fix contractions
+                const contractionMap = {
+                    'im': "I'm",
+                    'ive': "I've",
+                    'ill': "I'll",
+                    'id': "I'd",
+                    'dont': "don't",
+                    'cant': "can't",
+                    'wont': "won't",
+                    'its': "it's",
+                    'youre': "you're",
+                    'theyre': "they're",
+                    'weve': "we've",
+                    'hes': "he's",
+                    'shes': "she's",
+                    'lets': "let's",
+                    'thatll': "that'll",
+                    'whos': "who's",
+                    'whats': "what's",
+                    'wheres': "where's",
+                    'whens': "when's",
+                    'whys': "why's",
+                    'hows': "how's"
+                };
+                
+                Object.keys(contractionMap).forEach(wrong => {
+                    const regex = new RegExp('\\b' + wrong + '\\b', 'gi');
+                    if (newText.match(regex)) {
+                        newText = newText.replace(regex, contractionMap[wrong]);
+                        fixed = true;
+                    }
+                });
+            } else if (suggestion === 'Try starting with a different word') {
+                // Fix sentence starters by adding a word before
+                const sentences = text.split(/[.!?]+/);
+                newText = sentences.map(sentence => {
+                    const trimmed = sentence.trim();
+                    if (trimmed.length > 0) {
+                        const firstWord = trimmed.split(' ')[0].toLowerCase();
+                        if (['and', 'but', 'or', 'so', 'because'].includes(firstWord)) {
+                            // Add a word before to fix the sentence starter
+                            const replacements = {
+                                'and': 'Then',
+                                'but': 'However',
+                                'or': 'Alternatively',
+                                'so': 'Therefore',
+                                'because': 'This happened because'
+                            };
+                            fixed = true;
+                            return sentence.replace(firstWord, replacements[firstWord]);
+                        }
+                    }
+                    return sentence;
+                }).join('. ') + '.';
+            } else if (suggestion === 'Add more details') {
+                // For very short sentences, suggest adding details
+                alert('💡 Tip: Try adding more details to make this sentence more interesting!\n\nExample: Instead of "The cat ran."\nTry: "The fluffy orange cat ran quickly across the green grass."');
+                return;
+            } else if (suggestion === 'Break into shorter sentences') {
+                // For very long sentences, suggest breaking them
+                alert('💡 Tip: This sentence is very long. Try breaking it into two or three shorter sentences to make it easier to read!');
+                return;
+            } else if (suggestion === 'Try using different words') {
+                // For repetitive words, suggest alternatives
+                if (original.includes('"')) {
+                    const word = original.match(/"([^"]+)"/)?.[1];
+                    if (word) {
+                        const alternatives = getWordAlternatives(word);
+                        alert(`💡 Tip: You used "${word}" many times. Try these alternatives:\n\n${alternatives.join(', ')}`);
+                    }
+                }
+                return;
+            }
+            
+            if (fixed) {
+                // Update the text
+                storyInput.value = newText;
+                updateCounts();
+                
+                // Show success message
+                const correctionItem = document.querySelectorAll('.correction-item')[index];
+                if (correctionItem) {
+                    correctionItem.style.background = '#d4edda';
+                    correctionItem.style.borderLeftColor = '#28a745';
+                    setTimeout(() => {
+                        correctionItem.style.background = '#f8f9fa';
+                        correctionItem.style.borderLeftColor = '#51cf66';
+                    }, 2000);
+                }
+                
+                // Re-check writing to update suggestions
+                setTimeout(() => {
+                    const newSuggestions = analyzeWriting(newText);
+                    displayCorrections(newSuggestions);
+                }, 500);
+                
+                alert('✅ Fixed! Your story has been updated automatically!');
+            }
+        }
+
+        function getWordAlternatives(word) {
+            const alternatives = {
+                'said': ['exclaimed', 'whispered', 'shouted', 'mumbled', 'replied', 'answered'],
+                'went': ['walked', 'ran', 'jumped', 'climbed', 'crawled', 'flew'],
+                'big': ['huge', 'enormous', 'massive', 'gigantic', 'large', 'tremendous'],
+                'small': ['tiny', 'little', 'miniature', 'petite', 'compact', 'mini'],
+                'good': ['excellent', 'wonderful', 'amazing', 'fantastic', 'terrific', 'superb'],
+                'bad': ['terrible', 'awful', 'horrible', 'dreadful', 'awful', 'poor'],
+                'happy': ['joyful', 'cheerful', 'delighted', 'pleased', 'thrilled', 'ecstatic'],
+                'sad': ['unhappy', 'miserable', 'depressed', 'gloomy', 'melancholy', 'sorrowful'],
+                'looked': ['gazed', 'stared', 'peered', 'examined', 'observed', 'studied'],
+                'walked': ['strolled', 'marched', 'wandered', 'sauntered', 'trudged', 'skipped']
+            };
+            
+            return alternatives[word.toLowerCase()] || ['different', 'other', 'alternative', 'varied'];
+        }
+
+        // Initialize
+        updateCounts();
+    </script>
+</body>
+</html>
+

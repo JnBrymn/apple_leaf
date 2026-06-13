@@ -1,8 +1,8 @@
-import { overlapsObstacle } from '../world/obstacles'
+import { overlapsSolidAtHeight } from '../world/obstacles'
 import type { Soldier } from '../engine/types'
 
 export function hasLineOfSight(from: Soldier, to: Soldier, padding = 0.1): boolean {
-  return hasLineOfSightBetween(from.x, from.z, to.x, to.z, padding)
+  return hasLineOfSightBetween(from.x, from.z, to.x, to.z, (from.y + to.y) / 2 + 1.2, padding)
 }
 
 export function hasLineOfSightBetween(
@@ -10,6 +10,7 @@ export function hasLineOfSightBetween(
   fromZ: number,
   toX: number,
   toZ: number,
+  sampleY = 1.2,
   padding = 0.1,
 ): boolean {
   const dx = toX - fromX
@@ -22,7 +23,7 @@ export function hasLineOfSightBetween(
     const t = i / steps
     const x = fromX + dx * t
     const z = fromZ + dz * t
-    if (overlapsObstacle(x, z, padding)) return false
+    if (overlapsSolidAtHeight(x, z, sampleY, padding)) return false
   }
   return true
 }

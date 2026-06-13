@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Click 50!</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, 'Segoe UI', sans-serif;
+      background: #d8d6d2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      user-select: none;
+      color: #3a3a3a;
+    }
+
+    .game {
+      background: #f4f3f1;
+      border: 1px solid #c8c6c2;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      padding: 2rem;
+      width: min(480px, 100%);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 2.2rem;
+      color: #2e2e2e;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      margin: 0 0 1.5rem;
+      color: #6b6b6b;
+      font-size: 1rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat {
+      background: #eae9e6;
+      border-radius: 8px;
+      padding: 0.85rem;
+      border: 1px solid #d0cec9;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.85rem;
+      color: #7a7a7a;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #2e2e2e;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .click-btn {
+      width: 220px;
+      height: 220px;
+      border: 2px solid #8b0000;
+      border-radius: 50%;
+      background: #e53935;
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 8px 0 #b71c1c;
+      transition: transform 0.05s, box-shadow 0.05s;
+      margin: 0 auto 1.25rem;
+      display: block;
+    }
+
+    .click-btn:active:not(:disabled),
+    .click-btn.pressed {
+      transform: translateY(6px);
+      box-shadow: 0 2px 0 #b71c1c;
+    }
+
+    .click-btn:disabled {
+      opacity: 0.55;
+      cursor: default;
+      transform: none;
+    }
+
+    .progress-wrap {
+      height: 14px;
+      background: #d0cec9;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #5a5a5a;
+      border-radius: 999px;
+      transition: width 0.08s ease-out;
+    }
+
+    .message {
+      min-height: 1.5rem;
+      font-size: 1rem;
+      color: #6b6b6b;
+      margin-bottom: 0.5rem;
+    }
+
+    .results {
+      display: none;
+      animation: pop 0.35s ease;
+    }
+
+    .results.show {
+      display: block;
+    }
+
+    .results h2 {
+      margin: 0 0 0.5rem;
+      color: #2e2e2e;
+      font-size: 1.8rem;
+    }
+
+    .big-time {
+      font-size: 2.8rem;
+      font-weight: bold;
+      color: #2e2e2e;
+      margin: 0.5rem 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cps {
+      font-size: 1.15rem;
+      color: #6b6b6b;
+      margin-bottom: 1rem;
+    }
+
+    .rank {
+      font-size: 1rem;
+      color: #5a5a5a;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+
+    .again-btn {
+      border: 1px solid #4a4a4a;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      background: #6b6b6b;
+      color: #f4f3f1;
+      box-shadow: 0 4px 0 #3d3d3d;
+    }
+
+    .again-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #3d3d3d;
+    }
+
+    .playing .results {
+      display: none !important;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+
+    .click-btn.ready {
+      animation: pulse 1.2s infinite;
+    }
+
+    .speed-match {
+      background: #eae9e6;
+      border: 1px solid #d0cec9;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      color: #3a3a3a;
+      line-height: 1.4;
+    }
+
+    .speed-match .emoji {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .pop-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .speed-pop {
+      position: absolute;
+      background: #f4f3f1;
+      border: 1px solid #c8c6c2;
+      border-radius: 8px;
+      padding: 0.65rem 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #3a3a3a;
+      white-space: nowrap;
+      animation: floatPop 2.2s ease-out forwards;
+    }
+
+    .speed-pop .pop-emoji {
+      font-size: 1.6rem;
+      margin-right: 0.35rem;
+    }
+
+    @keyframes floatPop {
+      0% {
+        transform: translateY(20px) scale(0.5);
+        opacity: 0;
+      }
+      15% {
+        transform: translateY(0) scale(1.08);
+        opacity: 1;
+      }
+      30% {
+        transform: translateY(-8px) scale(1);
+        opacity: 1;
+      }
+      85% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-60px) scale(0.95);
+        opacity: 0;
+      }
+    }
+
+    .menu, .lesson-results {
+      display: none;
+    }
+
+    .menu.show, .lesson-results.show {
+      display: block;
+      animation: pop 0.35s ease;
+    }
+
+    .menu h2, .lesson-results h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.4rem;
+      color: #2e2e2e;
+    }
+
+    .menu p, .lesson-results p {
+      margin: 0 0 1rem;
+      color: #6b6b6b;
+      line-height: 1.45;
+    }
+
+    .menu-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .menu-btn {
+      border: 1px solid #c8c6c2;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      background: #eae9e6;
+      color: #3a3a3a;
+      text-align: left;
+      box-shadow: 0 3px 0 #c0beba;
+    }
+
+    .menu-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #c0beba;
+    }
+
+    .menu-btn.primary {
+      background: #6b6b6b;
+      color: #f4f3f1;
+      border-color: #4a4a4a;
+      box-shadow: 0 4px 0 #3d3d3d;
+    }
+
+    .menu-btn.primary:active {
+      box-shadow: 0 1px 0 #3d3d3d;
+    }
+
+    .lesson-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 340px;
+      overflow-y: auto;
+    }
+
+    .lesson-section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #8a8a8a;
+      margin: 0.35rem 0 0.15rem;
+      padding-left: 0.15rem;
+    }
+
+    .lesson-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      border: 1px solid #d0cec9;
+      border-radius: 8px;
+      padding: 0.7rem 0.85rem;
+      background: #fff;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      font-size: 0.95rem;
+      color: #3a3a3a;
+      box-shadow: 0 2px 0 #d8d6d2;
+    }
+
+    .lesson-item:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #d8d6d2;
+    }
+
+    .lesson-item.done {
+      border-color: #8aaa8a;
+      background: #eef5ee;
+    }
+
+    .lesson-item.locked {
+      opacity: 0.45;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .lesson-num {
+      flex-shrink: 0;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 50%;
+      background: #6b6b6b;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lesson-item.done .lesson-num {
+      background: #4a7a4a;
+    }
+
+    .lesson-info strong {
+      display: block;
+      margin-bottom: 0.1rem;
+    }
+
+    .lesson-info span {
+      font-size: 0.85rem;
+      color: #7a7a7a;
+    }
+
+    .lesson-tip {
+      background: #fff8e6;
+      border: 1px solid #e8d9a8;
+      border-radius: 8px;
+      padding: 0.75rem 0.9rem;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      color: #5a4a2a;
+      line-height: 1.4;
+      text-align: left;
+    }
+
+    .lesson-tip strong {
+      display: block;
+      margin-bottom: 0.25rem;
+      color: #3a3020;
+    }
+
+    .lesson-badge {
+      display: inline-block;
+      background: #eae9e6;
+      border-radius: 999px;
+      padding: 0.2rem 0.65rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #5a5a5a;
+      margin-bottom: 0.75rem;
+    }
+
+    .back-link {
+      background: none;
+      border: none;
+      color: #6b6b6b;
+      font-size: 0.9rem;
+      font-family: inherit;
+      cursor: pointer;
+      margin-bottom: 0.75rem;
+      padding: 0;
+      text-decoration: underline;
+    }
+
+    .playing .menu,
+    .playing .lesson-results {
+      display: none !important;
+    }
+
+    .menu-mode #playArea,
+    .menu-mode .results,
+    .menu-mode .lesson-results {
+      display: none !important;
+    }
+
+    #menuActions[hidden],
+    #lessonPicker[hidden] {
+      display: none !important;
+    }
+
+    .lesson-done-mode .speed-match {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Click 50 — press SPACE 50 times as fast as you can.
+    Practice lessons: 15 steps from 5 presses up to master-level 50.
+    Timer starts on first press. Speed compared to animals (snail, deer, cheetah, etc.).
+  -->
+  <div class="pop-layer" id="popLayer"></div>
+  <div class="game menu-mode" id="game">
+    <h1>Click 50!</h1>
+    <p class="subtitle" id="subtitle">Press SPACE as fast as you can!</p>
+
+    <div class="menu show" id="menu">
+      <h2>What do you want to do?</h2>
+      <p>Practice lessons teach you step by step. The full challenge is all 50 presses!</p>
+      <div class="menu-actions" id="menuActions">
+        <button class="menu-btn primary" id="openLessonsBtn" type="button">Practice Lessons</button>
+        <button class="menu-btn" id="fullChallengeBtn" type="button">Full Challenge — 50 presses</button>
+      </div>
+      <div id="lessonPicker" hidden>
+        <button class="back-link" id="backToMenuBtn" type="button">← Back</button>
+        <h2>Practice Lessons</h2>
+        <p>15 lessons from easy to master. Finish each one to unlock the next.</p>
+        <ul class="lesson-list" id="lessonList"></ul>
+      </div>
+    </div>
+
+    <div id="playArea">
+      <button class="back-link" id="quitPlayBtn" type="button">← Quit to menu</button>
+      <span class="lesson-badge" id="lessonBadge" hidden></span>
+      <div class="lesson-tip" id="lessonTip" hidden></div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Presses left</span>
+          <span class="stat-value" id="clicksLeft">50</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Time</span>
+          <span class="stat-value" id="timer">0.00s</span>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <p class="message" id="message">Press SPACE to start!</p>
+
+      <div class="click-btn ready" id="clickBtn">SPACE</div>
+    </div>
+
+    <div class="lesson-results" id="lessonResults">
+      <h2 id="lessonDoneTitle">Lesson complete!</h2>
+      <p class="big-time" id="lessonFinalTime">0.00 seconds</p>
+      <p class="cps" id="lessonCpsText">0 clicks per second</p>
+      <p id="lessonDoneMsg"></p>
+      <button class="again-btn" id="nextLessonBtn" type="button">Next Lesson</button>
+      <button class="menu-btn" id="lessonMenuBtn" type="button" style="margin-top:0.5rem;width:100%">Back to Lessons</button>
+    </div>
+
+    <div class="results" id="results">
+      <h2>Done!</h2>
+      <p class="big-time" id="finalTime">0.00 seconds</p>
+      <p class="cps" id="cpsText">0 clicks per second</p>
+      <div class="speed-match" id="speedMatch"></div>
+      <p class="rank" id="rankText"></p>
+      <button class="again-btn" id="againBtn" type="button">Try Again</button>
+      <button class="menu-btn" id="resultsMenuBtn" type="button" style="margin-top:0.5rem;width:100%">Main Menu</button>
+    </div>
+  </div>
+
+  <script>
+    const FULL_GOAL = 50;
+    const STORAGE_KEY = 'click50_lessons_done';
+
+    const LESSONS = [
+      {
+        section: 'Basics',
+        title: 'First Steps',
+        goal: 5,
+        tip: 'Use one finger on SPACE. Just tap five times — learn how the timer starts on your first press.',
+        passMsg: 'You started the timer and finished! That is lesson one.'
+      },
+      {
+        section: 'Basics',
+        title: 'Warm Up',
+        goal: 10,
+        tip: 'Press slow and steady. Do not rush — just feel the rhythm.',
+        passMsg: 'Ten presses done. Your fingers know what to do now.'
+      },
+      {
+        section: 'Basics',
+        title: 'Tiny Bit Faster',
+        goal: 12,
+        tip: 'Same steady rhythm, but try to go a little quicker than last time.',
+        passMsg: 'A little faster already! Small steps add up.'
+      },
+      {
+        section: 'Basics',
+        title: 'Steady Beat',
+        goal: 15,
+        tip: 'Try to press at the same speed the whole time. No sprinting at the start!',
+        passMsg: 'Good rhythm! Steady clicking is how you get faster later.'
+      },
+      {
+        section: 'Building',
+        title: 'Cruise to 18',
+        goal: 18,
+        tip: 'Count in your head: 1, 2, 3… Keeping a beat in your brain helps your fingers.',
+        passMsg: 'Eighteen smooth presses. Your brain and fingers are teaming up.'
+      },
+      {
+        section: 'Building',
+        title: 'Pick Up Speed',
+        goal: 20,
+        tip: 'Start normal, then go faster on the last 5 presses. Finish strong!',
+        passMsg: 'You saved energy for the end. That is a real speed trick!'
+      },
+      {
+        section: 'Building',
+        title: 'Quarter Mark',
+        goal: 25,
+        tip: 'Twenty-five is halfway to fifty! Stay relaxed — tense hands are slow hands.',
+        passMsg: 'A quarter of the full challenge done. Nice work.'
+      },
+      {
+        section: 'Building',
+        title: 'No Stopping',
+        goal: 28,
+        tip: 'Once you start, do not pause even for a second. Momentum is your friend.',
+        passMsg: 'You kept going the whole time. That momentum matters!'
+      },
+      {
+        section: 'Building',
+        title: 'Thirty Club',
+        goal: 30,
+        tip: 'Breathe out on press 15. A quick breath can wake up your fingers.',
+        passMsg: 'Thirty presses! You are more than halfway to the big challenge.'
+      },
+      {
+        section: 'Big Runs',
+        title: 'Almost There',
+        goal: 35,
+        tip: 'Keep your hand relaxed. Speed comes from fast fingers, not squeezing the keyboard.',
+        passMsg: 'Thirty-five done! The full 50 is right around the corner.'
+      },
+      {
+        section: 'Big Runs',
+        title: 'Forty Power',
+        goal: 40,
+        tip: 'Picture a finish line at 40. Sprint your fingers to it!',
+        passMsg: 'Forty presses crushed. Only ten more until the real deal.'
+      },
+      {
+        section: 'Big Runs',
+        title: 'So Close',
+        goal: 45,
+        tip: 'You are SO close to 50. Stay focused — do not celebrate early!',
+        passMsg: 'Forty-five! Five more presses and you have the full count.'
+      },
+      {
+        section: 'Big Runs',
+        title: 'Full Sprint',
+        goal: 50,
+        tip: 'All 50 presses. Go as fast as you can!',
+        passMsg: 'You hit 50! Every practice lesson led to this.'
+      },
+      {
+        section: 'Mastery',
+        title: 'Speed Demon',
+        goal: 50,
+        tip: 'Fifty presses again — try for 7 or more clicks per second!',
+        targetCps: 7,
+        passMsg: 'Another full run done. Keep chasing that speed!'
+      },
+      {
+        section: 'Mastery',
+        title: 'Click Master',
+        goal: 50,
+        tip: 'Final boss lesson: 50 presses, 9+ clicks per second. Lightning fingers!',
+        targetCps: 9,
+        passMsg: 'You finished every lesson. You are a click master!'
+      }
+    ];
+
+    const game = document.getElementById('game');
+    const subtitleEl = document.getElementById('subtitle');
+    const menuEl = document.getElementById('menu');
+    const lessonPickerEl = document.getElementById('lessonPicker');
+    const lessonListEl = document.getElementById('lessonList');
+    const playAreaEl = document.getElementById('playArea');
+    const lessonBadgeEl = document.getElementById('lessonBadge');
+    const lessonTipEl = document.getElementById('lessonTip');
+    const lessonResultsEl = document.getElementById('lessonResults');
+    const lessonDoneTitleEl = document.getElementById('lessonDoneTitle');
+    const lessonFinalTimeEl = document.getElementById('lessonFinalTime');
+    const lessonCpsTextEl = document.getElementById('lessonCpsText');
+    const lessonDoneMsgEl = document.getElementById('lessonDoneMsg');
+    const clickBtn = document.getElementById('clickBtn');
+    const againBtn = document.getElementById('againBtn');
+    const clicksLeftEl = document.getElementById('clicksLeft');
+    const timerEl = document.getElementById('timer');
+    const progressBar = document.getElementById('progressBar');
+    const messageEl = document.getElementById('message');
+    const resultsEl = document.getElementById('results');
+    const finalTimeEl = document.getElementById('finalTime');
+    const cpsTextEl = document.getElementById('cpsText');
+    const rankTextEl = document.getElementById('rankText');
+    const speedMatchEl = document.getElementById('speedMatch');
+    const popLayer = document.getElementById('popLayer');
+
+    let goal = FULL_GOAL;
+    let mode = 'menu';
+    let lessonIndex = null;
+    let lessonsDone = loadLessonsDone();
+
+    // Animals sorted by average speed (mph). Click speed maps onto this scale.
+    const SPEED_THINGS = [
+      { emoji: '🪱', name: 'earthworm', mph: 0.01 },
+      { emoji: '🐌', name: 'snail', mph: 0.03 },
+      { emoji: '🦥', name: 'sloth', mph: 0.15 },
+      { emoji: '🐢', name: 'turtle', mph: 0.2 },
+      { emoji: '🐨', name: 'koala', mph: 0.5 },
+      { emoji: '🦞', name: 'lobster', mph: 1 },
+      { emoji: '🦀', name: 'crab', mph: 1.5 },
+      { emoji: '🦔', name: 'porcupine', mph: 2 },
+      { emoji: '🐸', name: 'frog', mph: 3 },
+      { emoji: '🦎', name: 'gecko', mph: 3.5 },
+      { emoji: '🐹', name: 'hamster', mph: 4 },
+      { emoji: '🦔', name: 'hedgehog', mph: 4.5 },
+      { emoji: '🐹', name: 'guinea pig', mph: 5 },
+      { emoji: '🦫', name: 'beaver', mph: 5 },
+      { emoji: '🦦', name: 'sea otter', mph: 5.5 },
+      { emoji: '🦆', name: 'duck', mph: 6 },
+      { emoji: '🦨', name: 'skunk', mph: 6.5 },
+      { emoji: '🐭', name: 'mouse', mph: 8 },
+      { emoji: '🐾', name: 'opossum', mph: 8.5 },
+      { emoji: '🐔', name: 'chicken', mph: 9 },
+      { emoji: '🦃', name: 'turkey', mph: 9.5 },
+      { emoji: '🐐', name: 'goat', mph: 10 },
+      { emoji: '🐷', name: 'pig', mph: 11 },
+      { emoji: '🐑', name: 'sheep', mph: 12 },
+      { emoji: '🐿️', name: 'squirrel', mph: 12 },
+      { emoji: '🦃', name: 'roadrunner', mph: 13 },
+      { emoji: '🦡', name: 'badger', mph: 14 },
+      { emoji: '🦝', name: 'raccoon', mph: 15 },
+      { emoji: '🐧', name: 'penguin swimming', mph: 16 },
+      { emoji: '🐄', name: 'cow', mph: 17 },
+      { emoji: '🦛', name: 'hippo', mph: 18 },
+      { emoji: '🐕', name: 'dog', mph: 19 },
+      { emoji: '🐈', name: 'cat', mph: 20 },
+      { emoji: '🐢', name: 'sea turtle', mph: 21 },
+      { emoji: '🐇', name: 'rabbit', mph: 22 },
+      { emoji: '🦍', name: 'gorilla', mph: 23 },
+      { emoji: '🐬', name: 'dolphin', mph: 24 },
+      { emoji: '🐘', name: 'elephant', mph: 25 },
+      { emoji: '🐫', name: 'camel', mph: 26 },
+      { emoji: '🦙', name: 'llama', mph: 27 },
+      { emoji: '🦊', name: 'fox', mph: 28 },
+      { emoji: '🦌', name: 'deer', mph: 29 },
+      { emoji: '🦓', name: 'zebra', mph: 30 },
+      { emoji: '🦤', name: 'emu', mph: 31 },
+      { emoji: '🦏', name: 'rhino', mph: 32 },
+      { emoji: '🐻', name: 'bear', mph: 33 },
+      { emoji: '🐴', name: 'horse', mph: 34 },
+      { emoji: '🐺', name: 'wolf', mph: 35 },
+      { emoji: '🐆', name: 'leopard', mph: 36 },
+      { emoji: '🐺', name: 'hyena', mph: 37 },
+      { emoji: '🦘', name: 'kangaroo', mph: 38 },
+      { emoji: '🐯', name: 'tiger', mph: 39 },
+      { emoji: '🦁', name: 'lion', mph: 40 },
+      { emoji: '🐆', name: 'jaguar', mph: 41 },
+      { emoji: '🦃', name: 'ostrich', mph: 43 },
+      { emoji: '🐺', name: 'coyote', mph: 44 },
+      { emoji: '🐕', name: 'greyhound', mph: 45 },
+      { emoji: '🦈', name: 'mako shark', mph: 46 },
+      { emoji: '🦬', name: 'wildebeest', mph: 47 },
+      { emoji: '🦌', name: 'antelope', mph: 50 },
+      { emoji: '🐟', name: 'sailfish', mph: 52 },
+      { emoji: '🦌', name: 'pronghorn', mph: 55 },
+      { emoji: '🐆', name: 'cheetah', mph: 70 },
+      { emoji: '🐋', name: 'orca', mph: 75 },
+      { emoji: '🕊️', name: 'pigeon flying', mph: 80 },
+      { emoji: '🦅', name: 'golden eagle diving', mph: 90 },
+      { emoji: '🦅', name: 'eagle diving', mph: 100 },
+      { emoji: '🦅', name: 'gannet dive', mph: 120 },
+      { emoji: '🦅', name: 'peregrine falcon', mph: 240 }
+    ];
+
+    let clicks = 0;
+    let popTimeouts = [];
+    let startTime = null;
+    let endTime = null;
+    let timerId = null;
+    let finished = false;
+
+    function loadLessonsDone() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveLessonsDone() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(lessonsDone));
+    }
+
+    function isLessonUnlocked(index) {
+      if (index === 0) return true;
+      return lessonsDone.includes(index - 1);
+    }
+
+    function markLessonDone(index) {
+      if (!lessonsDone.includes(index)) {
+        lessonsDone.push(index);
+        lessonsDone.sort((a, b) => a - b);
+        saveLessonsDone();
+      }
+    }
+
+    function lessonSubtitle(lesson, done, unlocked) {
+      let text = lesson.goal + ' presses';
+      if (lesson.targetCps) text += ' · aim ' + lesson.targetCps + '+ cps';
+      if (done) text += ' — done!';
+      else if (!unlocked) text += ' — locked';
+      return text;
+    }
+
+    function renderLessonList() {
+      lessonListEl.innerHTML = '';
+      let lastSection = '';
+      LESSONS.forEach((lesson, index) => {
+        if (lesson.section && lesson.section !== lastSection) {
+          lastSection = lesson.section;
+          const label = document.createElement('li');
+          label.className = 'lesson-section-label';
+          label.textContent = lesson.section;
+          lessonListEl.appendChild(label);
+        }
+
+        const done = lessonsDone.includes(index);
+        const unlocked = isLessonUnlocked(index);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lesson-item' + (done ? ' done' : '') + (unlocked ? '' : ' locked');
+        btn.innerHTML =
+          '<span class="lesson-num">' + (done ? '✓' : (index + 1)) + '</span>' +
+          '<span class="lesson-info"><strong>' + lesson.title + '</strong>' +
+          '<span>' + lessonSubtitle(lesson, done, unlocked) + '</span></span>';
+        if (unlocked) {
+          btn.addEventListener('click', () => startLesson(index));
+        }
+        lessonListEl.appendChild(btn);
+      });
+    }
+
+    function showMenu(showLessonPicker) {
+      mode = 'menu';
+      game.className = 'game menu-mode';
+      menuEl.classList.add('show');
+      document.getElementById('menuActions').hidden = showLessonPicker;
+      lessonPickerEl.hidden = !showLessonPicker;
+      playAreaEl.style.display = 'none';
+      lessonResultsEl.classList.remove('show');
+      resultsEl.classList.remove('show');
+      subtitleEl.textContent = 'Press SPACE as fast as you can!';
+      renderLessonList();
+    }
+
+    function startLesson(index) {
+      lessonIndex = index;
+      goal = LESSONS[index].goal;
+      mode = 'lesson';
+      resetRound();
+      game.className = 'game playing';
+      game.classList.remove('lesson-done-mode');
+      menuEl.classList.remove('show');
+      playAreaEl.style.display = 'block';
+      lessonResultsEl.classList.remove('show');
+      resultsEl.classList.remove('show');
+
+      const lesson = LESSONS[index];
+      subtitleEl.textContent = 'Lesson ' + (index + 1) + ': ' + lesson.title;
+      lessonBadgeEl.hidden = false;
+      lessonBadgeEl.textContent = 'Lesson ' + (index + 1) + ' · ' + lesson.goal + ' presses';
+      lessonTipEl.hidden = false;
+      lessonTipEl.innerHTML = '<strong>Tip</strong>' + lesson.tip;
+    }
+
+    function startFullChallenge() {
+      lessonIndex = null;
+      goal = FULL_GOAL;
+      mode = 'challenge';
+      resetRound();
+      game.className = 'game playing';
+      game.classList.remove('lesson-done-mode');
+      menuEl.classList.remove('show');
+      playAreaEl.style.display = 'block';
+      lessonResultsEl.classList.remove('show');
+      resultsEl.classList.remove('show');
+
+      subtitleEl.textContent = 'Press SPACE 50 times. Go as fast as you can!';
+      lessonBadgeEl.hidden = true;
+      lessonTipEl.hidden = true;
+    }
+
+    function formatTime(ms) {
+      return (ms / 1000).toFixed(2);
+    }
+
+    function cpsToMph(cps) {
+      return cps * 4;
+    }
+
+    function closestSpeedThing(mph) {
+      let best = SPEED_THINGS[0];
+      let bestDiff = Math.abs(mph - best.mph);
+      for (const thing of SPEED_THINGS) {
+        const diff = Math.abs(mph - thing.mph);
+        if (diff < bestDiff) {
+          best = thing;
+          bestDiff = diff;
+        }
+      }
+      return best;
+    }
+
+    function nearbySpeedThings(mph, count) {
+      return SPEED_THINGS
+        .slice()
+        .sort((a, b) => Math.abs(a.mph - mph) - Math.abs(b.mph - mph))
+        .slice(0, count);
+    }
+
+    function formatMph(mph) {
+      if (mph >= 100) return Math.round(mph) + ' mph';
+      if (mph >= 10) return mph.toFixed(0) + ' mph';
+      if (mph >= 1) return mph.toFixed(1) + ' mph';
+      return mph.toFixed(2) + ' mph';
+    }
+
+    function getRank(cps) {
+      if (cps >= 12) return 'INSANE! You are a clicking machine!';
+      if (cps >= 9) return 'Super fast! Lightning fingers!';
+      if (cps >= 7) return 'Nice speed! Keep going!';
+      if (cps >= 5) return 'Pretty good!';
+      if (cps >= 3) return 'Not bad — try again to go faster!';
+      return 'Slow and steady — you can beat that!';
+    }
+
+    function clearPops() {
+      popTimeouts.forEach(clearTimeout);
+      popTimeouts = [];
+      popLayer.innerHTML = '';
+    }
+
+    function spawnSpeedPop(thing, label, delay) {
+      const id = setTimeout(() => {
+        const pop = document.createElement('div');
+        pop.className = 'speed-pop';
+        pop.style.left = (8 + Math.random() * 72) + '%';
+        pop.style.top = (35 + Math.random() * 40) + '%';
+        pop.innerHTML =
+          '<span class="pop-emoji">' + thing.emoji + '</span>' +
+          label + ' <span style="color:#888;font-weight:normal">(' + formatMph(thing.mph) + ' avg)</span>';
+        popLayer.appendChild(pop);
+        pop.addEventListener('animationend', () => pop.remove());
+      }, delay);
+      popTimeouts.push(id);
+    }
+
+    function showSpeedComparison(cps) {
+      const mph = cpsToMph(cps);
+      const match = closestSpeedThing(mph);
+      const nearby = nearbySpeedThings(mph, 7);
+
+      speedMatchEl.innerHTML =
+        '<span class="emoji">' + match.emoji + '</span>' +
+        'You click about as fast as a <strong>' + match.name + '</strong>!<br>' +
+        '<span style="font-size:0.95rem;color:#666">(~' + formatMph(match.mph) + ' average speed)</span>';
+
+      clearPops();
+      nearby.forEach((thing, i) => {
+        const isMatch = thing.name === match.name;
+        const label = isMatch
+          ? 'That is YOU — ' + thing.name + ' speed!'
+          : 'Close to a ' + thing.name + '!';
+        spawnSpeedPop(thing, label, i * 450);
+      });
+    }
+
+    function updateTimer() {
+      if (!startTime || finished) return;
+      timerEl.textContent = formatTime(performance.now() - startTime) + 's';
+    }
+
+    function resetRound() {
+      clicks = 0;
+      startTime = null;
+      endTime = null;
+      finished = false;
+      clearInterval(timerId);
+      timerId = null;
+
+      clicksLeftEl.textContent = goal;
+      timerEl.textContent = '0.00s';
+      progressBar.style.width = '0%';
+      messageEl.textContent = 'Press SPACE to start!';
+      clickBtn.classList.add('ready');
+      clickBtn.textContent = 'SPACE';
+      speedMatchEl.innerHTML = '';
+      clearPops();
+    }
+
+    function resetGame() {
+      if (mode === 'lesson' && lessonIndex !== null) {
+        startLesson(lessonIndex);
+        return;
+      }
+      if (mode === 'challenge') {
+        startFullChallenge();
+        return;
+      }
+      showMenu(false);
+    }
+
+    function finishLesson(totalMs, cps) {
+      const lesson = LESSONS[lessonIndex];
+      markLessonDone(lessonIndex);
+
+      clickBtn.classList.remove('ready');
+      clickBtn.textContent = 'Done!';
+
+      lessonDoneTitleEl.textContent = lesson.title + ' — complete!';
+      lessonFinalTimeEl.textContent = formatTime(totalMs) + ' seconds';
+      lessonCpsTextEl.textContent = cps.toFixed(1) + ' clicks per second';
+
+      let doneText = lesson.passMsg;
+      if (lesson.targetCps) {
+        if (cps >= lesson.targetCps) {
+          doneText += ' You hit the speed goal — ' + lesson.targetCps + '+ cps!';
+        } else {
+          doneText += ' Try again to hit ' + lesson.targetCps + '+ clicks per second.';
+        }
+      }
+      lessonDoneMsgEl.textContent = doneText;
+
+      const nextBtn = document.getElementById('nextLessonBtn');
+      const hasNext = lessonIndex < LESSONS.length - 1;
+      nextBtn.textContent = hasNext ? 'Next Lesson' : 'Back to Lessons';
+      nextBtn.dataset.next = hasNext ? String(lessonIndex + 1) : '';
+
+      game.classList.remove('playing');
+      game.classList.add('lesson-done-mode');
+      playAreaEl.style.display = 'none';
+      lessonResultsEl.classList.add('show');
+      messageEl.textContent = 'Lesson done!';
+    }
+
+    function finishGame() {
+      finished = true;
+      endTime = performance.now();
+      clearInterval(timerId);
+
+      const totalMs = endTime - startTime;
+      const seconds = totalMs / 1000;
+      const cps = goal / seconds;
+
+      clickBtn.classList.remove('ready');
+      clickBtn.textContent = 'Done!';
+
+      if (mode === 'lesson' && lessonIndex !== null) {
+        finishLesson(totalMs, cps);
+        return;
+      }
+
+      finalTimeEl.textContent = formatTime(totalMs) + ' seconds';
+      cpsTextEl.textContent = cps.toFixed(1) + ' clicks per second';
+      showSpeedComparison(cps);
+      rankTextEl.textContent = getRank(cps);
+
+      game.classList.remove('playing');
+      playAreaEl.style.display = 'none';
+      resultsEl.classList.add('show');
+      messageEl.textContent = 'All ' + goal + ' presses!';
+    }
+
+    function handlePress() {
+      if (finished) return;
+
+      if (clicks === 0) {
+        startTime = performance.now();
+        timerId = setInterval(updateTimer, 16);
+        messageEl.textContent = 'Go go go!';
+        clickBtn.classList.remove('ready');
+      }
+
+      clicks++;
+      const left = goal - clicks;
+      clicksLeftEl.textContent = left;
+      progressBar.style.width = ((clicks / goal) * 100) + '%';
+
+      clickBtn.classList.add('pressed');
+      setTimeout(() => clickBtn.classList.remove('pressed'), 80);
+
+      if (clicks >= goal) {
+        finishGame();
+      }
+    }
+
+    function handleKeydown(e) {
+      if (e.code !== 'Space' || e.repeat) return;
+      if (!game.classList.contains('playing') || finished) return;
+      e.preventDefault();
+      handlePress();
+    }
+
+    document.addEventListener('keydown', handleKeydown);
+    againBtn.addEventListener('click', resetGame);
+
+    document.getElementById('openLessonsBtn').addEventListener('click', () => showMenu(true));
+    document.getElementById('fullChallengeBtn').addEventListener('click', startFullChallenge);
+    document.getElementById('backToMenuBtn').addEventListener('click', () => showMenu(false));
+    document.getElementById('quitPlayBtn').addEventListener('click', () => showMenu(lessonIndex !== null));
+    document.getElementById('resultsMenuBtn').addEventListener('click', () => showMenu(false));
+    document.getElementById('lessonMenuBtn').addEventListener('click', () => {
+      game.classList.remove('lesson-done-mode');
+      showMenu(true);
+    });
+    document.getElementById('nextLessonBtn').addEventListener('click', (e) => {
+      game.classList.remove('lesson-done-mode');
+      const next = e.currentTarget.dataset.next;
+      if (next !== '') {
+        startLesson(Number(next));
+      } else {
+        showMenu(true);
+      }
+    });
+
+    showMenu(false);
+  </script>
+</body>
+</html>
