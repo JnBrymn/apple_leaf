@@ -717,7 +717,7 @@
             <div><strong>Workers:</strong> <span id="workerCount">0</span></div>
             <div><strong>Water Buckets:</strong> <span id="bucketCount">0</span></div>
             <div><strong>Candles:</strong> <span id="candleCount">0</span> <span class="muted">(press C to place)</span></div>
-            <div><strong>Tree Branch:</strong> <span id="branchStatus">no</span> <span class="muted">(Q to whack monsters)</span></div>
+            <div><strong>Tree Branch:</strong> <span id="branchStatus">no</span></div>
             <div><strong>Pending Worker X:</strong> <span id="workerLane">-</span></div>
             <div class="muted" id="shopHint">Go to the shop (top 3 rows, center) to bank and buy.</div>
           </div>
@@ -747,7 +747,7 @@
       </section>
     </div>
 
-    <div class="controls" id="gameControlsHint">Move: WASD/Arrows | Space/Enter or click game: mine | Q: whack monsters with tree branch | Late pickaxes: 4 or 8 blocks, then Auto Digger</div>
+    <div class="controls" id="gameControlsHint">Move: WASD/Arrows | Space/Enter or click game: mine | Late pickaxes: 4 or 8 blocks, then Auto Digger</div>
   </main>
 
   <div id="cutsceneOverlay"></div>
@@ -4046,8 +4046,7 @@
     }
 
     function getMonsterAt(x, y) {
-      if (!state.monsters) return null;
-      return state.monsters.find((m) => m.x === x && m.y === y) || null;
+      return null;
     }
 
     function trySpawnMonsterEntity(x, y, baseTile) {
@@ -4101,110 +4100,12 @@
     }
 
     function updateMonsters(now) {
-      if (!state.monsters) state.monsters = [];
-      if (!state.lastMonsterSpawnAt) state.lastMonsterSpawnAt = 0;
-      if (state.dead || state.gamePaused || isInCutscene()) return;
-
-      if (
-        player.y >= MONSTER_MIN_DEPTH &&
-        now - state.lastMonsterSpawnAt >= MONSTER_SPAWN_CHECK_MS
-      ) {
-        state.lastMonsterSpawnAt = now;
-        const nearCount = state.monsters.filter(
-          (m) => Math.abs(m.y - player.y) <= 14
-        ).length;
-        if (nearCount < MONSTER_MAX_NEAR_PLAYER) {
-          for (let i = 0; i < 20; i++) {
-            const rx = Math.max(1, Math.min(WORLD_W - 2, player.x + Math.floor(Math.random() * 25) - 12));
-            const ry = Math.max(MONSTER_MIN_DEPTH, player.y + Math.floor(Math.random() * 17) - 8);
-            if (!canSpawnMonsterAt(rx, ry)) continue;
-            if (!isAir(rx, ry)) continue;
-            if (getMonsterAt(rx, ry)) continue;
-            if (Math.abs(rx - player.x) <= 2 && Math.abs(ry - player.y) <= 2) continue;
-            trySpawnMonsterEntity(rx, ry, "air");
-            break;
-          }
-        }
-      }
-
-      if (!state.monsters.length) return;
-
-      for (const m of state.monsters) {
-        if (now - m.lastMoveAt >= MONSTER_MOVE_MS) {
-          m.lastMoveAt = now;
-          let moved = false;
-          const dist = Math.abs(player.x - m.x) + Math.abs(player.y - m.y);
-          if (dist > 0 && dist <= 14) {
-            const dx = Math.sign(player.x - m.x);
-            const dy = Math.sign(player.y - m.y);
-            const chase = [
-              [dx, 0],
-              [0, dy],
-              [dx, dy],
-            ];
-            for (const [mx, my] of chase) {
-              if (mx === 0 && my === 0) continue;
-              if (tryMoveMonster(m, mx, my)) {
-                moved = true;
-                break;
-              }
-            }
-          }
-          if (!moved) {
-            const wiggle = [
-              [1, 0],
-              [-1, 0],
-              [0, 1],
-              [0, -1],
-            ];
-            const start = Math.floor(hash2d(m.x + now, m.y) * 4);
-            for (let i = 0; i < 4; i++) {
-              const [mx, my] = wiggle[(start + i) % 4];
-              if (tryMoveMonster(m, mx, my)) break;
-            }
-          }
-        }
-
-        const touch =
-          Math.abs(player.x - m.x) + Math.abs(player.y - m.y) <= 1 ||
-          (Math.abs(player.x - m.x) <= 1 &&
-            (player.y === m.y || player.y - 1 === m.y || player.y + 1 === m.y));
-        if (touch && now - (m.lastAttackAt || 0) >= MONSTER_ATTACK_MS) {
-          m.lastAttackAt = now;
-          triggerMonsterAttack(m.x, m.y);
-        }
-
-        const h = state.homeless;
-        const hitsPuck =
-          h &&
-          h.state === "following" &&
-          Math.abs(h.x - m.x) <= 1 &&
-          Math.abs(h.y - m.y) <= 1;
-        if (hitsPuck && now - (m.lastPuckAttackAt || 0) >= MONSTER_ATTACK_MS) {
-          m.lastPuckAttackAt = now;
-          const puckDamage = 6 + Math.floor(hash2d(m.x * 11 + now, m.y * 13 + 7) * 8);
-          hurtPuck(puckDamage, `Monster claws Puck! -${puckDamage} HP`);
-          spawnMineFx(h.x, h.y, "#c03070");
-        }
-      }
-
-      const minY = player.y - getActiveRadius() - 10;
-      const maxY = player.y + getActiveRadius() + 10;
-      state.monsters = state.monsters.filter((m) => {
-        if (m.y >= minY && m.y <= maxY) return true;
-        if (m.embedded) setTile(m.x, m.y, m.baseTile);
-        return false;
-      });
+      state.monsters = [];
+      state.lastMonsterSpawnAt = now;
     }
 
     function drawMonsters(camX, camY) {
-      if (!state.monsters) return;
-      for (const m of state.monsters) {
-        const sx = (m.x - camX) * TILE;
-        const sy = (m.y - camY) * TILE;
-        if (sx < -TILE || sx > canvas.width + TILE || sy < -TILE || sy > canvas.height + TILE) continue;
-        drawMonsterBlock(sx, sy, m.x, m.y, m);
-      }
+      return;
     }
 
     function getDepthMeters(y) {
@@ -4212,8 +4113,7 @@
     }
 
     function getOwOreAt(x, y) {
-      if (!state.owOres) return null;
-      return state.owOres.find((o) => o.x === x && o.y === y) || null;
+      return null;
     }
 
     function owOreCanSitAt(x, y) {
@@ -4301,29 +4201,8 @@
     }
 
     function updateOwOres(now) {
-      if (!state.owOres) state.owOres = [];
-      if (state.dead || state.gamePaused || isInCutscene()) return;
-      if (now - (state.lastOwOreSpawnAt || 0) > 2200) {
-        state.lastOwOreSpawnAt = now;
-        trySpawnOwOresNearPlayer();
-      }
-      const minY = player.y - getActiveRadius() - 12;
-      const maxY = player.y + getActiveRadius() + 12;
-      state.owOres = state.owOres.filter((o) => o.y >= minY && o.y <= maxY);
-      for (const ore of state.owOres) {
-        if (now - ore.lastMoveAt < OW_ORE_MOVE_MS) continue;
-        ore.lastMoveAt = now;
-        const dist = Math.abs(player.x - ore.x) + Math.abs(player.y - ore.y);
-        if (dist <= 5 && Math.random() < 0.55) fleeOwOre(ore);
-        else if (Math.random() < 0.35) {
-          const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-          const [dx, dy] = dirs[Math.floor(Math.random() * dirs.length)];
-          if (owOreCanSitAt(ore.x + dx, ore.y + dy)) {
-            ore.x += dx;
-            ore.y += dy;
-          }
-        }
-      }
+      state.owOres = [];
+      state.lastOwOreSpawnAt = now;
     }
 
     function drawOwOreBlock(sx, sy, ore, now) {
@@ -4359,14 +4238,7 @@
     }
 
     function drawOwOres(camX, camY) {
-      if (!state.owOres) return;
-      const now = performance.now();
-      for (const ore of state.owOres) {
-        const sx = (ore.x - camX) * TILE;
-        const sy = (ore.y - camY) * TILE;
-        if (sx < -TILE || sx > canvas.width + TILE || sy < -TILE || sy > canvas.height + TILE) continue;
-        drawOwOreBlock(sx, sy, ore, now);
-      }
+      return;
     }
 
     function isDancing() {
