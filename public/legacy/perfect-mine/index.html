@@ -786,21 +786,11 @@
 
   <div id="homelessModal" class="respawn-modal">
     <div class="respawn-panel">
-      <p><strong>"Psst — down here! A monster chased me and rocks sealed the only way out. I dropped my last loaf of bread. Spot me $500 and you can have my stick. Two whacks, they're history."</strong></p>
+      <p><strong>"Psst — down here! Rocks sealed the only way out. I dropped my last loaf of bread. Spot me $500 and you can have my stick."</strong></p>
       <p class="muted-small">Puck looks miserable, staring at the bread on the ground.</p>
       <div class="respawn-actions">
         <button id="homelessYesBtn">Yes</button>
         <button id="homelessNoBtn">No</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="puckGraveModal" class="respawn-modal" style="z-index: 26;">
-    <div class="respawn-panel" style="max-width: 360px;">
-      <p style="font-size: 1.05rem; letter-spacing: 0.04em;"><strong>R.I.P in the memory of puck.</strong></p>
-      <p class="muted-small" style="font-style: italic; line-height: 1.5;">&ldquo;It was nice to be friends.&rdquo;</p>
-      <div class="respawn-actions">
-        <button id="puckGraveCloseBtn">Close</button>
       </div>
     </div>
   </div>
@@ -1008,12 +998,11 @@
           <p class="signed">&mdash; Mayor Cornelius Pebblestone III</p>
           <h3>LETTERS TO THE EDITOR</h3>
           <p><em>"Dear Editor &mdash; I just want to say I once dug a really big hole and it was very fun. If the hero is reading this, hello!"</em><br>&mdash; Jimmy, age 8</p>
-          <p><em>"Dear Editor &mdash; my dog Buster is missing. I also post paid jobs at my house by the shop. Miners welcome!"</em><br>&mdash; Mrs. Tugg</p>
+          <p><em>"Dear Editor &mdash; I post paid jobs at my house by the shop. Miners welcome!"</em><br>&mdash; Mrs. Tugg</p>
           <p><em>"Dear Editor &mdash; the hero better hurry. My garden needs fertilizer and they say the King has plenty."</em><br>&mdash; A Concerned Farmer</p>
           <h3>OBITUARIES</h3>
           <p>This week we mourn the following brave miners last seen entering the mine: Phineas Quartz, Rosie Boulder, "Lefty" McDig, and the entire Crumble-Bottom family. May their spirits find peace among the deep stones.</p>
           <h3>CLASSIFIED ADS</h3>
-          <p><strong>LOST</strong> &mdash; one canary, yellow. Last seen entering the mine. Reward: 5 copper.</p>
           <p><strong>FOR SALE</strong> &mdash; helmet with built-in headlamp. Slightly dented. Make offer.</p>
           <p><strong>WANTED</strong> &mdash; lava-resistant boots, men's size 11. Apply within.</p>
           <p><strong>FREE</strong> &mdash; 47 unused mining lanterns, all slightly used by miners who didn't come back. Pick up behind the smithy.</p>
@@ -1156,8 +1145,6 @@
 
     // Lost things in the mine (newspaper ads / world — not all Mrs. Tugg's).
     const LOST_ITEMS = [
-      { id: "dog",    questId: "dog",    label: "Buster the dog", depth: 100, dx:  3 },
-      { id: "canary", questId: "canary", label: "yellow canary",  depth: 200, dx: -3 },
       { id: "helmet", questId: "helmet", label: "headlamp helmet", depth: 200, dx:  3 },
       { id: "boot",   questId: "boot",   label: "rubber boot", depth: 320, dx:  4 },
       { id: "lunch",  questId: "lunch",  label: "packed lunch", depth: 380, dx: -4 },
@@ -1209,11 +1196,9 @@
 
       // —— Puck ——
       { id: "feed_puck", title: "Feed Puck", desc: "Give Puck food ($500) — he follows you and gives you his stick.", type: "feed_puck", reward: 500, after: "find_puck" },
-      { id: "dog", title: "Find Buster", desc: "Find her dog near 100m.", type: "find_item", itemId: "dog", reward: 1500, after: "find_puck" },
 
       // —— Lost & found ——
-      { id: "canary", title: "Canary Rescue", desc: "Find the yellow canary near 200m.", type: "find_item", itemId: "canary", reward: 800, after: "feed_puck" },
-      { id: "helmet", title: "Helmet Return", desc: "Find the headlamp helmet near 200m.", type: "find_item", itemId: "helmet", reward: 600, after: "canary" },
+      { id: "helmet", title: "Helmet Return", desc: "Find the headlamp helmet near 200m.", type: "find_item", itemId: "helmet", reward: 600, after: "feed_puck" },
       { id: "boot", title: "Lost Boot", desc: "Find the rubber boot near 320m.", type: "find_item", itemId: "boot", reward: 700, after: "helmet" },
       { id: "lunch", title: "Lunch Break", desc: "Find the packed lunch near 380m.", type: "find_item", itemId: "lunch", reward: 850, after: "boot" },
       { id: "watch", title: "Tick Tock", desc: "Find the gold pocket watch near 550m.", type: "find_item", itemId: "watch", reward: 1200, after: "lunch" },
@@ -1261,6 +1246,18 @@
       return cells;
     }
 
+    function setupPuckWaitingInHole() {
+      state.puckBackstorySeen = true;
+      state.puckBreadVisible = true;
+      const h = state.homeless;
+      if (h) {
+        h.sad = true;
+        h.x = TUNNEL_X - 1;
+        h.y = HOMELESS_HOLE_Y_MAX;
+      }
+      if (!state.puckHoleSealed) sealPuckHoleEntrance();
+    }
+
     function carvePuckHole() {
       for (let y = HOMELESS_HOLE_Y_MIN; y <= HOMELESS_HOLE_Y_MAX; y++) {
         for (let x = HOMELESS_HOLE_X_MIN; x <= HOMELESS_HOLE_X_MAX; x++) {
@@ -1272,6 +1269,7 @@
           if (inBounds(x, y)) setTile(x, y, "air");
         }
       }
+      setupPuckWaitingInHole();
     }
 
     function sealPuckHoleEntrance() {
@@ -1549,7 +1547,6 @@
         "pmSettingsModal",
         "respawnModal",
         "homelessModal",
-        "puckGraveModal",
         "mrsTuggModal",
         "victoryMenuModal",
       ];
@@ -1665,7 +1662,7 @@
       "Place workers in different lanes to mine more at once.",
       "Repair before durability hits zero so you do not get stuck.",
       "Bank often near the surface so you do not lose progress momentum.",
-      "Cave monsters need Puck's stick — feed him near 500m, then whack with Q (2 hits).",
+      "Feed Puck near 500m ($500) — he follows you and helps fight the Miner King.",
       "Mega workers clear wide tunnels fast but cost more, so save up first."
     ];
 
@@ -2513,12 +2510,8 @@
         return;
       }
       if (state.dead) { stopMusic(); return; }
-      const graveModalOpen =
-        document.getElementById("puckGraveModal")?.style.display === "flex";
       let track;
-      if (isPuckDead() || isPuckBuried() || graveModalOpen) {
-        track = "puckMourn";
-      } else if (state.bossDefeated && (state.cutscene || isAtSurface())) {
+      if (state.bossDefeated && (state.cutscene || isAtSurface())) {
         track = "celebrate";
       } else if (state.bossFight && !state.bossDefeated) {
         track = "boss";
@@ -2669,7 +2662,6 @@
           const tile = getTile(tx, ty);
           if (tile === "air") showMessage("Nothing to mine there.");
           else if (tile === "lava") showMessage("Lava is too hot to mine!");
-          else if (getMonsterAt(tx, ty)) showMessage("Whack the monster with Puck's stick! (Press Q — feed Puck near 500m if you don't have it)");
           else if (isMazeProtectedBlock(tx, ty, tile)) showMessage("Maze walls are unbreakable.");
           else showMessage("Too hard to break or blocked.");
           sfx.blocked();
@@ -3223,10 +3215,7 @@
         const nx = h.x + mx;
         const ny = h.y + my;
         if (!inBounds(nx, ny)) continue;
-        if (getTile(nx, ny) === "lava") {
-          killPuck("Puck ran into lava!");
-          return false;
-        }
+        if (getTile(nx, ny) === "lava") continue;
         if (getTile(nx, ny) !== "air") continue;
         if (bossOccupies(nx, ny)) continue;
         h.x = nx;
@@ -3313,37 +3302,22 @@
     function hurtPuck(amount, message) {
       const h = state.homeless;
       if (!h || h.state !== "following") return;
-      h.hp = Math.max(0, getPuckHp() - amount);
+      h.hp = Math.max(1, getPuckHp() - amount);
       if (message) showMessage(message, "var(--bad)", 70);
       sfx.hurt();
       updateHud();
-      if (h.hp <= 0) killPuck("Puck died!");
     }
 
     function playPuckMournMusic() {
-      ensureAudioReady();
-      audioUnlocked = true;
-      startMusic("puckMourn");
+      return;
     }
 
     function killPuck(message) {
-      const h = state.homeless;
-      if (!h || h.state !== "following") return;
-      h.state = "dead";
-      h.deathX = h.x;
-      h.deathY = h.y;
-      h.deathAnimStart = performance.now();
-      h.hp = 0;
-      showMessage(message || "Puck died!", "var(--bad)", 220);
-      sfx.hurt();
-      playPuckMournMusic();
-      updateHud();
+      return;
     }
 
     function checkPuckLavaDeath() {
-      const h = state.homeless;
-      if (!h || h.state !== "following") return;
-      if (getTile(h.x, h.y) === "lava") killPuck("Puck was swallowed by lava!");
+      return;
     }
 
     function updatePuckHealPlease(now) {
@@ -3390,53 +3364,23 @@
     }
 
     function tryBuryPuck() {
-      const h = state.homeless;
-      if (!h || h.state !== "dead" || !nearPuckBurialSite()) return false;
-      h.state = "buried";
-      showMessage("You bury Puck on the hill. Rest in peace, friend.", "var(--good)", 260);
-      playTone(220, 0.2, "triangle", 0.05);
-      playPuckMournMusic();
-      showPuckGraveModal();
-      updateHud();
-      return true;
+      return false;
     }
 
     function tryBringBackPuck() {
-      const h = state.homeless;
-      if (!h || !nearPuckBurialSite()) return false;
-      if (h.state !== "dead" && h.state !== "buried") return false;
-      h.state = "following";
-      h.hp = PUCK_MAX_HP;
-      h.x = player.x - 1;
-      h.y = player.y;
-      h.lastMoveAt = performance.now();
-      h.lastMineAt = performance.now();
-      h.lastBossAttackAt = 0;
-      h.lastHealPleaseAt = 0;
-      h.deathAnimStart = 0;
-      hidePuckGraveModal();
-      grantBranchFromPuck();
-      showMessage("Puck is back with you — and his stick!", "var(--good)", 200);
-      playTone(520, 0.12, "triangle", 0.06);
-      updateHud();
-      return true;
+      return false;
     }
 
     function showPuckGraveModal() {
-      state.gamePaused = true;
-      document.getElementById("puckGraveModal").style.display = "flex";
+      return;
     }
 
     function hidePuckGraveModal() {
-      state.gamePaused = false;
-      document.getElementById("puckGraveModal").style.display = "none";
-      updateMusic();
+      return;
     }
 
     function tryReadPuckGrave() {
-      if (!nearPuckGrave()) return false;
-      showPuckGraveModal();
-      return true;
+      return false;
     }
 
     function getBossStartPos() {
@@ -4050,21 +3994,7 @@
     }
 
     function trySpawnMonsterEntity(x, y, baseTile) {
-      if (!state.monsters) state.monsters = [];
-      if (!canSpawnMonsterAt(x, y)) return;
-      // Monsters should appear in existing open holes/tunnels only.
-      if (baseTile !== "air") return;
-      if (hash2d(x * 19 + 501, y * 31 + 907) >= MONSTER_SPAWN_CHANCE) return;
-      if (getMonsterAt(x, y)) return;
-      state.monsters.push({
-        x,
-        y,
-        hp: MONSTER_HP,
-        baseTile: "air",
-        embedded: false,
-        lastMoveAt: performance.now() + hash2d(x, y) * 400,
-        lastAttackAt: 0,
-      });
+      return;
     }
 
     function removeMonsterEntity(m, restoreTile) {
@@ -4191,13 +4121,7 @@
     }
 
     function triggerOwOreHit(ore) {
-      ore.owUntil = performance.now() + 850;
-      playTone(920, 0.07, "square", 0.07);
-      playTone(520, 0.12, "sine", 0.05, 0.04);
-      fleeOwOre(ore);
-      player.mineFlashX = ore.x;
-      player.mineFlashY = ore.y;
-      player.mineFlashStart = performance.now();
+      return;
     }
 
     function updateOwOres(now) {
@@ -4296,21 +4220,7 @@
     }
 
     function triggerMonsterAttack(tx, ty) {
-      const dmg = 8 + Math.floor(hash2d(tx * 5 + 11, ty * 7 + 13) * 12);
-      state.hp -= dmg;
-      showMessage(`A cave monster leaps out! -${dmg} HP`, "var(--bad)");
-      sfx.hurt();
-      playTone(140, 0.1, "sawtooth", 0.06);
-      spawnMineFx(tx, ty, "#c03070");
-      const h = state.homeless;
-      if (h && h.state === "following") {
-        const near =
-          (h.x === tx && h.y === ty) ||
-          (Math.abs(h.x - tx) <= 1 && Math.abs(h.y - ty) <= 1);
-        if (near) hurtPuck(5 + Math.floor(dmg * 0.45), "The monster hurt Puck!");
-      }
-      updateHud();
-      if (state.hp <= 0) killPlayer("A cave monster got you!", "monster");
+      return;
     }
 
     function getBranchTargetMonster() {
@@ -4330,53 +4240,7 @@
     }
 
     function tryBranchAttack() {
-      if (state.dead || state.gamePaused || isInCutscene()) return false;
-      if (!state.hasTreeBranch) {
-        showMessage("You need Puck's stick! Find him near 500m and give him food ($500).");
-        sfx.blocked();
-        return false;
-      }
-      const now = performance.now();
-      if (now - (state.lastBranchAttackAt || 0) < BRANCH_ATTACK_MS) return false;
-
-      const hit = getBranchTargetMonster();
-      if (!hit) {
-        showMessage("No monster there to whack!");
-        sfx.blocked();
-        return false;
-      }
-
-      const { m, tx, ty, dx, dy } = hit;
-      state.lastBranchAttackAt = now;
-      player.dirX = dx;
-      player.dirY = dy;
-      startPlayerAnim("branch");
-      sfx.whack();
-
-      m.hp = (typeof m.hp === "number" ? m.hp : MONSTER_HP) - 1;
-      player.mineFlashX = tx;
-      player.mineFlashY = ty;
-      player.mineFlashStart = now;
-      spawnMineFx(tx, ty, "#6b4423");
-
-      if (m.hp <= 0) {
-        removeMonsterEntity(m, true);
-        state.bagValue += MONSTER_KILL_VALUE;
-        if (state.questStats) state.questStats.blocksMined++;
-        showMessage(`Monster defeated! +$${MONSTER_KILL_VALUE}`, "var(--good)");
-        playTone(120, 0.1, "sawtooth", 0.05);
-      } else {
-        showMessage("Whack! One more hit!", "var(--good)");
-        if (Math.random() < 0.4) {
-          const dmg = 3 + Math.floor(Math.random() * 5);
-          state.hp -= dmg;
-          showMessage(`It fought back! -${dmg} HP`, "var(--bad)");
-          sfx.hurt();
-          if (state.hp <= 0) killPlayer("A cave monster got you!", "monster");
-        }
-      }
-      updateHud();
-      return true;
+      return false;
     }
 
     function generateTileAt(x, y) {
@@ -4429,18 +4293,7 @@
       if (!inBounds(x, y)) return "bedrock";
       const key = keyFor(x, y);
       if (!activeTiles.has(key)) {
-        let tile = savedEdits.has(key) ? savedEdits.get(key) : generateTileAt(x, y);
-        if (tile === "monster") {
-          trySpawnMonsterEntity(x, y, "stone");
-          tile = "stone";
-          savedEdits.set(key, "stone");
-        } else if (!savedEdits.has(key)) {
-          trySpawnMonsterEntity(x, y, tile);
-        }
-        if (tile === "air") {
-          // Allow monsters to show up in already existing deep holes too.
-          trySpawnMonsterEntity(x, y, tile);
-        }
+        const tile = savedEdits.has(key) ? savedEdits.get(key) : generateTileAt(x, y);
         activeTiles.set(key, tile);
       }
       const tile = activeTiles.get(key);
@@ -4943,7 +4796,7 @@
         if (isMrsTuggTaskComplete(task)) return "Claim your pay!";
         return task.title + "?";
       }
-      if (state.tuggQuestDone.dog) return "Thank you, hero!";
+      if (state.tuggQuestDone.ring) return "Thank you, hero!";
       return null;
     }
 
@@ -5338,10 +5191,6 @@
       if (!nearWaitingPuck()) return false;
       if (state.questStats) state.questStats.metPuck = true;
       h.promptShown = true;
-      if (!state.puckBackstorySeen) {
-        startPuckBackstoryCutscene();
-        return true;
-      }
       showHomelessPrompt();
       return true;
     }
@@ -5407,14 +5256,8 @@
             ? "Arrows"
             : "WASD/Arrows";
       const mineHint = pmSettings.mineKey === "enter" ? "Enter" : "Space";
-      const base = `Move: ${moveHint} | ${mineHint}/Enter or click game: mine | Q: whack monsters`;
-      if ((isPuckDead() || isPuckBuried()) && nearPuckBurialSite()) {
-        el.textContent = `${base} | E: bring Puck back`;
-      } else if (isPuckDead() && !isPuckBuried() && nearPuckBurialSite()) {
-        el.textContent = `${base} | E: bury Puck on the hill`;
-      } else if (nearPuckGrave()) {
-        el.textContent = `${base} | E: read Puck's gravestone`;
-      } else if (isPuckFollowing() && nearLivingPuck() && getPuckHp() < PUCK_MAX_HP) {
+      const base = `Move: ${moveHint} | ${mineHint}/Enter or click game: mine`;
+      if (isPuckFollowing() && nearLivingPuck() && getPuckHp() < PUCK_MAX_HP) {
         el.textContent = `${base} | E: heal Puck ($${PUCK_HEAL_COST})`;
       } else if (state.bossFight && !state.bossDefeated) {
         const puckFight = isPuckFollowing() ? " Puck fights with you!" : "";
@@ -5443,9 +5286,6 @@
         if (isPuckFollowing()) {
           puckRow.style.display = "";
           puckHpEl.textContent = getPuckHp();
-        } else if (isPuckDead()) {
-          puckRow.style.display = "";
-          puckHpEl.textContent = "dead";
         } else {
           puckRow.style.display = "none";
         }
@@ -6882,7 +6722,6 @@
       // Draw Puck (only after Find Puck job unlocks).
       if (state.homeless && isMrsTuggQuestUnlocked("find_puck")) {
         const h = state.homeless;
-        if (h.state === "dead") drawPuckCorpseAt(camX, camY, h);
         if (h.state === "following") {
           const hx = (h.x - camX) * TILE;
           const hy = (h.y - camY) * TILE;
@@ -6995,22 +6834,9 @@
         ctx.fillRect(0, sy + TILE - 4, canvas.width, 4);
       }
 
-      const graveSx = (PUCK_BURIAL_X - camX) * TILE;
-      const graveSy = (PUCK_BURIAL_Y - camY) * TILE;
-      if (
-        graveSx >= -TILE &&
-        graveSx <= canvas.width &&
-        graveSy >= -TILE &&
-        graveSy <= canvas.height
-      ) {
-        if (isPuckBuried()) drawPuckGravestone(graveSx, graveSy);
-        else if (isPuckDead()) drawPuckBurialPlot(graveSx, graveSy);
-      }
-
       drawCelebration(camX, camY);
       drawSurfaceDance(camX, camY);
       drawPuckBreadOnGround(camX, camY);
-      drawPuckStoryOverlay(camX, camY, performance.now());
       if (pmSettings.lavaGlow) drawLavaGlow(camX, camY);
       drawDarkness(camX, camY);
     }
@@ -7351,10 +7177,6 @@
         if (k === "c") {
           e.preventDefault();
           placeCandleAtPlayer();
-        } else if (k === "q") {
-          e.preventDefault();
-          focusGameCanvas();
-          tryBranchAttack();
         } else if (k === "b") {
           e.preventDefault();
           tryStartDance();
@@ -7362,9 +7184,6 @@
         else if (k === "e") {
           e.preventDefault();
           if (tryTalkToPuck()) return;
-          if (tryBringBackPuck()) return;
-          if (tryReadPuckGrave()) return;
-          if (tryBuryPuck()) return;
           if (tryHealPuck()) return;
           tryTalkMrsTugg();
         }
@@ -7742,7 +7561,7 @@
       const gotStick = grantBranchFromPuck();
       showMessage(
         gotStick
-          ? "\"Thanks! Here — take my stick for the monsters. I'll tag along too!\""
+          ? "\"Thanks! Here — take my stick. I'll tag along too!\""
           : "\"Thanks! I'm Puck. I'll tag along and help you mine.\"",
         "var(--good)",
         240
@@ -7754,10 +7573,6 @@
       if (!state.homeless) return;
       hideHomelessPrompt();
       showMessage("\"Sigh... maybe next time.\"", "var(--muted)", 150);
-    });
-
-    document.getElementById("puckGraveCloseBtn").addEventListener("click", () => {
-      hidePuckGraveModal();
     });
 
     document.getElementById("mrsTuggCloseBtn").addEventListener("click", hideMrsTuggModal);
