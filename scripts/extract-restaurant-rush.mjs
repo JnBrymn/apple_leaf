@@ -24,8 +24,6 @@ if (!styleMatch || !bodyMatch || !scriptMatch) {
 
 let css = styleMatch[1]
 css = css.replace(/\bbody\b/g, '.root')
-// Undo mistaken class names like .customer-body → .customer-.root
-css = css.replace(/-\.root/g, '-body')
 css = css.replace(/^\s*\*\s*\{/m, '.root * {')
 
 const markup = bodyMatch[1].trim()

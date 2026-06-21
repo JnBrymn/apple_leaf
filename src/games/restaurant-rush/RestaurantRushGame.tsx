@@ -12,12 +12,5 @@ export default function RestaurantRushGame() {
     return initRestaurantRushGame(shell)
   }, [])
 
-  return (
-    <>
-      <a href="/" className={styles.backLink}>
-        ← Arcade
-      </a>
-      <div ref={shellRef} className={`${styles.shell} gameShell`} />
-    </>
-  )
+  return <div ref={shellRef} className={`${styles.shell} gameShell`} />
 }
