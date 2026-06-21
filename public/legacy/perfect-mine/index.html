@@ -787,7 +787,7 @@
   <div id="homelessModal" class="respawn-modal">
     <div class="respawn-panel">
       <p><strong>"Psst — down here! Rocks sealed the only way out. I dropped my last loaf of bread. Spot me $500 and you can have my stick."</strong></p>
-      <p class="muted-small">Puck looks miserable, staring at the bread on the ground.</p>
+      <p class="muted-small">Puck is staring at the bread on the ground.</p>
       <div class="respawn-actions">
         <button id="homelessYesBtn">Yes</button>
         <button id="homelessNoBtn">No</button>
@@ -1251,7 +1251,7 @@
       state.puckBreadVisible = true;
       const h = state.homeless;
       if (h) {
-        h.sad = true;
+        h.sad = false;
         h.x = TUNNEL_X - 1;
         h.y = HOMELESS_HOLE_Y_MAX;
       }
@@ -1763,26 +1763,7 @@
     }
 
     function startPuckGriefForPlayerDeath() {
-      const h = state.homeless;
-      if (!h || h.state !== "following") return;
-      h.griefAnimStart = performance.now();
-      const spots = [
-        [player.x - 1, player.y],
-        [player.x + 1, player.y],
-        [player.x, player.y + 1],
-        [player.x - 1, player.y - 1],
-        [player.x + 1, player.y - 1],
-      ];
-      for (const [nx, ny] of spots) {
-        if (!inBounds(nx, ny)) continue;
-        if (nx === player.x && (ny === player.y || ny === player.y - 1)) continue;
-        if (getTile(nx, ny) === "air") {
-          h.x = nx;
-          h.y = ny;
-          break;
-        }
-      }
-      sfx.puckGrief();
+      return;
     }
 
     function killPlayer(message, reason = "generic") {
@@ -3321,12 +3302,7 @@
     }
 
     function updatePuckHealPlease(now) {
-      const h = state.homeless;
-      if (!h || h.state !== "following" || h.hp > PUCK_HEAL_PLEASE_HP) return;
-      const last = h.lastHealPleaseAt || 0;
-      if (now - last < 4500) return;
-      h.lastHealPleaseAt = now;
-      showMessage('Puck: "Please heal me!"', "var(--warn)", 120);
+      return;
     }
 
     function nearPuckBurialSite() {
@@ -6742,16 +6718,7 @@
             if (puckDamage > 0) drawPlayerDamage(puckDamage);
             ctx.restore();
 
-            if (h.hp <= PUCK_HEAL_PLEASE_HP) {
-              const bob = Math.sin(performance.now() / 220) * 2;
-              ctx.save();
-              ctx.fillStyle = "#ffaaaa";
-              ctx.font = "bold 11px Verdana";
-              ctx.textAlign = "center";
-              ctx.fillText("heal me!", hx + TILE / 2, hy - 12 + bob);
-              ctx.textAlign = "start";
-              ctx.restore();
-            } else if (state.bossFight && state.boss) {
+            if (state.bossFight && state.boss) {
               const swing = performance.now() - (h.lastBossAttackAt || 0) < 220;
               if (swing || isPuckNearBoss(h)) {
                 ctx.save();
@@ -6768,8 +6735,6 @@
           const hx = (h.x - camX) * TILE;
           const hy = (h.y - camY) * TILE;
           if (hx >= -TILE * 2 && hx <= canvas.width + TILE && hy >= -TILE * 2 && hy <= canvas.height + TILE) {
-            const showSad =
-              h.sad || state.puckBackstorySeen || state.cutscene === "puckStory";
             ctx.save();
             ctx.translate(hx + TILE / 2, hy + TILE / 2);
             drawPerson({
@@ -6783,9 +6748,6 @@
             });
             drawHomelessRags();
             ctx.restore();
-            if (showSad) {
-              drawPuckSadFaceAt(hx, hy, state.cutsceneStart);
-            }
             const bob = Math.sin(performance.now() / 280) * 2;
             drawSpeechBubble(hx, hy, getPuckBubbleText(), bob);
           }

@@ -151,6 +151,7 @@ export const GamePuzzles = {
     state.appleCoreTrashed = true
     ui.disposeAppleCore()
     ui.shakeElement('file-trash')
-    setTimeout(() => ui.showMrGlitch(), 350)
+    ui.showMrGlitch()
+    ui.narrate('appleCoreTrash', 1)
   },
 }

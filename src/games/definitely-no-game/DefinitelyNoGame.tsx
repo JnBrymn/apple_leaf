@@ -7,6 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { Garden } from './garden'
+import { NARRATOR } from './narrator'
 import { GamePuzzles } from './puzzles'
 import { createInitialGameState, type GameState, type GameUI } from './types'
 import styles from './definitely-no-game.module.css'
@@ -22,6 +23,7 @@ const HOTSPOT_CLASS: Record<(typeof PHOTO_CORNERS)[number], string> = {
 
 interface VisualState {
   stage: number
+  narratorText: string | null
   periodFell: boolean
   titleShake: boolean
   screwVisible: boolean
@@ -60,7 +62,6 @@ interface VisualState {
   appleCorePos: { left: number; top: number }
   appleCoreDragging: boolean
   mrGlitchVisible: boolean
-  mrGlitchPos: { left: number; top: number }
   musicToast: boolean
   trophyPos: { left: string; top: string; transform: string }
   trophyCaughtAnim: boolean
@@ -69,6 +70,7 @@ interface VisualState {
 function initialVisual(): VisualState {
   return {
     stage: 1,
+    narratorText: null,
     periodFell: false,
     titleShake: false,
     screwVisible: false,
@@ -107,7 +109,6 @@ function initialVisual(): VisualState {
     appleCorePos: { left: 0, top: 0 },
     appleCoreDragging: false,
     mrGlitchVisible: false,
-    mrGlitchPos: { left: 0, top: 0 },
     musicToast: false,
     trophyPos: { left: '50%', top: '45%', transform: 'translate(-50%, -50%)' },
     trophyCaughtAnim: false,
@@ -163,7 +164,11 @@ export default function DefinitelyNoGame() {
   const chatbotFileRef = useRef<HTMLDivElement>(null)
   const trashFileRef = useRef<HTMLDivElement>(null)
 
-  const narrate = useCallback((_group: string, _index: number) => {}, [])
+  const narrate = useCallback((group: string, index: number) => {
+    const lines = NARRATOR[group]
+    if (!lines?.[index]) return
+    setVisual((v) => ({ ...v, narratorText: lines[index] }))
+  }, [])
 
   const ui = useRef<GameUI>({
     showScene(n) {
@@ -254,22 +259,7 @@ export default function DefinitelyNoGame() {
       }))
     },
     showMrGlitch() {
-      const root = rootRef.current
-      const trash = trashFileRef.current
-      let left = 120
-      let top = 200
-      if (root && trash) {
-        const rootRect = root.getBoundingClientRect()
-        const trashRect = trash.getBoundingClientRect()
-        left = trashRect.right - rootRect.left + 12
-        top = trashRect.top - rootRect.top - 8
-      }
-      setVisual((v) => ({
-        ...v,
-        mrGlitchVisible: true,
-        mrGlitchPos: { left, top },
-      }))
-      narrate('mrGlitch', 0)
+      setVisual((v) => ({ ...v, mrGlitchVisible: true }))
     },
     shakeTitle() {
       setVisual((v) => ({ ...v, titleShake: true }))
@@ -944,15 +934,6 @@ export default function DefinitelyNoGame() {
         </div>
       )}
 
-      {visual.mrGlitchVisible && (
-        <div
-          className={styles.mrGlitch}
-          style={{ left: visual.mrGlitchPos.left, top: visual.mrGlitchPos.top }}
-        >
-          mr glitch
-        </div>
-      )}
-
       {/* Stage 4 */}
       <section className={sceneClass(4, styles.stage4)}>
         <div ref={trophyZoneRef} className={styles.trophyZone}>
@@ -972,6 +953,23 @@ export default function DefinitelyNoGame() {
           </div>
         </div>
       </section>
+
+      {visual.narratorText && (
+        <div className={styles.narrator}>
+          <div className={styles.narratorName}>Game</div>
+          {visual.narratorText}
+        </div>
+      )}
+
+      {visual.mrGlitchVisible && (
+        <div className={styles.mrGlitch}>
+          <img
+            src="/games/definitely-no-game/mr-glitch.svg"
+            alt="Mr Glitch"
+            className={styles.mrGlitchImg}
+          />
+        </div>
+      )}
 
       <div className={[styles.musicToast, visual.musicToast ? styles.musicToastShow : ''].join(' ')}>
         🎵 Not Music.mp3 — 0:00 / 0:00 (broken)

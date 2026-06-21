@@ -252,6 +252,15 @@ export const GAMES: GameConfig[] = [
     component: lazy(() => import('../games/three-snakes')),
   },
   {
+    id: 'tower-defence',
+    title: 'Ragdoll Arena',
+    description:
+      'Fight ragdoll enemies in 2D — beat levels, earn coins, buy weapons from bat to grenade.',
+    thumbnail: '/thumbnails/tower-defence.png',
+    tags: ['action', '2d'],
+    component: lazy(() => import('../games/tower-defence')),
+  },
+  {
     id: 'writing-app',
     title: 'Writing App',
     description: "Bo's story writing tool with prompts and save.",
